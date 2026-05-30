@@ -1,12 +1,15 @@
 """
 ============================================================
-  SINGULARITY - Chronicle of Origin -  Prototype 0.3
+  SINGULARITY - Chronicle of Origin -  Prototype 0.5
   core/constants.py  ── ゲーム全体で使う定数まとめ
 
-  [0.2 変更点]
-    - タイトルを Prototype 0.3 に更新
+  [0.5 変更点]
+    - タイトルを Prototype 0.5 に更新
+    - 属性カラー定数を追加（C_ELEM_FIRE など 7種）
+    - SLIME_ELEMENT を新規追加（スライム名 → 属性ID のマップ）
+    - SLIME_VARIANTS の既存タプル形式は変更なし（互換性維持）
+  [0.4 以前の変更点]
     - 属性スライムを基本六属性（火・水・風・土・光・闇）に統一
-      （雷・毒スライムは削除）
     - STATE_BATTLE（バトル画面）を追加
     - バトル画面レイアウト用の定数を追加
 
@@ -15,7 +18,7 @@
 """
 
 # ── ウィンドウ設定 ─────────────────────────────────────
-TITLE    = "SINGULARITY - Chronicle of Origin -  Prototype 0.3"
+TITLE    = "SINGULARITY - Chronicle of Origin -  Prototype 0.5"
 WINDOW_W = 800   # 画面の横幅（ピクセル）
 WINDOW_H = 600   # 画面の縦幅（ピクセル）
 FPS      = 60    # 1秒間のフレーム数（大きいほど滑らか）
@@ -63,6 +66,18 @@ C_GREEN_DIM  = ( 40, 120,  60)   # 経験値バー
 C_GRAY       = ( 80,  75,  90)
 C_DARK_GRAY  = ( 40,  38,  50)
 
+# ── 属性カラー定数（element_system.py の ELEMENT_COLOR と同値） ─
+#    UI・HUD・スキル名の色分けに使う。
+#    element_system.get_element_color() でも取得できるが、
+#    constants.py からも直接参照できるよう定数として定義しておく。
+C_ELEM_FIRE  = (220,  70,  30)   # 火：赤橙
+C_ELEM_WATER = ( 50, 130, 220)   # 水：青
+C_ELEM_WIND  = ( 60, 180,  80)   # 風：緑
+C_ELEM_EARTH = (140,  95,  50)   # 土：茶
+C_ELEM_LIGHT = (230, 220, 140)   # 光：金白
+C_ELEM_DARK  = ( 90,  50, 140)   # 闇：紫黒
+C_ELEM_NONE  = (160, 155, 145)   # 無：グレー
+
 # バトル画面用カラー
 C_BATTLE_BG     = (  8,   6,  16)   # バトル背景（より暗く）
 C_WINDOW_BG     = ( 15,  12,  25)   # コマンドウィンドウ背景
@@ -94,8 +109,27 @@ SLIME_VARIANTS = [
     ("風スライム", 16, 5, 1, 28, ( 60, 180,  80)),   # 緑
     ("土スライム", 24, 4, 4, 32, (140,  95,  50)),   # 茶色
     ("光スライム", 20, 7, 2, 40, (230, 220, 140)),   # 金白
-    ("闇スライム", 26, 8, 2, 45, ( 80,  40, 130)),   # 紫黒
+    ("闇スライム", 26, 8, 2, 45, ( 90,  50, 140)),   # 紫黒（C_ELEM_DARK と統一）
 ]
+
+# ── スライム属性マップ（0.5 新規） ─────────────────────────
+#    スライムの名前（SLIME_VARIANTS の name 列）→ 属性ID のマッピング。
+#    SLIME_VARIANTS のタプル形式を変えずに属性IDを参照できるようにする。
+#
+#    使い方（enemy.py Step6 以降で参照）:
+#        from core.constants import SLIME_ELEMENT
+#        element_id = SLIME_ELEMENT.get(self.name, "none")
+#
+#    ★ 新しいスライムを SLIME_VARIANTS に追加したとき、
+#      ここにも対応するエントリを追加してください。
+SLIME_ELEMENT: dict[str, str] = {
+    "火スライム": "fire",
+    "水スライム": "water",
+    "風スライム": "wind",
+    "土スライム": "earth",
+    "光スライム": "light",
+    "闇スライム": "dark",
+}
 
 # ── スプライト画像パス（SpriteManager が参照する） ──────
 #    画像ファイルは assets/images/ に置いてください

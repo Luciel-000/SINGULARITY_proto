@@ -44,11 +44,21 @@ import pathlib
 
 # プレイヤー: キー = "識別子"  値 = "ファイル名（拡張子なし）"
 PLAYER_SPRITE_MAP: dict[str, str] = {
-    "novice_m"  : "player_novice_m",   # ノービス（男）
-    "novice_f"  : "player_novice_f",   # ノービス（女）※将来用
-    # ジョブを追加するときはここに追記
-    # "warrior_m" : "player_warrior_m",
-    # "mage_m"    : "player_mage_m",
+    # ── Tier 1（初期ジョブ）
+    "novice_m"   : "player_novice_m",    # ノービス（男）
+    "novice_f"   : "player_novice_f",    # ノービス（女）※将来用
+
+    # ── Tier 2（中級ジョブ）★ 0.4 追加
+    "fighter_m"  : "player_fighter_m",   # ファイター（男）  assets/images/player_fighter_m.png
+    "fighter_f"  : "player_fighter_f",   # ファイター（女）※将来用
+    "mage_m"     : "player_mage_m",      # メイジ（男）      assets/images/player_mage_m.png
+    "mage_f"     : "player_mage_f",      # メイジ（女）※将来用
+
+    # ── Tier 3（上級ジョブ）※将来用
+    # "knight_m"   : "player_knight_m",
+    # "wizard_m"   : "player_wizard_m",
+    # "berserker_m": "player_berserker_m",
+    # "sorcerer_m" : "player_sorcerer_m",
 }
 
 # 敵: キー = "スライムの名前（constants.py の name と一致させる）"

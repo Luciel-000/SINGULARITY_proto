@@ -1,11 +1,16 @@
 """
 ============================================================
-  core/enemy.py  ── 敵「属性スライム」クラス  [0.3 更新]
+  core/enemy.py  ── 敵「属性スライム」クラス  [0.5 更新]
 
-  [0.3 変更点]
+  [0.5 変更点]
+    - self.element を追加（SLIME_ELEMENT から属性IDを取得）
+      battle.py が Step8 で属性相性ダメージ計算に使用する予定
+    - do_attack() の戻り値は int のまま変更なし（互換維持）
+    - 描画・AI・ダメージ処理は変更なし
+
+  [0.3 変更点（継続）]
     - draw()        : スプライト画像に対応（なければ図形描画）
     - draw_battle() : スプライト画像に対応（なければ図形描画）
-      引数に sprite_mgr を追加（省略可）
 
   担当機能（変更なし）:
     - 探索マップ上の追跡 AI
@@ -17,11 +22,13 @@
 import pygame
 import math
 import random
+from .utils import safe_alpha, make_rgba, lerp_alpha  # ★ 0.3.1: alpha安全変換
 from .constants import (
     TILE, ENEMY_SPEED, ENEMY_DETECT_R,
     GAME_AREA_H, WINDOW_W,
     C_WHITE, C_DARK_BG, C_CRIMSON_LT, C_GOLD,
     SLIME_VARIANTS,
+    SLIME_ELEMENT,        # ★ 0.5: スライム名 → 属性ID マップ
 )
 
 
@@ -39,6 +46,7 @@ class Enemy:
         self.defense = defense
         self.exp_val = exp_val
         self.color   = color
+        self.element = SLIME_ELEMENT.get(self.name, "none")  # ★ 0.5: 属性ID
 
         self.state       = "idle"
         self.alive       = True
@@ -168,10 +176,10 @@ class Enemy:
     def _draw_death_effect(self, surface: pygame.Surface):
         prog   = self.death_timer / 30
         radius = int((1 - prog) * 22)
-        alpha  = int(prog * 200)
+        alpha  = lerp_alpha(self.death_timer, 30, max_alpha=200)  # safe
         if radius < 1: return
         s = pygame.Surface((radius * 2, radius * 2), pygame.SRCALPHA)
-        pygame.draw.circle(s, (*self.color, alpha), (radius, radius), radius)
+        pygame.draw.circle(s, make_rgba(*self.color, alpha), (radius, radius), radius)  # safe
         surface.blit(s, (self.rect.centerx - radius, self.rect.centery - radius))
 
     # ──────────────────────────────────────────────────────
@@ -275,7 +283,7 @@ class Enemy:
 
         # ダメージ数値の浮き上がり
         for ft in self.float_texts:
-            alpha   = int(255 * ft["life"] / 50)
+            alpha   = lerp_alpha(ft["life"], 50)           # safe: float→int→clamp
             fx      = ft["x"] if ft["x"] != 0 else cx
             fy      = ft["y"] if ft["y"] != 0 else (cy - 60 - (50 - ft["life"]))
             dmg_txt = font_md.render(ft["text"], True, ft["color"])
@@ -285,8 +293,8 @@ class Enemy:
     def _draw_battle_death(self, surface: pygame.Surface, cx: int, cy: int):
         prog   = self.death_timer / 30
         radius = int((1 - prog) * 60)
-        alpha  = int(prog * 220)
+        alpha  = lerp_alpha(self.death_timer, 30, max_alpha=220)  # safe
         if radius < 1: return
         s = pygame.Surface((radius * 2, radius * 2), pygame.SRCALPHA)
-        pygame.draw.circle(s, (*self.color, alpha), (radius, radius), radius)
+        pygame.draw.circle(s, make_rgba(*self.color, alpha), (radius, radius), radius)  # safe
         surface.blit(s, (cx - radius, cy - radius))

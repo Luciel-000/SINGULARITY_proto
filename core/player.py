@@ -1,50 +1,79 @@
 """
 ============================================================
-  core/player.py  ── プレイヤー「ノービス」クラス  [0.3 更新]
+  core/player.py  ── プレイヤー「ノービス」クラス  [0.5 更新]
 
-  [0.3 変更点]
+  [0.5 変更点]
+    - element プロパティを追加
+      現在ジョブの "element" キーを返す（例: "fire" / "earth" / "none"）
+      battle.py が Step8 で属性相性計算に使用する予定
+    - learned_skills を追加
+      現在ジョブの "skills" キーをリストで保持する
+      battle.py が Step8 でスキルメニュー構築に使用する予定
+    - change_job() に learned_skills 更新を追加
+      ジョブチェンジ時に新ジョブのスキルリストへ自動更新
+
+  [0.4 変更点（継続）]
+    - current_job    : 現在のジョブID（"novice" / "fighter" / "mage"）
+    - change_job()   : ジョブチェンジメソッド
+    - sprite_key     : ジョブ辞書から自動で決まる
+    - draw_battle()  : 名前ラベルをジョブ名で表示
+    - _do_level_up() : ジョブごとのレベルアップ成長量を使用
+
+  [0.3 変更点（継続）]
     - draw()        : スプライト画像に対応（なければ図形描画）
     - draw_battle() : バトル画面用の大きなスプライト描画に対応
-    - SpriteManager を外部から受け取って使う設計
 
-  担当機能（変更なし）:
-    - WASD / 矢印キーで移動
-    - HP・攻撃力・防御力の管理
-    - 経験値獲得とレベルアップ
+  [変更なし]
+    - 移動・当たり判定・攻撃・EXP・レベルアップのロジック
 ============================================================
 """
 
 import pygame
-import math
+from .utils    import make_rgba, lerp_alpha
+from .job_data import get_job, DEFAULT_JOB_ID   # ★ 0.4: ジョブデータ
 from .constants import (
     TILE, PLAYER_SPEED, PLAYER_ATTACK_CD,
     GAME_AREA_H, WINDOW_W,
-    C_WHITE, C_GOLD, C_CRIMSON_LT, C_DARK_GRAY, C_DARK_BG,
+    C_WHITE, C_GOLD, C_CRIMSON_LT, C_DARK_BG,
     EXP_TABLE,
 )
 
 
 class Player:
     """
-    プレイヤーキャラクター「ノービス」
+    プレイヤーキャラクター。
 
     使い方:
         player = Player(x=100, y=100)
-        player.update(walls)                      # 毎フレーム
-        player.draw(surface, sprite_manager)      # 探索マップ描画
-        player.draw_battle(surface, px, py, ...)  # バトル画面描画
+        player.update(walls)                        # 毎フレーム（探索）
+        player.draw(surface, sprite_manager)        # 探索マップ描画
+        player.draw_battle(surface, px, py, ...)    # バトル画面描画
+        player.change_job("fighter")                # ジョブチェンジ
     """
 
     def __init__(self, x: int, y: int):
         self.rect = pygame.Rect(x, y, TILE - 4, TILE - 4)
 
-        # ── ステータス
+        # ── ★ 0.4: ジョブ管理
+        # current_job_id : ジョブ辞書のキー（"novice" / "fighter" / "mage"）
+        self.current_job_id: str  = DEFAULT_JOB_ID
+        # current_job     : ジョブデータの辞書（get_job() で取得）
+        self.current_job: dict    = get_job(DEFAULT_JOB_ID)
+
+        # ── ベースステータス（ジョブボーナスを加算する前の値）
+        # ジョブチェンジしてもリセットされない「プレイヤー本来の力」
+        self._base_max_hp  = 30
+        self._base_atk     = 8
+        self._base_defense = 2
+
+        # ── 表示ステータス（ベース + ジョブボーナスの合計）
+        # ゲーム内でダメージ計算などに使うのはこちら
         self.level   = 1
-        self.max_hp  = 30
-        self.hp      = 30
-        self.atk     = 8
-        self.defense = 2
         self.exp     = 0
+        self.max_hp  = self._calc_max_hp()
+        self.hp      = self.max_hp
+        self.atk     = self._calc_atk()
+        self.defense = self._calc_defense()
 
         # ── タイマー類
         self.attack_cd           = 0
@@ -57,14 +86,115 @@ class Player:
         self.attack_rect: pygame.Rect | None = None
         self.trail: list[tuple[int, int, int]] = []
 
-        # ── スプライトキー（ジョブ切り替えに使う）
-        # ★ 将来ジョブを増やすときはここを変えるだけ
-        self.sprite_key = "novice_m"
+        # ── ★ 0.5: スキルリスト
+        # 現在ジョブが使えるスキルIDのリスト。
+        # ジョブチェンジ時は change_job() が自動で更新する。
+        # battle.py が Step8 でスキルメニュー構築に参照する。
+        self.learned_skills: list[str] = list(
+            self.current_job.get("skills", [])
+        )
 
     # ──────────────────────────────────────────────────────
-    #  更新（変更なし）
+    #  ★ 0.4: ジョブ関連
+    # ──────────────────────────────────────────────────────
+
+    @property
+    def sprite_key(self) -> str:
+        """
+        現在のジョブに対応するスプライトキーを返す。
+        SpriteManager.get_player() に渡す。
+
+        例:
+            "novice"  → "novice_m"
+            "fighter" → "fighter_m"
+            "mage"    → "mage_m"
+        """
+        return self.current_job.get("sprite_key", "novice_m")
+
+    @property
+    def job_name(self) -> str:
+        """現在のジョブ名（日本語）を返す。HUD・バトル表示に使う。"""
+        return self.current_job.get("name", "ノービス")
+
+    @property
+    def job_color(self) -> tuple:
+        """現在のジョブのカラーを返す。HUD の装飾に使う。"""
+        return self.current_job.get("color", C_WHITE)
+
+    @property
+    def element(self) -> str:
+        """
+        現在ジョブの属性IDを返す。  ★ 0.5 追加
+        element_system.get_multiplier() に渡して相性計算に使う。
+
+        例:
+            novice  → "none"
+            fighter → "earth"
+            mage    → "fire"
+        """
+        return self.current_job.get("element", "none")
+
+    def _calc_max_hp(self) -> int:
+        """ベースHP + ジョブボーナスを合計して返す"""
+        return self._base_max_hp + self.current_job.get("hp_bonus", 0)
+
+    def _calc_atk(self) -> int:
+        """ベースATK + ジョブボーナスを合計して返す"""
+        return self._base_atk + self.current_job.get("atk_bonus", 0)
+
+    def _calc_defense(self) -> int:
+        """ベースDEF + ジョブボーナスを合計して返す"""
+        return max(0, self._base_defense + self.current_job.get("def_bonus", 0))
+
+    def change_job(self, new_job_id: str) -> bool:
+        """
+        ジョブチェンジを実行する。
+
+        引数:
+            new_job_id : 変更先ジョブID（"fighter" / "mage" など）
+
+        戻り値:
+            True  : チェンジ成功
+            False : 同じジョブ or 存在しないジョブ → 変更なし
+
+        処理内容:
+            1. ジョブデータを差し替える
+            2. ステータスを再計算（ジョブボーナスの付け替え）
+            3. HPは最大HPに変わっても現在HPの割合を維持する
+        """
+        from .job_data import JOB_DATA
+
+        # 同じジョブまたは存在しないジョブは変更なし
+        if new_job_id == self.current_job_id:
+            return False
+        if new_job_id not in JOB_DATA:
+            return False
+
+        # HP割合を記録（チェンジ後も比率を維持するため）
+        hp_ratio = self.hp / max(1, self.max_hp)
+
+        # ジョブを変更
+        self.current_job_id = new_job_id
+        self.current_job    = get_job(new_job_id)
+
+        # ステータスを再計算
+        self.max_hp  = self._calc_max_hp()
+        self.atk     = self._calc_atk()
+        self.defense = self._calc_defense()
+
+        # HP は変更前の割合を引き継ぐ（最低1）
+        self.hp = max(1, int(self.max_hp * hp_ratio))
+
+        # ★ 0.5: 新ジョブのスキルリストに更新
+        self.learned_skills = list(self.current_job.get("skills", []))
+
+        return True
+
+    # ──────────────────────────────────────────────────────
+    #  移動・当たり判定（変更なし）
     # ──────────────────────────────────────────────────────
     def update(self, walls: list[pygame.Rect]):
+        """毎フレーム呼ぶ。キー入力を読んで移動し壁との当たり判定を行う。"""
         keys = pygame.key.get_pressed()
         vx, vy = 0, 0
 
@@ -102,7 +232,7 @@ class Player:
         if self.attack_effect_timer <= 0: self.attack_rect = None
 
     # ──────────────────────────────────────────────────────
-    #  攻撃・ダメージ・EXP（変更なし）
+    #  攻撃・ダメージ（変更なし）
     # ──────────────────────────────────────────────────────
     def try_attack(self) -> bool:
         if self.attack_cd > 0:
@@ -124,7 +254,11 @@ class Player:
     def is_dead(self) -> bool:
         return self.hp <= 0
 
+    # ──────────────────────────────────────────────────────
+    #  経験値・レベルアップ（★ 0.4: ジョブ成長量を使用）
+    # ──────────────────────────────────────────────────────
     def gain_exp(self, amount: int) -> bool:
+        """経験値を加算。レベルアップした場合は True を返す。"""
         self.exp += amount
         if self.level < len(EXP_TABLE) - 1:
             if self.exp >= EXP_TABLE[self.level]:
@@ -133,11 +267,29 @@ class Player:
         return False
 
     def _do_level_up(self):
-        self.level   += 1
-        self.max_hp  += 8
-        self.hp       = self.max_hp
-        self.atk     += 3
-        self.defense += 1
+        """
+        レベルアップ処理。
+        ★ 0.4: ジョブデータの lv_up_* を使って成長量を決める。
+        ジョブによって伸び方が変わる（ファイター→HP多め、メイジ→ATK多め）
+        """
+        self.level += 1
+
+        # ジョブの成長量を取得
+        lv_hp  = self.current_job.get("lv_up_hp",  8)
+        lv_atk = self.current_job.get("lv_up_atk", 3)
+        lv_def = self.current_job.get("lv_up_def", 1)
+
+        # ベースステータスを伸ばす（ジョブボーナスの二重加算を避けるため）
+        self._base_max_hp  += lv_hp
+        self._base_atk     += lv_atk
+        self._base_defense += lv_def
+
+        # 表示ステータスを再計算（ジョブボーナスも含む）
+        self.max_hp  = self._calc_max_hp()
+        self.atk     = self._calc_atk()
+        self.defense = self._calc_defense()
+        self.hp      = self.max_hp   # HP全回復
+
         self.levelup_timer = 90
 
     def exp_to_next(self) -> int:
@@ -153,44 +305,33 @@ class Player:
         return (self.exp - prev) / max(1, nxt - prev)
 
     # ──────────────────────────────────────────────────────
-    #  探索マップ描画（スプライト対応）
+    #  探索マップ描画（変更なし）
     # ──────────────────────────────────────────────────────
     def draw(self, surface: pygame.Surface, sprite_mgr=None):
-        """
-        探索マップ上のプレイヤーを描く。
-        sprite_mgr が渡されて画像があれば PNG を使う。
-        なければ今まで通りの図形描画にフォールバック。
-        """
+        """探索マップ上のプレイヤーを描く。スプライトがなければ図形で代替。"""
         # 足跡エフェクト
         for tx, ty, alpha in self.trail:
             s = pygame.Surface((6, 6), pygame.SRCALPHA)
-            s.fill((*C_GOLD, max(0, min(255, int(alpha)))))
+            s.fill(make_rgba(*C_GOLD, alpha))
             surface.blit(s, (tx - 3, ty - 3))
 
-        # ── スプライト描画を試みる
+        # スプライト描画を試みる
         img = None
         if sprite_mgr is not None:
-            # 探索マップ用サイズ（タイルサイズ相当）
             img = sprite_mgr.get_player(self.sprite_key,
                                          size=(self.rect.width, self.rect.height))
 
         if img is not None:
-            # PNG がある場合：画像を表示
-            # ダメージ中は赤く着色（Surface をコピーして赤を重ねる）
             if self.hit_timer > 0 and (self.hit_timer // 4) % 2 == 0:
                 img = img.copy()
                 red = pygame.Surface(img.get_size(), pygame.SRCALPHA)
                 red.fill((220, 60, 60, 140))
                 img.blit(red, (0, 0), special_flags=pygame.BLEND_RGBA_MULT)
-
-            # 左向きのときは水平反転
             if self.direction == "left":
                 img = pygame.transform.flip(img, True, False)
-
             surface.blit(img, (self.rect.x, self.rect.y))
-
         else:
-            # PNG がない場合：図形で描く（フォールバック）
+            # フォールバック：図形描画
             body_color = C_CRIMSON_LT if (self.hit_timer > 0 and (self.hit_timer // 4) % 2 == 0) else C_WHITE
             pygame.draw.rect(surface, body_color, self.rect, border_radius=5)
             head_cx, head_cy = self.rect.centerx, self.rect.top + 8
@@ -201,11 +342,11 @@ class Player:
                 else (self.rect.left + 2, self.rect.left - 10)
             pygame.draw.line(surface, C_GOLD, (sx, self.rect.centery), (ex, self.rect.centery - 6), 2)
 
-        # 攻撃エフェクト（スプライト有無に関わらず表示）
+        # 攻撃エフェクト
         if self.attack_rect and self.attack_effect_timer > 0:
-            alpha = int(self.attack_effect_timer / 10 * 160)
+            alpha = lerp_alpha(self.attack_effect_timer, 10, max_alpha=160)
             s = pygame.Surface((self.attack_rect.width, self.attack_rect.height), pygame.SRCALPHA)
-            s.fill((*C_GOLD, alpha))
+            s.fill(make_rgba(*C_GOLD, alpha))
             surface.blit(s, (self.attack_rect.x, self.attack_rect.y))
 
         # HP バー（頭上）
@@ -215,55 +356,38 @@ class Player:
         pygame.draw.rect(surface, C_CRIMSON_LT, (self.rect.x, self.rect.top - 8, int(bar_w * ratio), 4))
 
     # ──────────────────────────────────────────────────────
-    #  バトル画面描画（スプライト対応）
+    #  バトル画面描画（★ 0.4: 名前表示をジョブ名に変更）
     # ──────────────────────────────────────────────────────
     def draw_battle(self, surface: pygame.Surface,
                     px: int, py: int,
                     font_md: pygame.font.Font,
                     font_sm: pygame.font.Font,
                     sprite_mgr=None):
-        """
-        バトル画面用の大きなプレイヤーを描く。
-        px, py: 表示中心座標（PLAYER_BATTLE_X, PLAYER_BATTLE_Y）
-        sprite_mgr: SpriteManager（省略可）
-
-        スプライトがある場合はPNG、ない場合は図形でフォールバック。
-        """
-        # ── スプライト描画を試みる（バトル用の大きいサイズ）
-        BATTLE_SIZE = (96, 96)   # ★ バトル画面でのプレイヤーサイズ
+        """バトル画面用の大きなプレイヤーを描く。"""
+        BATTLE_SIZE = (96, 96)
         img = None
         if sprite_mgr is not None:
             img = sprite_mgr.get_player(self.sprite_key, size=BATTLE_SIZE)
 
         if img is not None:
-            # PNG がある場合
             draw_img = img
-
-            # ダメージ点滅
             if self.hit_timer > 0 and (self.hit_timer // 4) % 2 == 0:
                 draw_img = img.copy()
                 red = pygame.Surface(draw_img.get_size(), pygame.SRCALPHA)
                 red.fill((220, 60, 60, 140))
                 draw_img.blit(red, (0, 0), special_flags=pygame.BLEND_RGBA_MULT)
-
-            # 画像の中心を px, py に合わせて表示
             img_rect = draw_img.get_rect(center=(px, py))
             surface.blit(draw_img, img_rect)
-
-            # 影
             sw, sh = BATTLE_SIZE[0], 14
             shadow_s = pygame.Surface((sw, sh), pygame.SRCALPHA)
             pygame.draw.ellipse(shadow_s, (0, 0, 0, 55), (0, 0, sw, sh))
             surface.blit(shadow_s, (px - sw // 2, py + BATTLE_SIZE[1] // 2 - 4))
-
         else:
-            # PNG がない場合：図形で描く
+            # フォールバック：図形描画
             body_color = C_CRIMSON_LT if (self.hit_timer > 0 and (self.hit_timer // 4) % 2 == 0) else C_WHITE
-
             shadow_s = pygame.Surface((70, 14), pygame.SRCALPHA)
             pygame.draw.ellipse(shadow_s, (0, 0, 0, 60), (0, 0, 70, 14))
             surface.blit(shadow_s, (px - 35, py + 45))
-
             body = pygame.Rect(px - 20, py - 10, 40, 55)
             pygame.draw.rect(surface, body_color, body, border_radius=6)
             pygame.draw.circle(surface, body_color, (px, py - 22), 22)
@@ -273,8 +397,8 @@ class Player:
             pygame.draw.line(surface, C_GOLD, (px + 22, py - 5), (px + 46, py - 28), 3)
             pygame.draw.line(surface, (180, 140, 60), (px + 28, py), (px + 36, py - 12), 3)
 
-        # 名前ラベル（スプライト有無に関わらず表示）
-        name_txt = font_md.render("ノービス", True, C_GOLD)
+        # ★ 0.4: 名前ラベルをジョブ名で表示（ジョブカラーで色分け）
+        name_txt = font_md.render(self.job_name, True, self.job_color)
         surface.blit(name_txt, (px - name_txt.get_width() // 2, py - 70))
 
         # HP バー
