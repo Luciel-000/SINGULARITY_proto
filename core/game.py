@@ -1,16 +1,22 @@
 """
 ============================================================
   core/game.py  ── ゲーム本体（状態管理・メインループ処理）
-                   [0.5 更新]
+                   [0.6 更新]
 
-  [0.5 Step9 変更点]
+  [0.6 変更点]
+    - current_zone_id を追加
+    - ゲーム開始は World("town")（始まりの町）から開始
+    - zone_data.py からゾーン情報を取得
+    - has_enemies=True のゾーンだけ敵をスポーン
+    - 出口タイル（world.exit_rects）に触れるとゾーン遷移
+    - _transition_zone(next_zone_id) を追加
+    - HUD にマップ名を表示（右端ヒント欄）
+
+  [0.5 Step9 変更点（継続）]
     - HUD にプレイヤーの属性を表示
-    - player.element → get_element_name / get_element_color で
-      ジョブ名の直下に「属性：火」などを属性カラーで表示
 
   [0.4 変更点（継続）]
     - J キーでジョブチェンジメニューを開く
-    - ジョブチェンジメニュー状態（STATE_JOB_MENU）を追加
     - HUD にジョブ名を常時表示
 
   [0.3 変更点（継続）]
@@ -38,6 +44,7 @@ from .font_manager   import FontManager
 from .sprite_manager import SpriteManager
 from .job_data       import get_job, get_evolutions, JOB_DATA   # ★ 0.4
 from .element_system import get_element_name, get_element_color  # ★ 0.5: 属性名・属性カラー
+from .zone_data      import get_zone_name, get_zone_exits        # ★ 0.6: ゾーン情報
 
 # ★ 0.4: ジョブチェンジメニューの状態定数
 STATE_JOB_MENU = "job_menu"
@@ -65,6 +72,9 @@ class Game:
         self.title_timer    = 0
         self.gameover_timer = 0
 
+        # ★ 0.6: 現在のゾーンID（ゲーム開始時は "town"）
+        self.current_zone_id: str = "town"
+
         # ★ 0.4: ジョブチェンジメニュー用
         # job_menu_options : 現在選択可能なジョブIDのリスト
         # job_menu_cursor  : カーソル位置
@@ -75,18 +85,23 @@ class Game:
     #  ゲーム初期化
     # ──────────────────────────────────────────────────────
     def _init_game(self):
-        self.world    = World()
+        # ★ 0.6: ゲーム開始は「始まりの町」から
+        self.current_zone_id = "town"
+        self.world    = World(self.current_zone_id)
         px, py        = self.world.player_spawn
         self.player   = Player(px, py)
         self.enemies  = []
         self.messages = []
         self.battle   = None
         self.battle_enemy = None
-        self._add_message("J キーでジョブチェンジメニュー", C_GOLD)
+        self._add_message(f"ここは {self.world.zone_name}", C_GOLD)
+        self._add_message("J キーでジョブチェンジ", C_GRAY)
 
-        spawn_positions = self.world.get_enemy_spawns(6)
-        for i, (ex, ey) in enumerate(spawn_positions):
-            self.enemies.append(Enemy(ex, ey, variant_index=i % len(SLIME_VARIANTS)))
+        # ★ 0.6: has_enemies=True のゾーンだけ敵をスポーン
+        if self.world.has_enemies:
+            spawn_positions = self.world.get_enemy_spawns(6)
+            for i, (ex, ey) in enumerate(spawn_positions):
+                self.enemies.append(Enemy(ex, ey, variant_index=i % len(SLIME_VARIANTS)))
 
     # ──────────────────────────────────────────────────────
     #  イベント処理
@@ -252,6 +267,15 @@ class Game:
 
         if self.state == STATE_PLAY and self.player and self.world:
             self.player.update(self.world.wall_rects)
+
+            # ★ 0.6: 出口タイルへの接触でゾーン遷移
+            for exit_rect in self.world.exit_rects:
+                if self.player.rect.colliderect(exit_rect):
+                    exits = get_zone_exits(self.current_zone_id)
+                    if exits:
+                        self._transition_zone(exits[0]["to"])
+                    break
+
             for enemy in self.enemies:
                 enemy.update(self.player.rect, self.world.wall_rects)
                 if enemy.alive and enemy.touches_player(self.player.rect):
@@ -283,8 +307,36 @@ class Game:
         self.state = STATE_BATTLE
         self._add_message(f"{enemy.name} が現れた！", C_GOLD)
 
+    def _transition_zone(self, next_zone_id: str):
+        """
+        ★ 0.6: ゾーンを切り替える。
+        新しい World を生成し、プレイヤーをスポーン位置に移動する。
+        has_enemies=True のゾーンだけ敵をスポーンする。
+        """
+        self.current_zone_id = next_zone_id
+        self.world   = World(next_zone_id)
+        self.enemies = []
+        self.battle  = None
+        self.battle_enemy = None
+
+        # プレイヤーを新ゾーンのスポーン位置に移動
+        px, py = self.world.player_spawn
+        self.player.rect.x = px
+        self.player.rect.y = py
+
+        # 敵をスポーン（has_enemies=False の町では何もしない）
+        if self.world.has_enemies:
+            spawn_positions = self.world.get_enemy_spawns(6)
+            for i, (ex, ey) in enumerate(spawn_positions):
+                self.enemies.append(Enemy(ex, ey, variant_index=i % len(SLIME_VARIANTS)))
+
+        zone_name = self.world.zone_name
+        self._add_message(f"ここは {zone_name}", C_GOLD)
+
     def _respawn_enemies(self):
         if not self.world: return
+        # ★ 0.6: has_enemies=False のゾーンでは補充しない
+        if not self.world.has_enemies: return
         positions = self.world.get_enemy_spawns(4)
         for i, (ex, ey) in enumerate(positions):
             self.enemies.append(Enemy(ex, ey))
@@ -321,7 +373,7 @@ class Game:
 
         t1 = self.font_lg.render("SINGULARITY",             True, C_WHITE)
         t2 = self.font_md.render("- Chronicle of Origin -", True, C_GOLD)
-        t3 = self.font_sm.render("Prototype  0.5",          True, C_GRAY)
+        t3 = self.font_sm.render("Prototype  0.6",          True, C_GRAY)
         surface.blit(t1, (WINDOW_W // 2 - t1.get_width() // 2, 110))
         surface.blit(t2, (WINDOW_W // 2 - t2.get_width() // 2, 158))
         surface.blit(t3, (WINDOW_W // 2 - t3.get_width() // 2, 192))
@@ -418,9 +470,10 @@ class Game:
         elem_txt   = self.font_sm.render(f"属性：{elem_name}", True, elem_color)
         surface.blit(elem_txt, (210, GAME_AREA_H + 72))
 
-        # ヒント（右端）
+        # ヒント（右端）: ★ 0.6 マップ名を追加
+        zone_name = self.world.zone_name if self.world else ""
         hint = self.font_sm.render(
-            "移動：WASD/矢印   J：ジョブチェンジ", True, C_DARK_GRAY)
+            f"[ {zone_name} ]  J：ジョブチェンジ", True, C_DARK_GRAY)
         surface.blit(hint, (WINDOW_W - hint.get_width() - 10, GAME_AREA_H + 10))
 
         # メッセージログ（最新3件）

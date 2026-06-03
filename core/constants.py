@@ -1,8 +1,13 @@
 """
 ============================================================
-  SINGULARITY - Chronicle of Origin -  Prototype 0.5
+  SINGULARITY - Chronicle of Origin -  Prototype 0.6
   core/constants.py  ── ゲーム全体で使う定数まとめ
 
+  [0.6 変更点]
+    - タイトルを Prototype 0.6 に更新
+    - 町用タイル色定数を追加（C_TOWN_FLOOR / C_TOWN_WALL）
+    - 出口タイル色定数を追加（C_EXIT_TILE）
+    - 既存定数・SLIME_VARIANTS・SLIME_ELEMENT は変更なし
   [0.5 変更点]
     - タイトルを Prototype 0.5 に更新
     - 属性カラー定数を追加（C_ELEM_FIRE など 7種）
@@ -18,7 +23,7 @@
 """
 
 # ── ウィンドウ設定 ─────────────────────────────────────
-TITLE    = "SINGULARITY - Chronicle of Origin -  Prototype 0.5"
+TITLE    = "SINGULARITY - Chronicle of Origin -  Prototype 0.6"
 WINDOW_W = 800   # 画面の横幅（ピクセル）
 WINDOW_H = 600   # 画面の縦幅（ピクセル）
 FPS      = 60    # 1秒間のフレーム数（大きいほど滑らか）
@@ -135,3 +140,16 @@ SLIME_ELEMENT: dict[str, str] = {
 #    画像ファイルは assets/images/ に置いてください
 #    ファイルがなくても図形でフォールバックするので動作します
 SPRITE_DIR = "assets/images"
+
+# ── ゾーン別タイル色（0.6 新規） ─────────────────────────
+#    zone_data.py / world.py からタイル描画色として参照する。
+#    ゾーンごとの雰囲気を色で表現する。
+
+# 始まりの町の床・壁色（ダンジョンより明るい石畳のイメージ）
+C_TOWN_FLOOR = ( 45,  40,  55)   # やや明るい石畳（C_FLOOR より明るめ）
+C_TOWN_WALL  = ( 35,  30,  48)   # 石造りの壁（C_WALL より明るめ）
+
+# 出口タイルの表示色
+# 探索マップ上に出口マーカーとして描画するときに使う。
+# 目立つようにゴールド系にしつつ、床と区別できる色にする。
+C_EXIT_TILE  = (160, 140,  60)   # くすんだゴールド（出口タイル）
