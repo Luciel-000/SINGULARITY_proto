@@ -1,18 +1,21 @@
 """
 ============================================================
-  SINGULARITY - Chronicle of Origin -  Prototype 0.6
+  SINGULARITY - Chronicle of Origin -  Prototype 0.7
   core/constants.py  ── ゲーム全体で使う定数まとめ
 
+  [0.7 変更点]
+    - タイトルを Prototype 0.7 に更新
+    - STATE_DIALOGUE を追加（会話中のゲーム状態）
+    - 会話ウィンドウ用カラー定数を追加
+      C_DIALOGUE_BG / C_DIALOGUE_BORDER / C_DIALOGUE_NAME / C_DIALOGUE_TEXT
   [0.6 変更点]
     - タイトルを Prototype 0.6 に更新
     - 町用タイル色定数を追加（C_TOWN_FLOOR / C_TOWN_WALL）
     - 出口タイル色定数を追加（C_EXIT_TILE）
     - 既存定数・SLIME_VARIANTS・SLIME_ELEMENT は変更なし
   [0.5 変更点]
-    - タイトルを Prototype 0.5 に更新
     - 属性カラー定数を追加（C_ELEM_FIRE など 7種）
     - SLIME_ELEMENT を新規追加（スライム名 → 属性ID のマップ）
-    - SLIME_VARIANTS の既存タプル形式は変更なし（互換性維持）
   [0.4 以前の変更点]
     - 属性スライムを基本六属性（火・水・風・土・光・闇）に統一
     - STATE_BATTLE（バトル画面）を追加
@@ -23,7 +26,7 @@
 """
 
 # ── ウィンドウ設定 ─────────────────────────────────────
-TITLE    = "SINGULARITY - Chronicle of Origin -  Prototype 0.6"
+TITLE    = "SINGULARITY - Chronicle of Origin -  Prototype 0.7"
 WINDOW_W = 800   # 画面の横幅（ピクセル）
 WINDOW_H = 600   # 画面の縦幅（ピクセル）
 FPS      = 60    # 1秒間のフレーム数（大きいほど滑らか）
@@ -99,6 +102,7 @@ STATE_PLAY     = "play"      # 探索マップ
 STATE_BATTLE   = "battle"    # ★ 0.2新追加：ターン制バトル画面
 STATE_LEVELUP  = "levelup"   # レベルアップ演出
 STATE_GAMEOVER = "gameover"  # ゲームオーバー画面
+STATE_DIALOGUE = "dialogue"  # ★ 0.7新追加：NPC会話中
 
 # ── レベルアップに必要な累積経験値テーブル ────────────
 #    EXP_TABLE[lv] = そのレベルになるために必要な総EXP
@@ -153,3 +157,20 @@ C_TOWN_WALL  = ( 35,  30,  48)   # 石造りの壁（C_WALL より明るめ）
 # 探索マップ上に出口マーカーとして描画するときに使う。
 # 目立つようにゴールド系にしつつ、床と区別できる色にする。
 C_EXIT_TILE  = (160, 140,  60)   # くすんだゴールド（出口タイル）
+
+# ── 会話ウィンドウ用カラー（0.7 新規） ─────────────────────
+#    NPC 会話ウィンドウの描画に使う。
+#    バトルウィンドウ（C_WINDOW_BG 系）より暖かみのある色合いにして
+#    「人との会話」の雰囲気を出す。
+
+# ウィンドウ背景（少し茶みがかった暗色 → 石造りの建物内のイメージ）
+C_DIALOGUE_BG     = ( 18,  14,  22)   # バトルより少し暖かい暗背景
+
+# ウィンドウ枠線（金色系 → 大賢者・イベントの格式を表現）
+C_DIALOGUE_BORDER = (160, 130,  55)   # くすんだゴールド枠
+
+# 話者名テキスト（金色 → 名前を目立たせる）
+C_DIALOGUE_NAME   = (201, 168,  76)   # C_GOLD と同値（統一感）
+
+# 本文テキスト（やや暖かい白 → C_WHITE と同値）
+C_DIALOGUE_TEXT   = (240, 235, 220)   # C_WHITE と同値（統一感）

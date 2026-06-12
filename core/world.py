@@ -1,23 +1,24 @@
 """
 ============================================================
-  core/world.py  ── マップ生成・描画クラス  [0.6 更新]
+  core/world.py  ── マップ生成・描画クラス  [0.7 更新]
 
-  [0.6 変更点]
+  [0.7 変更点]
+    - self.npc_spawns を追加（NPC 配置座標リスト）
+    - _generate_town() で謎の老人のスポーン座標を記録
+    - _build_npc_spawns() を追加（タイル座標 → ピクセル座標変換）
+    - get_npc_spawns() を追加（game.py が NPC 生成に使う）
+    - field では get_npc_spawns() が空リスト [] を返す
+
+  [0.6 変更点（継続）]
     - World(zone_id="field") 形式に変更（デフォルト引数で後方互換）
     - ゾーンIDから名前・色・敵有無・出口情報を zone_data.py より取得
-    - self.zone_id / zone_name / has_enemies / map_type を追加
-    - self.floor_color / wall_color を追加（ゾーンごとにタイル色が変わる）
-    - _generate() がmap_typeで生成方式を切り替えるディスパッチャになった
-    - _generate_dungeon() : 旧 _generate() そのまま（field 用）
-    - _generate_town()    : 固定広間レイアウト（town 用）
-    - exit_rects を追加（出口タイルの当たり判定 Rect リスト）
+    - exit_rects を追加（出口タイルの当たり判定）
     - draw() で出口タイルをくすんだゴールドで描画
 
   [互換性維持]
     - World() 引数なし → zone_id="field" として動作（既存コード影響なし）
-    - wall_rects / player_spawn / rooms の型・意味は変わらない
+    - wall_rects / player_spawn / rooms / exit_rects の型・意味は変わらない
     - get_enemy_spawns() の戻り値型は変わらない
-      has_enemies=False のとき空リスト [] を返す
 
   タイルデータ：0 = 床、1 = 壁、2 = 出口タイル
 ============================================================
@@ -93,6 +94,11 @@ class World:
         floor_color   : 床タイルの色（RGB）
         wall_color    : 壁タイルの色（RGB）
         exit_rects    : 出口タイルの pygame.Rect リスト
+
+    属性（0.7 新規追加）:
+        npc_spawns    : NPC 配置座標のリスト（ピクセル座標）
+                        town の場合: [(x, y)] 1件
+                        field の場合: []（NPC なし）
     """
 
     def __init__(self, zone_id: str = DEFAULT_ZONE_ID):
@@ -115,11 +121,18 @@ class World:
         # ── ★ 0.6: 出口タイルの当たり判定 Rect リスト
         self.exit_rects: list[pygame.Rect]  = []
 
+        # ── ★ 0.7: NPC 配置座標リスト（ピクセル座標）
+        # _generate_town() が _npc_tile_positions に記録し、
+        # _build_npc_spawns() がピクセル座標に変換して npc_spawns に格納する。
+        self._npc_tile_positions: list[tuple[int, int]] = []  # 内部用タイル座標
+        self.npc_spawns: list[tuple[int, int]] = []           # 公開用ピクセル座標
+
         # ── マップを生成して各データを構築する
         self._generate()
         self._build_surface()
         self._build_wall_rects()
         self._build_exit_rects()
+        self._build_npc_spawns()  # ★ 0.7
 
     # ──────────────────────────────────────────────────────
     #  マップ生成ディスパッチャ（★ 0.6 変更）
@@ -222,6 +235,14 @@ class World:
         exit_row = town_row + town_h // 2  # 広間の縦中央
         self._tiles[exit_row][exit_col] = TILE_EXIT
 
+        # ── ★ 0.7: NPC（謎の老人）のタイル座標を記録
+        # プレイヤーの正面（右側2〜3マス先）に立たせる
+        # プレイヤーは広間左寄り（col+2, row+h//2）なので
+        # NPC は少し右の中央あたりに配置する
+        npc_col = town_col + town_w // 2   # 広間の横中央
+        npc_row = town_row + town_h // 2   # 広間の縦中央
+        self._npc_tile_positions.append((npc_col, npc_row))
+
     # ──────────────────────────────────────────────────────
     #  部屋・通路の掘削ヘルパー（変更なし）
     # ──────────────────────────────────────────────────────
@@ -319,6 +340,45 @@ class World:
                     self.exit_rects.append(
                         pygame.Rect(c * TILE, r * TILE, TILE, TILE)
                     )
+
+    # ──────────────────────────────────────────────────────
+    #  NPC スポーン位置の構築（★ 0.7 新規）
+    # ──────────────────────────────────────────────────────
+    def _build_npc_spawns(self):
+        """
+        _npc_tile_positions（タイル座標）を
+        ピクセル座標に変換して self.npc_spawns に格納する。
+
+        town 以外（field など）では _npc_tile_positions が空なので
+        npc_spawns も空リストになる。
+        """
+        self.npc_spawns = [
+            (col * TILE + 4, row * TILE + 4)
+            for col, row in self._npc_tile_positions
+        ]
+
+    # ──────────────────────────────────────────────────────
+    #  NPC スポーン位置を返す（★ 0.7 新規）
+    # ──────────────────────────────────────────────────────
+    def get_npc_spawns(self) -> list[tuple[int, int]]:
+        """
+        NPC を配置するピクセル座標のリストを返す。
+
+        戻り値:
+            list[tuple[int, int]] :
+                town の場合 → [(x, y)]  1件（謎の老人の座標）
+                field の場合 → []       （NPC なし）
+
+        使用例（game.py 側）:
+            for (x, y) in self.world.get_npc_spawns():
+                self.npcs.append(
+                    NPC(x, y,
+                        name="謎の老人",
+                        dialogue_id="elder_first",
+                        repeat_dialogue_id="elder_repeat")
+                )
+        """
+        return list(self.npc_spawns)  # コピーを返してリスト保護
 
     # ──────────────────────────────────────────────────────
     #  敵のスポーン位置（★ 0.6: has_enemies=False なら空リスト）
