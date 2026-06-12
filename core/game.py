@@ -1,27 +1,27 @@
 """
 ============================================================
   core/game.py  ── ゲーム本体（状態管理・メインループ処理）
-                   [0.6 更新]
+                   [0.7 Step5-B 更新]
 
-  [0.6 変更点]
-    - current_zone_id を追加
-    - ゲーム開始は World("town")（始まりの町）から開始
-    - zone_data.py からゾーン情報を取得
-    - has_enemies=True のゾーンだけ敵をスポーン
-    - 出口タイル（world.exit_rects）に触れるとゾーン遷移
-    - _transition_zone(next_zone_id) を追加
-    - HUD にマップ名を表示（右端ヒント欄）
+  [0.7 Step5-B 変更点]
+    - dialogue_data.py から会話取得関数を import
+    - STATE_DIALOGUE / 会話ウィンドウ色定数を import
+    - 会話状態管理変数を追加
+      （current_dialogue_id / dialogue_lines / dialogue_speaker /
+        dialogue_index / talking_npc）
+    - Z キーで近くの NPC に話しかける処理を追加
+    - STATE_DIALOGUE: Z/Enter/Space で次ページ、Esc/X で閉じる
+    - _start_dialogue / _advance_dialogue / _end_dialogue を追加
+    - _draw_dialogue_window() を追加
+    - draw() に STATE_DIALOGUE の描画分岐を追加
+    - on_end == "sage_activate" はまだ未処理（Step5-C 以降）
 
-  [0.5 Step9 変更点（継続）]
-    - HUD にプレイヤーの属性を表示
+  [0.7 Step5-A 変更点（継続）]
+    - NPC クラスを import、self.npcs リストを追加
+    - town で「謎の老人」が表示される
 
-  [0.4 変更点（継続）]
-    - J キーでジョブチェンジメニューを開く
-    - HUD にジョブ名を常時表示
-
-  [0.3 変更点（継続）]
-    - FontManager / SpriteManager を使用
-    - STATE_BATTLE バトル状態管理
+  [0.6 変更点（継続）]
+    - current_zone_id / ゾーン遷移 / マップ名 HUD
 ============================================================
 """
 
@@ -31,9 +31,12 @@ from .utils      import safe_alpha, make_rgba
 from .constants  import (
     WINDOW_W, WINDOW_H, GAME_AREA_H, HUD_H, TILE,
     STATE_TITLE, STATE_PLAY, STATE_BATTLE, STATE_LEVELUP, STATE_GAMEOVER,
+    STATE_DIALOGUE,                                  # ★ 0.7 Step5-B
     C_DARK_BG, C_WHITE, C_GOLD,
     C_CRIMSON_LT, C_GREEN_DIM, C_GRAY, C_DARK_GRAY,
     C_WINDOW_BG, C_WINDOW_BORDER,
+    C_DIALOGUE_BG, C_DIALOGUE_BORDER,               # ★ 0.7 Step5-B: 会話ウィンドウ色
+    C_DIALOGUE_NAME, C_DIALOGUE_TEXT,               # ★ 0.7 Step5-B
     SLIME_VARIANTS,
 )
 from .player         import Player
@@ -45,6 +48,12 @@ from .sprite_manager import SpriteManager
 from .job_data       import get_job, get_evolutions, JOB_DATA   # ★ 0.4
 from .element_system import get_element_name, get_element_color  # ★ 0.5: 属性名・属性カラー
 from .zone_data      import get_zone_name, get_zone_exits        # ★ 0.6: ゾーン情報
+from .npc            import NPC                                  # ★ 0.7: NPC
+from .dialogue_data  import (                                    # ★ 0.7 Step5-B: 会話データ
+    get_dialogue_lines,
+    get_dialogue_speaker,
+    get_dialogue_on_end,
+)
 
 # ★ 0.4: ジョブチェンジメニューの状態定数
 STATE_JOB_MENU = "job_menu"
@@ -75,6 +84,13 @@ class Game:
         # ★ 0.6: 現在のゾーンID（ゲーム開始時は "town"）
         self.current_zone_id: str = "town"
 
+        # ★ 0.7 Step5-B: 会話状態管理変数
+        self.current_dialogue_id: str        = ""    # 現在表示中の会話ID
+        self.dialogue_lines: list[str]       = []    # セリフリスト
+        self.dialogue_speaker: str           = ""    # 話者名
+        self.dialogue_index: int             = 0     # 現在のページ番号
+        self.talking_npc: "NPC | None"       = None  # 話しかけている NPC
+
         # ★ 0.4: ジョブチェンジメニュー用
         # job_menu_options : 現在選択可能なジョブIDのリスト
         # job_menu_cursor  : カーソル位置
@@ -91,6 +107,7 @@ class Game:
         px, py        = self.world.player_spawn
         self.player   = Player(px, py)
         self.enemies  = []
+        self.npcs     = []          # ★ 0.7: NPC リスト
         self.messages = []
         self.battle   = None
         self.battle_enemy = None
@@ -102,6 +119,15 @@ class Game:
             spawn_positions = self.world.get_enemy_spawns(6)
             for i, (ex, ey) in enumerate(spawn_positions):
                 self.enemies.append(Enemy(ex, ey, variant_index=i % len(SLIME_VARIANTS)))
+
+        # ★ 0.7: NPC をスポーン（town: 謎の老人、field: なし）
+        for (nx, ny) in self.world.get_npc_spawns():
+            self.npcs.append(NPC(
+                nx, ny,
+                name               = "謎の老人",
+                dialogue_id        = "elder_first",
+                repeat_dialogue_id = "elder_repeat",
+            ))
 
     # ──────────────────────────────────────────────────────
     #  イベント処理
@@ -138,11 +164,25 @@ class Game:
             self._handle_job_menu_key(key)
             return
 
+        # ── 会話中 ★ 0.7 Step5-B
+        if self.state == STATE_DIALOGUE:
+            if key in (pygame.K_z, pygame.K_RETURN, pygame.K_SPACE):
+                self._advance_dialogue()
+            elif key in (pygame.K_ESCAPE, pygame.K_x):
+                self._end_dialogue()
+            return
+
         # ── 探索マップ中
         if self.state in (STATE_PLAY, STATE_LEVELUP):
             if key == pygame.K_j:
                 # J キーでジョブメニューを開く
                 self._open_job_menu()
+            elif key == pygame.K_z:
+                # ★ 0.7 Step5-B: Z キーで近くの NPC に話しかける
+                for npc in self.npcs:
+                    if npc.is_near(self.player.rect):
+                        self._start_dialogue(npc)
+                        break
 
     def _open_job_menu(self):
         """
@@ -268,7 +308,9 @@ class Game:
         if self.state == STATE_PLAY and self.player and self.world:
             self.player.update(self.world.wall_rects)
 
-            # ★ 0.6: 出口タイルへの接触でゾーン遷移
+            # ★ 0.7: NPC を更新（アニメーションタイマー）
+            for npc in self.npcs:
+                npc.update(self.player.rect)            # ★ 0.6: 出口タイルへの接触でゾーン遷移
             for exit_rect in self.world.exit_rects:
                 if self.player.rect.colliderect(exit_rect):
                     exits = get_zone_exits(self.current_zone_id)
@@ -316,6 +358,7 @@ class Game:
         self.current_zone_id = next_zone_id
         self.world   = World(next_zone_id)
         self.enemies = []
+        self.npcs    = []           # ★ 0.7: NPC をリセット
         self.battle  = None
         self.battle_enemy = None
 
@@ -330,8 +373,69 @@ class Game:
             for i, (ex, ey) in enumerate(spawn_positions):
                 self.enemies.append(Enemy(ex, ey, variant_index=i % len(SLIME_VARIANTS)))
 
+        # ★ 0.7: NPC をスポーン（town: 謎の老人、field: なし）
+        for (nx, ny) in self.world.get_npc_spawns():
+            self.npcs.append(NPC(
+                nx, ny,
+                name               = "謎の老人",
+                dialogue_id        = "elder_first",
+                repeat_dialogue_id = "elder_repeat",
+            ))
+
         zone_name = self.world.zone_name
         self._add_message(f"ここは {zone_name}", C_GOLD)
+
+    # ──────────────────────────────────────────────────────
+    #  ★ 0.7 Step5-B: 会話処理
+    # ──────────────────────────────────────────────────────
+    def _start_dialogue(self, npc: "NPC"):
+        """
+        NPC との会話を開始する。
+        NPC が初回未会話なら dialogue_id、
+        2回目以降なら repeat_dialogue_id の会話を使う。
+        """
+        # talked フラグを見て初回/2回目以降を選択
+        if npc.talked and npc.repeat_dialogue_id:
+            d_id = npc.repeat_dialogue_id
+        else:
+            d_id = npc.dialogue_id
+
+        self.current_dialogue_id = d_id
+        self.dialogue_lines      = get_dialogue_lines(d_id)
+        self.dialogue_speaker    = get_dialogue_speaker(d_id)
+        self.dialogue_index      = 0
+        self.talking_npc         = npc
+        self.state               = STATE_DIALOGUE
+
+    def _advance_dialogue(self):
+        """
+        会話を次のページへ進める。
+        最後のページに達したら会話を終了する。
+        """
+        self.dialogue_index += 1
+        if self.dialogue_index >= len(self.dialogue_lines):
+            self._end_dialogue()
+
+    def _end_dialogue(self):
+        """
+        会話を終了して探索マップへ戻る。
+        on_end イベント処理はここで行うが、
+        "sage_activate" は Step5-C で実装するため今はスキップ。
+        """
+        if self.talking_npc:
+            self.talking_npc.mark_talked()  # 初回会話フラグを立てる
+
+        # on_end の取得（将来 Step5-C でイベント処理を追加する）
+        on_end = get_dialogue_on_end(self.current_dialogue_id)
+        # ★ Step5-C: on_end == "sage_activate" → 《観測補助機構》起動イベント
+
+        # 状態をリセットして探索マップへ戻る
+        self.current_dialogue_id = ""
+        self.dialogue_lines      = []
+        self.dialogue_speaker    = ""
+        self.dialogue_index      = 0
+        self.talking_npc         = None
+        self.state               = STATE_PLAY
 
     def _respawn_enemies(self):
         if not self.world: return
@@ -356,14 +460,88 @@ class Game:
         elif self.state == STATE_BATTLE and self.battle:
             self.battle.draw(surface)
         elif self.state == STATE_JOB_MENU:
-            # ジョブメニューはマップの上に重ねて表示
             self._draw_play(surface)
             self._draw_job_menu(surface)
+        elif self.state == STATE_DIALOGUE:
+            # ★ 0.7 Step5-B: マップの上に会話ウィンドウを重ねる
+            self._draw_play(surface)
+            self._draw_dialogue_window(surface)
         elif self.state in (STATE_PLAY, STATE_LEVELUP):
             self._draw_play(surface)
         elif self.state == STATE_GAMEOVER:
             self._draw_play(surface)
             self._draw_gameover(surface)
+
+    # ── ★ 0.7 Step5-B: 会話ウィンドウ描画 ───────────────────
+    def _draw_dialogue_window(self, surface: pygame.Surface):
+        """
+        会話ウィンドウを画面下部に描画する。
+        ├─ 話者名（上帯）
+        └─ セリフ本文（下エリア）
+        ページ送りヒントを右下に表示する。
+        """
+        if not self.dialogue_lines:
+            return
+
+        # ── ウィンドウのサイズ・位置
+        WIN_W   = WINDOW_W - 40          # 左右20pxずつ余白
+        WIN_H   = 140                    # 会話ウィンドウの高さ
+        WIN_X   = 20
+        WIN_Y   = GAME_AREA_H - WIN_H - 10   # ゲームエリア下端の少し上
+
+        # ── 背景・枠線
+        pygame.draw.rect(surface, C_DIALOGUE_BG,
+                         (WIN_X, WIN_Y, WIN_W, WIN_H), border_radius=6)
+        pygame.draw.rect(surface, C_DIALOGUE_BORDER,
+                         (WIN_X, WIN_Y, WIN_W, WIN_H), 2, border_radius=6)
+
+        # ── 話者名帯
+        NAME_H = 26
+        pygame.draw.rect(surface, C_DIALOGUE_BORDER,
+                         (WIN_X, WIN_Y, WIN_W, NAME_H),
+                         border_radius=6)
+        name_txt = self.font_md.render(self.dialogue_speaker, True, C_DIALOGUE_NAME)
+        surface.blit(name_txt, (WIN_X + 14, WIN_Y + 4))
+
+        # ── セリフ本文（現在のページを折り返して表示）
+        current_line = (self.dialogue_lines[self.dialogue_index]
+                        if self.dialogue_index < len(self.dialogue_lines) else "")
+        TEXT_MAX_W = WIN_W - 28
+        wrapped    = self._wrap_dialogue(current_line, self.font_md, TEXT_MAX_W)
+        for i, row in enumerate(wrapped[:3]):          # 最大3行表示
+            txt = self.font_md.render(row, True, C_DIALOGUE_TEXT)
+            surface.blit(txt, (WIN_X + 14, WIN_Y + NAME_H + 12 + i * 26))
+
+        # ── ページ送りヒント
+        total = len(self.dialogue_lines)
+        idx   = self.dialogue_index + 1
+        is_last = (idx >= total)
+        hint_str = "[ Z / Enter：閉じる ]" if is_last else f"[ Z / Enter：次へ  {idx}/{total} ]"
+        hint_txt = self.font_sm.render(hint_str, True, C_DIALOGUE_BORDER)
+        surface.blit(hint_txt,
+                     (WIN_X + WIN_W - hint_txt.get_width() - 12,
+                      WIN_Y + WIN_H - 20))
+
+    def _wrap_dialogue(self, text: str, font: "pygame.font.Font",
+                       max_width: int) -> list[str]:
+        """
+        会話テキストを max_width に収まるよう1文字ずつ折り返す。
+        battle.py の _wrap_text と同じロジックで統一。
+        """
+        lines: list[str] = []
+        current = ""
+        for char in text:
+            test = current + char
+            w, _ = font.size(test)
+            if w <= max_width:
+                current = test
+            else:
+                if current:
+                    lines.append(current)
+                current = char
+        if current:
+            lines.append(current)
+        return lines if lines else [""]
 
     # ── タイトル画面 ──────────────────────────────────────
     def _draw_title(self, surface: pygame.Surface):
@@ -373,7 +551,7 @@ class Game:
 
         t1 = self.font_lg.render("SINGULARITY",             True, C_WHITE)
         t2 = self.font_md.render("- Chronicle of Origin -", True, C_GOLD)
-        t3 = self.font_sm.render("Prototype  0.6",          True, C_GRAY)
+        t3 = self.font_sm.render("Prototype  0.7",          True, C_GRAY)
         surface.blit(t1, (WINDOW_W // 2 - t1.get_width() // 2, 110))
         surface.blit(t2, (WINDOW_W // 2 - t2.get_width() // 2, 158))
         surface.blit(t3, (WINDOW_W // 2 - t3.get_width() // 2, 192))
@@ -410,6 +588,9 @@ class Game:
         self.world.draw(surface)
         for enemy in self.enemies:
             enemy.draw(surface, self.font_sm, self.sprite_mgr)
+        # ★ 0.7: NPC を描画（プレイヤーが近いと「！」が出る）
+        for npc in self.npcs:
+            npc.draw(surface, self.font_sm, self.font_md, self.player.rect)
         self.player.draw(surface, self.sprite_mgr)
         if self.state == STATE_LEVELUP:
             self._draw_levelup_overlay(surface)
