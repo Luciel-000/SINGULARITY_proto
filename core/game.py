@@ -419,17 +419,27 @@ class Game:
     def _end_dialogue(self):
         """
         会話を終了して探索マップへ戻る。
-        on_end イベント処理はここで行うが、
-        "sage_activate" は Step5-C で実装するため今はスキップ。
+        on_end イベント処理はここで行う。
         """
+
+        # on_end の取得
+        on_end = get_dialogue_on_end(self.current_dialogue_id)
+
+        # Step5-C: on_end == "sage_activate" → 《観測補助機構》起動イベントを連続表示
+        if on_end == "sage_activate":
+            if self.talking_npc:
+                self.talking_npc.mark_talked()  # 初回会話フラグを立てる
+            self.talking_npc = None
+            self.current_dialogue_id = "sage_boot"
+            self.dialogue_lines      = get_dialogue_lines("sage_boot")
+            self.dialogue_speaker    = get_dialogue_speaker("sage_boot")
+            self.dialogue_index      = 0
+            return
+
         if self.talking_npc:
             self.talking_npc.mark_talked()  # 初回会話フラグを立てる
 
-        # on_end の取得（将来 Step5-C でイベント処理を追加する）
-        on_end = get_dialogue_on_end(self.current_dialogue_id)
-        # ★ Step5-C: on_end == "sage_activate" → 《観測補助機構》起動イベント
-
-        # 状態をリセットして探索マップへ戻る
+        # その他は通常通り探索に戻す
         self.current_dialogue_id = ""
         self.dialogue_lines      = []
         self.dialogue_speaker    = ""

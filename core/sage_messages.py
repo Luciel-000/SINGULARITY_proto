@@ -1,18 +1,18 @@
 """
 ============================================================
-  core/sage_messages.py  ── 大賢者メッセージ管理  [0.5 Step3 新規]
+  core/sage_messages.py  ── 観測補助機構メッセージ管理  [0.5 Step3 新規]
 
   担当:
-    - バトル中に大賢者が発するセリフを一元管理
+    - バトル中に観測補助機構が発するセリフを一元管理
     - 状況タグ・属性・スキルに応じてメッセージを返す
     - 不正な引数でも必ず文字列を返す（ゲームを落とさない）
 
-  ── 大賢者とは ───────────────────────────────────────────
+  ── 観測補助機構とは ───────────────────────────────────────────
     SINGULARITY の世界に存在する「未完成AI / 世界叡智システム」。
     起源（Origin）の時代に構築された属性解析を行う支援存在であり、
     感情や意図を持つかは不明だが、バトル中にプレイヤーへ
     属性情報・スキル解析・状況判断の助言を出力する。
-    バトルログ下部（またはポップアップ）に表示する想定。
+    バトルログ下部（またはポップアップ）に表示する想定.
 
   ── メッセージ種別（situation タグ）─────────────────────
     "battle_start" : バトル開始時
@@ -61,8 +61,8 @@ from .element_system import (
 )
 from .skill_data import get_skill_name, is_valid_skill
 
-# ── 大賢者の名称プレフィックス ───────────────────────────
-SAGE_PREFIX = "《大賢者》"
+# ── 観測補助機構の名称プレフィックス ───────────────────────────
+SAGE_PREFIX = "《観測補助機構》"
 
 # ── フォールバックメッセージ（何も当たらなかったとき） ───
 _FALLBACK_MSG = f"{SAGE_PREFIX}……（沈黙）"
@@ -192,7 +192,7 @@ def get_sage_message(
         skill_id    : 使用スキルID（省略可）
 
     戻り値:
-        str : 大賢者のセリフ（必ず文字列を返す）
+        str : 観測補助機構のセリフ（必ず文字列を返す）
 
     使用例:
         get_sage_message("battle_start")
@@ -233,7 +233,7 @@ def get_affinity_message(
         def_element : 防御側の属性ID
 
     戻り値:
-        str : 大賢者のセリフ
+        str : 観測補助機構のセリフ
 
     使用例:
         get_affinity_message("fire", "wind")   # 有利メッセージ
@@ -279,7 +279,7 @@ def get_battle_start_message(
         enemy_element : 敵の属性ID（"fire" など）省略可
 
     戻り値:
-        str : 大賢者のセリフ
+        str : 観測補助機構のセリフ
 
     使用例:
         get_battle_start_message()
@@ -312,7 +312,7 @@ def get_observe_message(
         enemy_element : 敵の属性ID（省略可）
 
     戻り値:
-        str : 大賢者のセリフ
+        str : 観測補助機構のセリフ
 
     使用例:
         get_observe_message()
@@ -373,13 +373,13 @@ def get_skill_message(skill_id: str) -> str:
         skill_id : スキルID（"fireball" / "tackle" など）
 
     戻り値:
-        str : 大賢者のセリフ
+        str : 観測補助機構のセリフ
 
     使用例:
         get_skill_message("fireball")
-        → "《大賢者》スキル「ファイアボール」の発動を確認しました。"
+        → "《観測補助機構》スキル「ファイアボール」の発動を確認しました。"
         get_skill_message("unknown")
-        → "《大賢者》スキル発動を確認しました。"
+        → "《観測補助機構》スキル発動を確認しました。"
     """
     if is_valid_skill(skill_id):
         skill_name = get_skill_name(skill_id)

@@ -291,6 +291,8 @@ class Battle:
             return
 
         # ── 攻撃スキル（power > 0.0）────────────────────────
+        # スキル発動ログ
+        self._add_log(f"ノービスは「{skill_name}」を使った！")
         # ★ 0.5 Step8-D: スキル使用の大賢者メッセージ
         self._add_log(get_skill_message(skill_id))
         # 属性相性倍率を計算
@@ -311,11 +313,11 @@ class Battle:
         # ── ダメージログ（属性相性メッセージ付き）
         label = get_affinity_label(mult)
         if label == "有利":
-            self._add_log(f"「{skill_name}」  効果は抜群だ！  {dmg} のダメージ！")
+            self._add_log(f"「{skill_name}」  {self.enemy.name}に {dmg} のダメージ！  効果は抜群だ！")
         elif label == "不利":
-            self._add_log(f"「{skill_name}」  効果はいまひとつ…  {dmg} のダメージ！")
+            self._add_log(f"「{skill_name}」  {self.enemy.name}に {dmg} のダメージ！  効果はいまひとつ…")
         else:
-            self._add_log(f"「{skill_name}」  {dmg} のダメージ！")
+            self._add_log(f"「{skill_name}」  {self.enemy.name}に {dmg} のダメージ！")
 
         # ── 勝利判定 or 敵ターンへ
         if not self.enemy.alive:
@@ -437,13 +439,13 @@ class Battle:
                 ft["x"] = ENEMY_BATTLE_X
                 ft["y"] = ENEMY_BATTLE_Y - 60
 
-            # 倍率ログ（通常以外のときだけ表示）
+            # ダメージログを分かりやすく表示
             if mult > 1.0:
-                self._add_log(f"  効果は抜群だ！  {dmg} のダメージ！")
+                self._add_log(f"  {self.enemy.name}に {dmg} のダメージ！  効果は抜群だ！")
             elif mult < 1.0:
-                self._add_log(f"  効果はいまひとつ…  {dmg} のダメージ！")
+                self._add_log(f"  {self.enemy.name}に {dmg} のダメージ！  効果はいまひとつ…")
             else:
-                self._add_log(f"  {dmg} のダメージ！")
+                self._add_log(f"  {self.enemy.name}に {dmg} のダメージ！")
 
             # 敵を倒したか確認
             if not self.enemy.alive:
@@ -501,13 +503,13 @@ class Battle:
             raw  = int(self.enemy.do_attack() * mult)
             dmg  = self.player.take_damage(raw)
 
-            # 倍率ログ（通常以外のときだけ表示）
+            # ダメージログを分かりやすく表示
             if mult > 1.0:
-                self._add_log(f"  効果は抜群だ！  {dmg} のダメージ！")
+                self._add_log(f"  ノービスに {dmg} のダメージ！  効果は抜群だ！")
             elif mult < 1.0:
-                self._add_log(f"  効果はいまひとつ…  {dmg} のダメージ！")
+                self._add_log(f"  ノービスに {dmg} のダメージ！  効果はいまひとつ…")
             else:
-                self._add_log(f"  {dmg} のダメージ！")
+                self._add_log(f"  ノービスに {dmg} のダメージ！")
 
             # プレイヤー側のダメージ数値を追加
             self.player_floats.append({
