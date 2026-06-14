@@ -31,7 +31,7 @@ from .utils      import safe_alpha, make_rgba
 from .constants  import (
     WINDOW_W, WINDOW_H, GAME_AREA_H, HUD_H, TILE,
     STATE_TITLE, STATE_PLAY, STATE_BATTLE, STATE_LEVELUP, STATE_GAMEOVER,
-    STATE_DIALOGUE,                                  # ★ 0.7 Step5-B
+    STATE_DIALOGUE, STATE_PROLOGUE,                   # ★ 0.7 Step5-B / Step5-D
     C_DARK_BG, C_WHITE, C_GOLD,
     C_CRIMSON_LT, C_GREEN_DIM, C_GRAY, C_DARK_GRAY,
     C_WINDOW_BG, C_WINDOW_BORDER,
@@ -145,7 +145,13 @@ class Game:
         if self.state == STATE_TITLE:
             if key == pygame.K_SPACE:
                 self._init_game()
-                self.state = STATE_PLAY
+                self._start_prologue()
+            return
+
+        # ── プロローグ
+        if self.state == STATE_PROLOGUE:
+            if key in (pygame.K_z, pygame.K_RETURN, pygame.K_SPACE):
+                self._advance_dialogue()
             return
 
         # ── ゲームオーバー
@@ -256,6 +262,13 @@ class Game:
 
         # ジョブメニュー中はプレイヤーを更新しない
         if self.state == STATE_JOB_MENU:
+            return
+
+        if self.state == STATE_PROLOGUE:
+            self.messages = [
+                {**m, "timer": m["timer"] - 1}
+                for m in self.messages if m["timer"] > 0
+            ]
             return
 
         if self.state == STATE_LEVELUP:
@@ -407,6 +420,15 @@ class Game:
         self.talking_npc         = npc
         self.state               = STATE_DIALOGUE
 
+    def _start_prologue(self):
+        """ゲーム開始直後にプロローグメッセージを表示する。"""
+        self.current_dialogue_id = "prologue_intro"
+        self.dialogue_lines      = get_dialogue_lines("prologue_intro")
+        self.dialogue_speaker    = get_dialogue_speaker("prologue_intro")
+        self.dialogue_index      = 0
+        self.talking_npc         = None
+        self.state               = STATE_PROLOGUE
+
     def _advance_dialogue(self):
         """
         会話を次のページへ進める。
@@ -474,6 +496,9 @@ class Game:
             self._draw_job_menu(surface)
         elif self.state == STATE_DIALOGUE:
             # ★ 0.7 Step5-B: マップの上に会話ウィンドウを重ねる
+            self._draw_play(surface)
+            self._draw_dialogue_window(surface)
+        elif self.state == STATE_PROLOGUE:
             self._draw_play(surface)
             self._draw_dialogue_window(surface)
         elif self.state in (STATE_PLAY, STATE_LEVELUP):

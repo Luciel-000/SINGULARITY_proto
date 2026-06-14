@@ -103,6 +103,7 @@ STATE_BATTLE   = "battle"    # ★ 0.2新追加：ターン制バトル画面
 STATE_LEVELUP  = "levelup"   # レベルアップ演出
 STATE_GAMEOVER = "gameover"  # ゲームオーバー画面
 STATE_DIALOGUE = "dialogue"  # ★ 0.7新追加：NPC会話中
+STATE_PROLOGUE = "prologue"  # ★ 0.7 Step5-D: ゲーム開始直後のプロローグ表示
 
 # ── レベルアップに必要な累積経験値テーブル ────────────
 #    EXP_TABLE[lv] = そのレベルになるために必要な総EXP
