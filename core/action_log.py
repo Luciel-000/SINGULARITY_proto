@@ -71,3 +71,21 @@ class ActionLog:
             "battle_lose_count": self.battle_lose_count,
             "job_change_count": self.job_change_count,
         }
+
+    def to_dict(self) -> dict:
+        """保存用の辞書を返す。"""
+        return self.get_summary()
+
+    def load_from_dict(self, data: dict) -> None:
+        """辞書からカウント値を復元する。存在しないキーは0にフォールバックする。"""
+        if not isinstance(data, dict):
+            return
+        self.normal_attack_count = int(data.get("normal_attack_count", 0))
+        self.skill_use_count = int(data.get("skill_use_count", 0))
+        self.observe_count = int(data.get("observe_count", 0))
+        self.physical_skill_count = int(data.get("physical_skill_count", 0))
+        self.magic_skill_count = int(data.get("magic_skill_count", 0))
+        self.escape_count = int(data.get("escape_count", 0))
+        self.battle_win_count = int(data.get("battle_win_count", 0))
+        self.battle_lose_count = int(data.get("battle_lose_count", 0))
+        self.job_change_count = int(data.get("job_change_count", 0))

@@ -223,6 +223,58 @@ class Player:
 
         return newly_unlocked
 
+    def to_save_dict(self) -> dict:
+        """セーブデータとして書き出す辞書を返す。"""
+        return {
+            "current_job_id": self.current_job_id,
+            "unlocked_jobs": (
+                list(self.unlocked_jobs)
+                if isinstance(self.unlocked_jobs, list)
+                else [self.current_job_id]
+            ),
+            "action_log": (
+                self.action_log.to_dict()
+                if hasattr(self.action_log, "to_dict")
+                else self.action_log.get_summary()
+            ),
+        }
+
+    def load_from_save_dict(self, data: dict) -> None:
+        """セーブデータ（辞書）からプレイヤー状態を復元する。"""
+        from .job_data import DEFAULT_JOB_ID, JOB_DATA
+
+        # current_job_id
+        job_id = data.get("current_job_id") if isinstance(data, dict) else None
+        if not job_id or job_id not in JOB_DATA:
+            job_id = DEFAULT_JOB_ID
+        self.current_job_id = job_id
+        self.current_job = get_job(self.current_job_id)
+
+        # unlocked_jobs
+        uj = data.get("unlocked_jobs") if isinstance(data, dict) else None
+        if not isinstance(uj, list) or len(uj) == 0:
+            self.unlocked_jobs = [DEFAULT_JOB_ID]
+        else:
+            # フィルタリング：存在しないジョブIDは除外
+            self.unlocked_jobs = [jid for jid in uj if jid in JOB_DATA]
+            if not self.unlocked_jobs:
+                self.unlocked_jobs = [DEFAULT_JOB_ID]
+
+        # action_log
+        al = data.get("action_log") if isinstance(data, dict) else None
+        if isinstance(al, dict) and hasattr(self.action_log, "load_from_dict"):
+            self.action_log.load_from_dict(al)
+
+        # 再計算：ステータス・スキルリストを current_job に合わせる
+        self.current_job = get_job(self.current_job_id)
+        self.learned_skills = list(self.current_job.get("skills", []))
+        # 再計算：ステータスを current_job に基づいて更新
+        self.max_hp = self._calc_max_hp()
+        self.atk = self._calc_atk()
+        self.defense = self._calc_defense()
+        # HP が最大を越えていたら調整
+        self.hp = min(self.hp, self.max_hp)
+
     # ──────────────────────────────────────────────────────
     #  移動・当たり判定（変更なし）
     # ──────────────────────────────────────────────────────

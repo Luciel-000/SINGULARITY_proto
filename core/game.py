@@ -178,6 +178,37 @@ class Game:
             self._add_message(f"DEBUG OVERLAY {status}", C_GRAY)
             return
 
+        # DEBUG_MODE のときだけ F5/F9 でセーブ/ロードを行う
+        if constants.DEBUG_MODE and key == pygame.K_F5:
+            try:
+                from .save_system import save_game
+
+                ok = save_game(self.player)
+            except Exception:
+                ok = False
+            if ok:
+                self._add_message("セーブしました", C_GRAY)
+            else:
+                self._add_message("セーブに失敗しました", C_CRIMSON_LT)
+            return
+
+        if constants.DEBUG_MODE and key == pygame.K_F9:
+            try:
+                from .save_system import load_game
+
+                ok, reason = load_game(self.player)
+            except Exception:
+                ok, reason = False, "error"
+
+            if ok:
+                self._add_message("ロードしました", C_GREEN_DIM)
+            else:
+                if reason == "no_file":
+                    self._add_message("セーブデータがありません", C_CRIMSON_LT)
+                else:
+                    self._add_message("ロードに失敗しました", C_CRIMSON_LT)
+            return
+
         # ── タイトル
         if self.state == STATE_TITLE:
             if key == pygame.K_SPACE:
