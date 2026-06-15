@@ -118,6 +118,8 @@ class Game:
         # job_menu_cursor  : カーソル位置
         self.job_menu_options: list[str] = []
         self.job_menu_cursor: int = 0
+        # 開発用デバッグ表示トグル（F3 / L キー）
+        self.show_debug_overlay: bool = False
 
     # ──────────────────────────────────────────────────────
     #  ゲーム初期化
@@ -168,6 +170,13 @@ class Game:
             return
 
         key = event.key
+
+        # DEBUG_MODE のときだけ表示トグルを許可（F3 または L）
+        if constants.DEBUG_MODE and key in (pygame.K_F3, pygame.K_l):
+            self.show_debug_overlay = not getattr(self, "show_debug_overlay", False)
+            status = "ON" if self.show_debug_overlay else "OFF"
+            self._add_message(f"DEBUG OVERLAY {status}", C_GRAY)
+            return
 
         # ── タイトル
         if self.state == STATE_TITLE:
@@ -800,6 +809,39 @@ class Game:
             txt = self.font_sm.render(msg["text"], True, msg["color"])
             txt.set_alpha(alpha)
             surface.blit(txt, (msg_x - txt.get_width(), GAME_AREA_H + 30 + i * 18))
+
+        # ── デバッグオーバーレイ（DEBUG_MODE が True のときのみ）
+        if constants.DEBUG_MODE and getattr(self, "show_debug_overlay", False):
+            try:
+                al = p.action_log.get_summary()
+            except Exception:
+                al = {}
+            lines = []
+            lines.append("ACTION LOG")
+            lines.append(f"Normal Attack: {al.get('normal_attack_count', 0)}")
+            lines.append(f"Skill Use: {al.get('skill_use_count', 0)}")
+            lines.append(f"Observe: {al.get('observe_count', 0)}")
+            lines.append(f"Magic Skill: {al.get('magic_skill_count', 0)}")
+            lines.append(f"Physical Skill: {al.get('physical_skill_count', 0)}")
+            lines.append(f"Escape: {al.get('escape_count', 0)}")
+            lines.append(f"Win: {al.get('battle_win_count', 0)}")
+            lines.append(f"Lose: {al.get('battle_lose_count', 0)}")
+            lines.append(f"Job Changes: {al.get('job_change_count', 0)}")
+            lines.append("")
+            lines.append(f"Current Job: {p.current_job_id}")
+            lines.append("Unlocked: " + ", ".join(p.unlocked_jobs))
+
+            box_w = 220
+            box_h = 18 * len(lines) + 12
+            bx = WINDOW_W - box_w - 8
+            by = 8
+            overlay = pygame.Surface((box_w, box_h), pygame.SRCALPHA)
+            overlay.fill(make_rgba(6, 6, 8, 200))
+            surface.blit(overlay, (bx, by))
+            for i, line in enumerate(lines):
+                col = C_GOLD if i == 0 else C_WHITE
+                txt = self.font_sm.render(line, True, col)
+                surface.blit(txt, (bx + 8, by + 6 + i * 18))
 
     # ── ★ 0.4: ジョブチェンジメニュー ────────────────────
     def _draw_job_menu(self, surface: pygame.Surface):
