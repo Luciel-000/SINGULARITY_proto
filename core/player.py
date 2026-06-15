@@ -29,12 +29,19 @@
 """
 
 import pygame
-from .utils    import make_rgba, lerp_alpha
-from .job_data import get_job, DEFAULT_JOB_ID   # ★ 0.4: ジョブデータ
+from .action_log import ActionLog
+from .utils import make_rgba, lerp_alpha
+from .job_data import get_job, DEFAULT_JOB_ID  # ★ 0.4: ジョブデータ
 from .constants import (
-    TILE, PLAYER_SPEED, PLAYER_ATTACK_CD,
-    GAME_AREA_H, WINDOW_W,
-    C_WHITE, C_GOLD, C_CRIMSON_LT, C_DARK_BG,
+    TILE,
+    PLAYER_SPEED,
+    PLAYER_ATTACK_CD,
+    GAME_AREA_H,
+    WINDOW_W,
+    C_WHITE,
+    C_GOLD,
+    C_CRIMSON_LT,
+    C_DARK_BG,
     EXP_TABLE,
 )
 
@@ -56,30 +63,30 @@ class Player:
 
         # ── ★ 0.4: ジョブ管理
         # current_job_id : ジョブ辞書のキー（"novice" / "fighter" / "mage"）
-        self.current_job_id: str  = DEFAULT_JOB_ID
+        self.current_job_id: str = DEFAULT_JOB_ID
         # current_job     : ジョブデータの辞書（get_job() で取得）
-        self.current_job: dict    = get_job(DEFAULT_JOB_ID)
+        self.current_job: dict = get_job(DEFAULT_JOB_ID)
 
         # ── ベースステータス（ジョブボーナスを加算する前の値）
         # ジョブチェンジしてもリセットされない「プレイヤー本来の力」
-        self._base_max_hp  = 30
-        self._base_atk     = 8
+        self._base_max_hp = 30
+        self._base_atk = 8
         self._base_defense = 2
 
         # ── 表示ステータス（ベース + ジョブボーナスの合計）
         # ゲーム内でダメージ計算などに使うのはこちら
-        self.level   = 1
-        self.exp     = 0
-        self.max_hp  = self._calc_max_hp()
-        self.hp      = self.max_hp
-        self.atk     = self._calc_atk()
+        self.level = 1
+        self.exp = 0
+        self.max_hp = self._calc_max_hp()
+        self.hp = self.max_hp
+        self.atk = self._calc_atk()
         self.defense = self._calc_defense()
 
         # ── タイマー類
-        self.attack_cd           = 0
+        self.attack_cd = 0
         self.attack_effect_timer = 0
-        self.hit_timer           = 0
-        self.levelup_timer       = 0
+        self.hit_timer = 0
+        self.levelup_timer = 0
 
         # ── 向き・アニメ
         self.direction = "right"
@@ -90,9 +97,8 @@ class Player:
         # 現在ジョブが使えるスキルIDのリスト。
         # ジョブチェンジ時は change_job() が自動で更新する。
         # battle.py が Step8 でスキルメニュー構築に参照する。
-        self.learned_skills: list[str] = list(
-            self.current_job.get("skills", [])
-        )
+        self.learned_skills: list[str] = list(self.current_job.get("skills", []))
+        self.action_log = ActionLog()
 
     # ──────────────────────────────────────────────────────
     #  ★ 0.4: ジョブ関連
@@ -175,11 +181,11 @@ class Player:
 
         # ジョブを変更
         self.current_job_id = new_job_id
-        self.current_job    = get_job(new_job_id)
+        self.current_job = get_job(new_job_id)
 
         # ステータスを再計算
-        self.max_hp  = self._calc_max_hp()
-        self.atk     = self._calc_atk()
+        self.max_hp = self._calc_max_hp()
+        self.atk = self._calc_atk()
         self.defense = self._calc_defense()
 
         # HP は変更前の割合を引き継ぐ（最低1）
@@ -198,10 +204,16 @@ class Player:
         keys = pygame.key.get_pressed()
         vx, vy = 0, 0
 
-        if keys[pygame.K_LEFT]  or keys[pygame.K_a]: vx = -PLAYER_SPEED; self.direction = "left"
-        if keys[pygame.K_RIGHT] or keys[pygame.K_d]: vx =  PLAYER_SPEED; self.direction = "right"
-        if keys[pygame.K_UP]    or keys[pygame.K_w]: vy = -PLAYER_SPEED
-        if keys[pygame.K_DOWN]  or keys[pygame.K_s]: vy =  PLAYER_SPEED
+        if keys[pygame.K_LEFT] or keys[pygame.K_a]:
+            vx = -PLAYER_SPEED
+            self.direction = "left"
+        if keys[pygame.K_RIGHT] or keys[pygame.K_d]:
+            vx = PLAYER_SPEED
+            self.direction = "right"
+        if keys[pygame.K_UP] or keys[pygame.K_w]:
+            vy = -PLAYER_SPEED
+        if keys[pygame.K_DOWN] or keys[pygame.K_s]:
+            vy = PLAYER_SPEED
 
         if vx != 0 and vy != 0:
             vx = int(vx * 0.707)
@@ -210,14 +222,18 @@ class Player:
         self.rect.x += vx
         for wall in walls:
             if self.rect.colliderect(wall):
-                if vx > 0: self.rect.right = wall.left
-                else:      self.rect.left  = wall.right
+                if vx > 0:
+                    self.rect.right = wall.left
+                else:
+                    self.rect.left = wall.right
 
         self.rect.y += vy
         for wall in walls:
             if self.rect.colliderect(wall):
-                if vy > 0: self.rect.bottom = wall.top
-                else:      self.rect.top    = wall.bottom
+                if vy > 0:
+                    self.rect.bottom = wall.top
+                else:
+                    self.rect.top = wall.bottom
 
         self.rect.clamp_ip(pygame.Rect(0, 0, WINDOW_W, GAME_AREA_H))
 
@@ -225,11 +241,16 @@ class Player:
             self.trail.append((self.rect.centerx, self.rect.centery, 160))
         self.trail = [(x, y, a - 18) for x, y, a in self.trail if a > 0]
 
-        if self.attack_cd           > 0: self.attack_cd           -= 1
-        if self.hit_timer           > 0: self.hit_timer           -= 1
-        if self.attack_effect_timer > 0: self.attack_effect_timer -= 1
-        if self.levelup_timer       > 0: self.levelup_timer       -= 1
-        if self.attack_effect_timer <= 0: self.attack_rect = None
+        if self.attack_cd > 0:
+            self.attack_cd -= 1
+        if self.hit_timer > 0:
+            self.hit_timer -= 1
+        if self.attack_effect_timer > 0:
+            self.attack_effect_timer -= 1
+        if self.levelup_timer > 0:
+            self.levelup_timer -= 1
+        if self.attack_effect_timer <= 0:
+            self.attack_rect = None
 
     # ──────────────────────────────────────────────────────
     #  攻撃・ダメージ（変更なし）
@@ -239,8 +260,8 @@ class Player:
             return False
         attack_w = TILE + 8
         ax = self.rect.right if self.direction == "right" else self.rect.left - attack_w
-        self.attack_rect         = pygame.Rect(ax, self.rect.top, attack_w, self.rect.height)
-        self.attack_cd           = PLAYER_ATTACK_CD
+        self.attack_rect = pygame.Rect(ax, self.rect.top, attack_w, self.rect.height)
+        self.attack_cd = PLAYER_ATTACK_CD
         self.attack_effect_timer = 10
         return True
 
@@ -275,20 +296,20 @@ class Player:
         self.level += 1
 
         # ジョブの成長量を取得
-        lv_hp  = self.current_job.get("lv_up_hp",  8)
+        lv_hp = self.current_job.get("lv_up_hp", 8)
         lv_atk = self.current_job.get("lv_up_atk", 3)
         lv_def = self.current_job.get("lv_up_def", 1)
 
         # ベースステータスを伸ばす（ジョブボーナスの二重加算を避けるため）
-        self._base_max_hp  += lv_hp
-        self._base_atk     += lv_atk
+        self._base_max_hp += lv_hp
+        self._base_atk += lv_atk
         self._base_defense += lv_def
 
         # 表示ステータスを再計算（ジョブボーナスも含む）
-        self.max_hp  = self._calc_max_hp()
-        self.atk     = self._calc_atk()
+        self.max_hp = self._calc_max_hp()
+        self.atk = self._calc_atk()
         self.defense = self._calc_defense()
-        self.hp      = self.max_hp   # HP全回復
+        self.hp = self.max_hp  # HP全回復
 
         self.levelup_timer = 90
 
@@ -301,7 +322,7 @@ class Player:
         if self.level >= len(EXP_TABLE) - 1:
             return 1.0
         prev = EXP_TABLE[self.level - 1]
-        nxt  = EXP_TABLE[self.level]
+        nxt = EXP_TABLE[self.level]
         return (self.exp - prev) / max(1, nxt - prev)
 
     # ──────────────────────────────────────────────────────
@@ -318,8 +339,9 @@ class Player:
         # スプライト描画を試みる
         img = None
         if sprite_mgr is not None:
-            img = sprite_mgr.get_player(self.sprite_key,
-                                         size=(self.rect.width, self.rect.height))
+            img = sprite_mgr.get_player(
+                self.sprite_key, size=(self.rect.width, self.rect.height)
+            )
 
         if img is not None:
             if self.hit_timer > 0 and (self.hit_timer // 4) % 2 == 0:
@@ -332,37 +354,58 @@ class Player:
             surface.blit(img, (self.rect.x, self.rect.y))
         else:
             # フォールバック：図形描画
-            body_color = C_CRIMSON_LT if (self.hit_timer > 0 and (self.hit_timer // 4) % 2 == 0) else C_WHITE
+            body_color = (
+                C_CRIMSON_LT
+                if (self.hit_timer > 0 and (self.hit_timer // 4) % 2 == 0)
+                else C_WHITE
+            )
             pygame.draw.rect(surface, body_color, self.rect, border_radius=5)
             head_cx, head_cy = self.rect.centerx, self.rect.top + 8
             pygame.draw.circle(surface, body_color, (head_cx, head_cy), 7)
             eye_dx = 3 if self.direction == "right" else -3
             pygame.draw.circle(surface, C_DARK_BG, (head_cx + eye_dx, head_cy - 1), 2)
-            sx, ex = (self.rect.right - 2, self.rect.right + 10) if self.direction == "right" \
+            sx, ex = (
+                (self.rect.right - 2, self.rect.right + 10)
+                if self.direction == "right"
                 else (self.rect.left + 2, self.rect.left - 10)
-            pygame.draw.line(surface, C_GOLD, (sx, self.rect.centery), (ex, self.rect.centery - 6), 2)
+            )
+            pygame.draw.line(
+                surface, C_GOLD, (sx, self.rect.centery), (ex, self.rect.centery - 6), 2
+            )
 
         # 攻撃エフェクト
         if self.attack_rect and self.attack_effect_timer > 0:
             alpha = lerp_alpha(self.attack_effect_timer, 10, max_alpha=160)
-            s = pygame.Surface((self.attack_rect.width, self.attack_rect.height), pygame.SRCALPHA)
+            s = pygame.Surface(
+                (self.attack_rect.width, self.attack_rect.height), pygame.SRCALPHA
+            )
             s.fill(make_rgba(*C_GOLD, alpha))
             surface.blit(s, (self.attack_rect.x, self.attack_rect.y))
 
         # HP バー（頭上）
         bar_w = self.rect.width
         ratio = max(0.0, self.hp / self.max_hp)
-        pygame.draw.rect(surface, (40, 10, 10), (self.rect.x, self.rect.top - 8, bar_w, 4))
-        pygame.draw.rect(surface, C_CRIMSON_LT, (self.rect.x, self.rect.top - 8, int(bar_w * ratio), 4))
+        pygame.draw.rect(
+            surface, (40, 10, 10), (self.rect.x, self.rect.top - 8, bar_w, 4)
+        )
+        pygame.draw.rect(
+            surface,
+            C_CRIMSON_LT,
+            (self.rect.x, self.rect.top - 8, int(bar_w * ratio), 4),
+        )
 
     # ──────────────────────────────────────────────────────
     #  バトル画面描画（★ 0.4: 名前表示をジョブ名に変更）
     # ──────────────────────────────────────────────────────
-    def draw_battle(self, surface: pygame.Surface,
-                    px: int, py: int,
-                    font_md: pygame.font.Font,
-                    font_sm: pygame.font.Font,
-                    sprite_mgr=None):
+    def draw_battle(
+        self,
+        surface: pygame.Surface,
+        px: int,
+        py: int,
+        font_md: pygame.font.Font,
+        font_sm: pygame.font.Font,
+        sprite_mgr=None,
+    ):
         """バトル画面用の大きなプレイヤーを描く。"""
         BATTLE_SIZE = (96, 96)
         img = None
@@ -384,18 +427,24 @@ class Player:
             surface.blit(shadow_s, (px - sw // 2, py + BATTLE_SIZE[1] // 2 - 4))
         else:
             # フォールバック：図形描画
-            body_color = C_CRIMSON_LT if (self.hit_timer > 0 and (self.hit_timer // 4) % 2 == 0) else C_WHITE
+            body_color = (
+                C_CRIMSON_LT
+                if (self.hit_timer > 0 and (self.hit_timer // 4) % 2 == 0)
+                else C_WHITE
+            )
             shadow_s = pygame.Surface((70, 14), pygame.SRCALPHA)
             pygame.draw.ellipse(shadow_s, (0, 0, 0, 60), (0, 0, 70, 14))
             surface.blit(shadow_s, (px - 35, py + 45))
             body = pygame.Rect(px - 20, py - 10, 40, 55)
             pygame.draw.rect(surface, body_color, body, border_radius=6)
             pygame.draw.circle(surface, body_color, (px, py - 22), 22)
-            pygame.draw.circle(surface, (30, 25, 45), (px + 7,  py - 24), 4)
-            pygame.draw.circle(surface, (30, 25, 45), (px - 7,  py - 24), 4)
+            pygame.draw.circle(surface, (30, 25, 45), (px + 7, py - 24), 4)
+            pygame.draw.circle(surface, (30, 25, 45), (px - 7, py - 24), 4)
             pygame.draw.circle(surface, (200, 210, 240), (px + 8, py - 25), 2)
             pygame.draw.line(surface, C_GOLD, (px + 22, py - 5), (px + 46, py - 28), 3)
-            pygame.draw.line(surface, (180, 140, 60), (px + 28, py), (px + 36, py - 12), 3)
+            pygame.draw.line(
+                surface, (180, 140, 60), (px + 28, py), (px + 36, py - 12), 3
+            )
 
         # ★ 0.4: 名前ラベルをジョブ名で表示（ジョブカラーで色分け）
         name_txt = font_md.render(self.job_name, True, self.job_color)
@@ -407,8 +456,12 @@ class Player:
         bar_y = py + 54
         ratio = max(0.0, self.hp / self.max_hp)
         bc = (50, 210, 80) if ratio > 0.5 else C_CRIMSON_LT
-        pygame.draw.rect(surface, (40, 10, 10), (bar_x, bar_y, bar_w, 10), border_radius=4)
-        pygame.draw.rect(surface, bc,           (bar_x, bar_y, int(bar_w * ratio), 10), border_radius=4)
-        pygame.draw.rect(surface, C_GOLD,       (bar_x, bar_y, bar_w, 10), 1, border_radius=4)
+        pygame.draw.rect(
+            surface, (40, 10, 10), (bar_x, bar_y, bar_w, 10), border_radius=4
+        )
+        pygame.draw.rect(
+            surface, bc, (bar_x, bar_y, int(bar_w * ratio), 10), border_radius=4
+        )
+        pygame.draw.rect(surface, C_GOLD, (bar_x, bar_y, bar_w, 10), 1, border_radius=4)
         hp_txt = font_sm.render(f"HP {self.hp}/{self.max_hp}", True, C_WHITE)
         surface.blit(hp_txt, (px - hp_txt.get_width() // 2, bar_y + 13))

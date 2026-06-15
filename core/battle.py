@@ -51,39 +51,52 @@ import pygame
 import math
 import random
 from .utils import safe_alpha, make_rgba, lerp_alpha  # ★ 0.3.1: alpha安全変換
-from .element_system  import get_multiplier             # ★ 0.5: 属性相性倍率
-from .sage_messages   import (                          # ★ 0.5 Step8-D: 大賢者メッセージ
+from .element_system import get_multiplier  # ★ 0.5: 属性相性倍率
+from .sage_messages import (  # ★ 0.5 Step8-D: 大賢者メッセージ
     get_battle_start_message,
     get_affinity_message,
     get_skill_message,
     get_observe_message,
 )
 from .constants import (
-    WINDOW_W, WINDOW_H,
-    BATTLE_TOP_H, BATTLE_CMD_Y, BATTLE_CMD_H,
-    PLAYER_BATTLE_X, PLAYER_BATTLE_Y,
-    ENEMY_BATTLE_X,  ENEMY_BATTLE_Y,
-    C_DARK_BG, C_BATTLE_BG, C_WINDOW_BG, C_WINDOW_BORDER,
-    C_WHITE, C_GOLD, C_CRIMSON_LT, C_GREEN_DIM, C_GRAY,
-    C_CMD_SELECT, C_CMD_NORMAL, C_CMD_DISABLED,
+    WINDOW_W,
+    WINDOW_H,
+    BATTLE_TOP_H,
+    BATTLE_CMD_Y,
+    BATTLE_CMD_H,
+    PLAYER_BATTLE_X,
+    PLAYER_BATTLE_Y,
+    ENEMY_BATTLE_X,
+    ENEMY_BATTLE_Y,
+    C_DARK_BG,
+    C_BATTLE_BG,
+    C_WINDOW_BG,
+    C_WINDOW_BORDER,
+    C_WHITE,
+    C_GOLD,
+    C_CRIMSON_LT,
+    C_GREEN_DIM,
+    C_GRAY,
+    C_CMD_SELECT,
+    C_CMD_NORMAL,
+    C_CMD_DISABLED,
     C_DAMAGE_NUM,
 )
-
 
 # ── コマンドの定義 ──────────────────────────────────────
 # (表示名, 実装済みか)  False のコマンドはグレー表示のみ
 COMMANDS = [
-    ("攻撃",   True),    # ★ 実装済み
-    ("スキル", True),    # ★ 0.5 Step8-B: スキル選択メニューを追加
-    ("合成",   False),   # 未実装（今後追加予定）
-    ("逃げる", True),    # ★ 実装済み
+    ("攻撃", True),  # ★ 実装済み
+    ("スキル", True),  # ★ 0.5 Step8-B: スキル選択メニューを追加
+    ("合成", False),  # 未実装（今後追加予定）
+    ("逃げる", True),  # ★ 実装済み
 ]
 
 # ── アニメーションの長さ（フレーム数） ────────────────
-ANIM_FORWARD  = 12   # 前進するフレーム数
-ANIM_SLASH    = 10   # 剣エフェクトを表示するフレーム数
-ANIM_BACK     = 12   # 後退するフレーム数
-ANIM_RESULT   = 120  # 結果表示（勝利など）のフレーム数
+ANIM_FORWARD = 12  # 前進するフレーム数
+ANIM_SLASH = 10  # 剣エフェクトを表示するフレーム数
+ANIM_BACK = 12  # 後退するフレーム数
+ANIM_RESULT = 120  # 結果表示（勝利など）のフレーム数
 ESCAPE_CHANCE = 0.7  # 逃げる成功確率（0.0〜1.0）
 
 
@@ -99,12 +112,12 @@ class Battle:
     """
 
     def __init__(self, player, enemy, font_lg, font_md, font_sm, sprite_mgr=None):
-        self.player   = player
-        self.enemy    = enemy
-        self.font_lg  = font_lg
-        self.font_md  = font_md
-        self.font_sm  = font_sm
-        self.sprite_mgr = sprite_mgr   # ★ 0.3: スプライト管理
+        self.player = player
+        self.enemy = enemy
+        self.font_lg = font_lg
+        self.font_md = font_md
+        self.font_sm = font_sm
+        self.sprite_mgr = sprite_mgr  # ★ 0.3: スプライト管理
 
         # ── フェーズ（バトルの進行段階）
         #   "player_select" → コマンドを選ぶ
@@ -136,16 +149,16 @@ class Battle:
         self.slash_timer = 0
 
         # ── 最後に表示するメッセージ（結果フェーズ用）
-        self.result_text   = ""
-        self.result_timer  = 0
+        self.result_text = ""
+        self.result_timer = 0
 
         # ── バトルログ（画面下コマンドウィンドウ内に表示）
         self.log: list[str] = ["バトル開始！"]
 
         # ★ 0.5 Step8-D: バトル開始時の大賢者メッセージ
         sage_start = get_battle_start_message(
-            enemy_name    = enemy.name,
-            enemy_element = enemy.element,
+            enemy_name=enemy.name,
+            enemy_element=enemy.element,
         )
         self.log.insert(0, sage_start)
 
@@ -200,7 +213,7 @@ class Battle:
             self._start_player_attack()
 
         elif name == "スキル":
-            self._open_skill_menu()     # ★ 0.5 Step8-B
+            self._open_skill_menu()  # ★ 0.5 Step8-B
 
         elif name == "逃げる":
             self._try_escape()
@@ -219,7 +232,7 @@ class Battle:
             return
         # skill_select フェーズへ移行
         self.skill_cursor = 0
-        self.phase        = "skill_select"
+        self.phase = "skill_select"
         self._add_log("スキルを選んでください")
 
     def _handle_skill_select_key(self, key: int):
@@ -245,13 +258,13 @@ class Battle:
             # 決定：スキルを発動する（★ Step8-C 実装）
             skill_id = skills[self.skill_cursor]
             self.skill_cursor = 0
-            self.phase        = "player_select"  # 一旦戻す（_execute_skill内で上書きあり）
+            self.phase = "player_select"  # 一旦戻す（_execute_skill内で上書きあり）
             self._execute_skill(skill_id)
 
         elif key in (pygame.K_x, pygame.K_ESCAPE):
             # キャンセル：コマンド選択へ戻す
             self._add_log("スキルをキャンセルした")
-            self.phase        = "player_select"
+            self.phase = "player_select"
             self.skill_cursor = 0
 
     def _execute_skill(self, skill_id: str):
@@ -267,23 +280,26 @@ class Battle:
         5. 敵が死んだ → 勝利処理へ
            生きている → 敵ターンへ
         """
-        from .skill_data      import get_skill_name, get_skill_element, get_skill_power
-        from .element_system  import get_multiplier, get_affinity_label
+        from .skill_data import get_skill_name, get_skill_element, get_skill_power
+        from .element_system import get_multiplier, get_affinity_label
 
-        skill_name  = get_skill_name(skill_id)
-        skill_elem  = get_skill_element(skill_id)
+        skill_name = get_skill_name(skill_id)
+        skill_elem = get_skill_element(skill_id)
         skill_power = get_skill_power(skill_id)
 
+        self.player.action_log.record_skill_use(skill_id)
         # ── 非攻撃スキル（power == 0.0）────────────────────
         if skill_power == 0.0:
             if skill_id == "observe":
                 self._add_log(f"「{skill_name}」で観察した。")
                 self._add_log("解析処理は後で実装")
                 # ★ 0.5 Step8-D: observe 専用の大賢者メッセージ
-                self._add_log(get_observe_message(
-                    enemy_name    = self.enemy.name,
-                    enemy_element = self.enemy.element,
-                ))
+                self._add_log(
+                    get_observe_message(
+                        enemy_name=self.enemy.name,
+                        enemy_element=self.enemy.element,
+                    )
+                )
             else:
                 self._add_log(f"「{skill_name}」を使った。")
             # ダメージなし・敵ターンなし → そのまま player_select へ
@@ -313,19 +329,23 @@ class Battle:
         # ── ダメージログ（属性相性メッセージ付き）
         label = get_affinity_label(mult)
         if label == "有利":
-            self._add_log(f"「{skill_name}」  {self.enemy.name}に {dmg} のダメージ！  効果は抜群だ！")
+            self._add_log(
+                f"「{skill_name}」  {self.enemy.name}に {dmg} のダメージ！  効果は抜群だ！"
+            )
         elif label == "不利":
-            self._add_log(f"「{skill_name}」  {self.enemy.name}に {dmg} のダメージ！  効果はいまひとつ…")
+            self._add_log(
+                f"「{skill_name}」  {self.enemy.name}に {dmg} のダメージ！  効果はいまひとつ…"
+            )
         else:
             self._add_log(f"「{skill_name}」  {self.enemy.name}に {dmg} のダメージ！")
 
         # ── 勝利判定 or 敵ターンへ
         if not self.enemy.alive:
             self._add_log(f"{self.enemy.name} を倒した！")
-            self.phase        = "result"
-            self.result_text  = "勝利！"
+            self.phase = "result"
+            self.result_text = "勝利！"
             self.result_timer = ANIM_RESULT
-            self._result      = "win"
+            self._result = "win"
         else:
             self._start_enemy_turn()
 
@@ -337,28 +357,30 @@ class Battle:
         """
         try:
             from .skill_data import get_skill_name
+
             return get_skill_name(skill_id)
         except Exception:
             return skill_id
 
     def _start_player_attack(self):
         """プレイヤー攻撃フェーズを開始する"""
-        self.phase       = "player_anim"
-        self.anim_timer  = 0
+        self.player.action_log.record_normal_attack()
+        self.phase = "player_anim"
+        self.anim_timer = 0
         self.slash_timer = 0
         self._add_log(f"ノービスの攻撃！")
         # ★ 0.5 Step8-D: 属性相性メッセージ（攻撃開始時）
-        self._add_log(get_affinity_message(
-            self.player.element, self.enemy.element))
+        self._add_log(get_affinity_message(self.player.element, self.enemy.element))
 
     def _try_escape(self):
         """逃走を試みる"""
+        self.player.action_log.record_escape()
         if random.random() < ESCAPE_CHANCE:
             self._add_log("うまく逃げ出した！")
-            self.phase        = "result"
-            self.result_text  = "逃走成功"
+            self.phase = "result"
+            self.result_text = "逃走成功"
             self.result_timer = ANIM_RESULT
-            self._result      = "escape"
+            self._result = "escape"
         else:
             self._add_log("逃げられなかった！")
             # 逃げ失敗 → 敵のターンへ
@@ -382,7 +404,8 @@ class Battle:
         # ダメージ数値（プレイヤー側）のフェードアウト
         self.player_floats = [
             {**ft, "y": ft["y"] - 1, "life": ft["life"] - 1}
-            for ft in self.player_floats if ft["life"] > 0
+            for ft in self.player_floats
+            if ft["life"] > 0
         ]
 
         # 敵ヒットタイマー
@@ -399,7 +422,7 @@ class Battle:
         elif self.phase == "result":
             self.result_timer -= 1
             if self.result_timer <= 0:
-                return self._result   # バトル終了を通知
+                return self._result  # バトル終了を通知
 
         return None  # バトル継続中
 
@@ -417,7 +440,7 @@ class Battle:
 
         if self.anim_timer <= ANIM_FORWARD:
             # 段階1: 前進（右に近づく）
-            progress    = self.anim_timer / ANIM_FORWARD
+            progress = self.anim_timer / ANIM_FORWARD
             self.player_x = PLAYER_BATTLE_X + int(120 * progress)
 
         elif self.anim_timer == ANIM_FORWARD + 1:
@@ -441,9 +464,13 @@ class Battle:
 
             # ダメージログを分かりやすく表示
             if mult > 1.0:
-                self._add_log(f"  {self.enemy.name}に {dmg} のダメージ！  効果は抜群だ！")
+                self._add_log(
+                    f"  {self.enemy.name}に {dmg} のダメージ！  効果は抜群だ！"
+                )
             elif mult < 1.0:
-                self._add_log(f"  {self.enemy.name}に {dmg} のダメージ！  効果はいまひとつ…")
+                self._add_log(
+                    f"  {self.enemy.name}に {dmg} のダメージ！  効果はいまひとつ…"
+                )
             else:
                 self._add_log(f"  {self.enemy.name}に {dmg} のダメージ！")
 
@@ -457,20 +484,21 @@ class Battle:
 
         elif self.anim_timer <= total:
             # 段階3: 後退（元の位置に戻る）
-            progress    = (self.anim_timer - ANIM_FORWARD - ANIM_SLASH) / ANIM_BACK
+            progress = (self.anim_timer - ANIM_FORWARD - ANIM_SLASH) / ANIM_BACK
             self.player_x = PLAYER_BATTLE_X + int(120 * (1 - progress))
 
         else:
             # アニメーション完了
-            self.player_x  = PLAYER_BATTLE_X
+            self.player_x = PLAYER_BATTLE_X
             self.slash_timer = 0
 
             # 敵が死んでいたら勝利
             if not self.enemy.alive:
-                self.phase        = "result"
-                self.result_text  = "勝利！"
+                self.player.action_log.record_battle_win()
+                self.phase = "result"
+                self.result_text = "勝利！"
                 self.result_timer = ANIM_RESULT
-                self._result      = "win"
+                self._result = "win"
             else:
                 # 生きていたら敵のターンへ
                 self._start_enemy_turn()
@@ -480,12 +508,11 @@ class Battle:
     # ──────────────────────────────────────────────────────
     def _start_enemy_turn(self):
         """敵のターンを開始する"""
-        self.phase      = "enemy_anim"
+        self.phase = "enemy_anim"
         self.anim_timer = 0
         self._add_log(f"{self.enemy.name}の攻撃！")
         # ★ 0.5 Step8-D: 属性相性メッセージ（敵攻撃開始時）
-        self._add_log(get_affinity_message(
-            self.enemy.element, self.player.element))
+        self._add_log(get_affinity_message(self.enemy.element, self.player.element))
 
     def _update_enemy_anim(self):
         """
@@ -500,8 +527,8 @@ class Battle:
             mult = get_multiplier(self.enemy.element, self.player.element)
 
             # do_attack() が返す int に倍率を掛けて整数化
-            raw  = int(self.enemy.do_attack() * mult)
-            dmg  = self.player.take_damage(raw)
+            raw = int(self.enemy.do_attack() * mult)
+            dmg = self.player.take_damage(raw)
 
             # ダメージログを分かりやすく表示
             if mult > 1.0:
@@ -512,23 +539,26 @@ class Battle:
                 self._add_log(f"  ノービスに {dmg} のダメージ！")
 
             # プレイヤー側のダメージ数値を追加
-            self.player_floats.append({
-                "text" : str(dmg),
-                "x"    : PLAYER_BATTLE_X,
-                "y"    : PLAYER_BATTLE_Y - 60,
-                "life" : 50,
-                "color": C_CRIMSON_LT,
-            })
+            self.player_floats.append(
+                {
+                    "text": str(dmg),
+                    "x": PLAYER_BATTLE_X,
+                    "y": PLAYER_BATTLE_Y - 60,
+                    "life": 50,
+                    "color": C_CRIMSON_LT,
+                }
+            )
 
         if self.anim_timer > total:
             # アニメーション完了 → プレイヤーが生きていればコマンド待機へ
             if self.player.is_dead:
-                self.phase        = "result"
-                self.result_text  = "敗北..."
+                self.player.action_log.record_battle_lose()
+                self.phase = "result"
+                self.result_text = "敗北..."
                 self.result_timer = ANIM_RESULT
-                self._result      = "lose"
+                self._result = "lose"
             else:
-                self.phase      = "player_select"
+                self.phase = "player_select"
                 self.anim_timer = 0
                 self._add_log("コマンドを選んでください")
 
@@ -548,9 +578,14 @@ class Battle:
         """バトル画面全体を描く（毎フレーム呼ぶ）"""
         self._draw_background(surface)
         self._draw_player(surface)
-        self.enemy.draw_battle(surface, ENEMY_BATTLE_X, ENEMY_BATTLE_Y,
-                               self.font_md, self.font_sm,
-                               sprite_mgr=self.sprite_mgr)
+        self.enemy.draw_battle(
+            surface,
+            ENEMY_BATTLE_X,
+            ENEMY_BATTLE_Y,
+            self.font_md,
+            self.font_sm,
+            sprite_mgr=self.sprite_mgr,
+        )
         self._draw_slash_effect(surface)
         self._draw_player_floats(surface)
         self._draw_command_window(surface)
@@ -575,18 +610,21 @@ class Battle:
         skills = self.player.learned_skills
 
         # ウィンドウサイズ（スキル数に応じて高さを調整）
-        WIN_W    = 340
-        ROW_H    = 48
-        PADDING  = 16
-        WIN_H    = PADDING * 2 + ROW_H * max(1, len(skills)) + 30
-        wx       = WINDOW_W - WIN_W - 10
-        wy       = BATTLE_CMD_Y - WIN_H - 4
+        WIN_W = 340
+        ROW_H = 48
+        PADDING = 16
+        WIN_H = PADDING * 2 + ROW_H * max(1, len(skills)) + 30
+        wx = WINDOW_W - WIN_W - 10
+        wy = BATTLE_CMD_Y - WIN_H - 4
 
         # ウィンドウ背景
-        pygame.draw.rect(surface, C_WINDOW_BG,     (wx, wy, WIN_W, WIN_H), border_radius=6)
-        pygame.draw.rect(surface, C_WINDOW_BORDER, (wx, wy, WIN_W, WIN_H), 2, border_radius=6)
-        pygame.draw.line(surface, C_GOLD,
-                         (wx + 1, wy + 30), (wx + WIN_W - 1, wy + 30), 1)
+        pygame.draw.rect(surface, C_WINDOW_BG, (wx, wy, WIN_W, WIN_H), border_radius=6)
+        pygame.draw.rect(
+            surface, C_WINDOW_BORDER, (wx, wy, WIN_W, WIN_H), 2, border_radius=6
+        )
+        pygame.draw.line(
+            surface, C_GOLD, (wx + 1, wy + 30), (wx + WIN_W - 1, wy + 30), 1
+        )
 
         # タイトル行
         title = self.font_sm.render("── スキル ──", True, C_GOLD)
@@ -594,8 +632,8 @@ class Battle:
 
         # スキル一覧
         for i, sid in enumerate(skills):
-            row_y   = wy + PADDING + 22 + i * ROW_H
-            is_sel  = (i == self.skill_cursor)
+            row_y = wy + PADDING + 22 + i * ROW_H
+            is_sel = i == self.skill_cursor
 
             # 選択ハイライト
             if is_sel:
@@ -607,22 +645,23 @@ class Battle:
                 surface.blit(cur, (wx + 10, row_y + 4))
 
             # スキル名（属性カラー）
-            elem_id    = get_skill_element(sid)
+            elem_id = get_skill_element(sid)
             elem_color = get_element_color(elem_id)
-            name_txt   = self.font_md.render(get_skill_name(sid), True,
-                                             C_CMD_SELECT if is_sel else C_CMD_NORMAL)
+            name_txt = self.font_md.render(
+                get_skill_name(sid), True, C_CMD_SELECT if is_sel else C_CMD_NORMAL
+            )
             surface.blit(name_txt, (wx + 28, row_y + 2))
 
             # 属性名タグ
             elem_tag = self.font_sm.render(
-                f"[{get_element_name(elem_id)}]", True, elem_color)
+                f"[{get_element_name(elem_id)}]", True, elem_color
+            )
             surface.blit(elem_tag, (wx + 28, row_y + 22))
 
             # 倍率
             power_val = get_skill_power(sid)
             if power_val > 0:
-                power_txt = self.font_sm.render(
-                    f"× {power_val:.1f}", True, C_GRAY)
+                power_txt = self.font_sm.render(f"× {power_val:.1f}", True, C_GRAY)
                 surface.blit(power_txt, (wx + WIN_W - 60, row_y + 12))
 
         # 操作ヒント
@@ -644,18 +683,19 @@ class Battle:
         # 床（下部の帯）
         floor_rect = pygame.Rect(0, BATTLE_TOP_H - 60, WINDOW_W, 60)
         pygame.draw.rect(surface, (18, 14, 30), floor_rect)
-        pygame.draw.line(surface, C_GOLD,
-                         (0, BATTLE_TOP_H - 60), (WINDOW_W, BATTLE_TOP_H - 60), 1)
+        pygame.draw.line(
+            surface, C_GOLD, (0, BATTLE_TOP_H - 60), (WINDOW_W, BATTLE_TOP_H - 60), 1
+        )
 
         # 背景の装飾（右上のルーン風円）
         t = self.bg_timer * 0.005
         for i in range(3):
-            r   = 80 + i * 30
-            alp = safe_alpha(18 - i * 4)              # safe: 負数をクランプ
+            r = 80 + i * 30
+            alp = safe_alpha(18 - i * 4)  # safe: 負数をクランプ
             ang = t + i * math.pi / 3
-            cx  = int(WINDOW_W * 0.72 + math.cos(ang) * 10)
-            cy  = int(BATTLE_TOP_H * 0.35 + math.sin(ang) * 10)
-            s   = pygame.Surface((r * 2, r * 2), pygame.SRCALPHA)
+            cx = int(WINDOW_W * 0.72 + math.cos(ang) * 10)
+            cy = int(BATTLE_TOP_H * 0.35 + math.sin(ang) * 10)
+            s = pygame.Surface((r * 2, r * 2), pygame.SRCALPHA)
             pygame.draw.circle(s, make_rgba(80, 50, 120, alp), (r, r), r, 1)  # safe
             surface.blit(s, (cx - r, cy - r))
 
@@ -667,15 +707,15 @@ class Battle:
         """
         self.player.draw_battle(
             surface,
-            px         = self.player_x,
-            py         = self.player_y,
-            font_md    = self.font_md,
-            font_sm    = self.font_sm,
-            sprite_mgr = self.sprite_mgr,
+            px=self.player_x,
+            py=self.player_y,
+            font_md=self.font_md,
+            font_sm=self.font_sm,
+            sprite_mgr=self.sprite_mgr,
         )
         # プレイヤー側ダメージ数値の浮き上がり（battle 固有）
         for ft in self.player_floats:
-            alpha   = lerp_alpha(ft["life"], 50)          # safe: float→int→clamp
+            alpha = lerp_alpha(ft["life"], 50)  # safe: float→int→clamp
             dmg_txt = self.font_md.render(ft["text"], True, ft["color"])
             dmg_txt.set_alpha(alpha)
             surface.blit(dmg_txt, (ft["x"] - dmg_txt.get_width() // 2, ft["y"]))
@@ -686,14 +726,14 @@ class Battle:
         if self.slash_timer <= 0:
             return
 
-        progress = self.slash_timer / ANIM_SLASH   # 1.0 → 0.0
-        alpha    = lerp_alpha(self.slash_timer, ANIM_SLASH, max_alpha=200)  # safe
-        cx       = ENEMY_BATTLE_X - 30
-        cy       = ENEMY_BATTLE_Y
+        progress = self.slash_timer / ANIM_SLASH  # 1.0 → 0.0
+        alpha = lerp_alpha(self.slash_timer, ANIM_SLASH, max_alpha=200)  # safe
+        cx = ENEMY_BATTLE_X - 30
+        cy = ENEMY_BATTLE_Y
 
         # 複数の斜め線で剣閃を表現
         for i in range(4):
-            angle  = math.pi * 0.3 + i * 0.15
+            angle = math.pi * 0.3 + i * 0.15
             length = 60 + i * 10
             x1 = int(cx - math.cos(angle) * length * 0.3)
             y1 = int(cy - math.sin(angle) * length * 0.3)
@@ -701,7 +741,9 @@ class Battle:
             y2 = int(cy + math.sin(angle) * length * 0.7)
 
             s = pygame.Surface((WINDOW_W, BATTLE_TOP_H), pygame.SRCALPHA)
-            pygame.draw.line(s, make_rgba(*C_GOLD, alpha - i * 30), (x1, y1), (x2, y2), 3 - i // 2)  # safe: 負数をクランプ
+            pygame.draw.line(
+                s, make_rgba(*C_GOLD, alpha - i * 30), (x1, y1), (x2, y2), 3 - i // 2
+            )  # safe: 負数をクランプ
             surface.blit(s, (0, 0))
 
     # ── プレイヤーダメージ数値 ────────────────────────────
@@ -710,7 +752,9 @@ class Battle:
         pass  # _draw_player() の中で描画済み
 
     # ── コマンドウィンドウ ────────────────────────────────
-    def _wrap_text(self, text: str, font: "pygame.font.Font", max_width: int) -> list[str]:
+    def _wrap_text(
+        self, text: str, font: "pygame.font.Font", max_width: int
+    ) -> list[str]:
         """
         テキストを max_width に収まるよう1文字ずつ折り返して行リストで返す。
 
@@ -760,19 +804,20 @@ class Battle:
         win_rect = pygame.Rect(0, BATTLE_CMD_Y, WINDOW_W, BATTLE_CMD_H)
         pygame.draw.rect(surface, C_WINDOW_BG, win_rect)
         pygame.draw.rect(surface, C_WINDOW_BORDER, win_rect, 2)
-        pygame.draw.line(surface, C_GOLD,
-                         (0, BATTLE_CMD_Y + 1), (WINDOW_W, BATTLE_CMD_Y + 1), 1)
+        pygame.draw.line(
+            surface, C_GOLD, (0, BATTLE_CMD_Y + 1), (WINDOW_W, BATTLE_CMD_Y + 1), 1
+        )
 
         # ── 左側：バトルログ（最新4件・折り返し対応）
-        log_x     = 20
-        log_y     = BATTLE_CMD_Y + 16
+        log_x = 20
+        log_y = BATTLE_CMD_Y + 16
         # 最大幅 = 区切り線(WINDOW_W-200) の手前 10px 余白
         # = 800 - 200 - 20(log_x) - 10 = 570px
         LOG_MAX_W = WINDOW_W - 200 - log_x - 10
 
         # ウィンドウ内に収まる最大行数（1行22px、余白を考慮）
-        LOG_AREA_H   = BATTLE_CMD_H - 20          # ログエリアの縦ピクセル
-        MAX_ROWS     = LOG_AREA_H // 22            # 表示できる最大行数
+        LOG_AREA_H = BATTLE_CMD_H - 20  # ログエリアの縦ピクセル
+        MAX_ROWS = LOG_AREA_H // 22  # 表示できる最大行数
 
         # ログを新しい順に折り返し展開し、最大行数に収める
         wrapped_rows: list[tuple[str, int]] = []  # (行テキスト, 元ログのインデックス)
@@ -788,18 +833,22 @@ class Battle:
         for row_i, (row_text, log_idx) in enumerate(wrapped_rows):
             # 古いログほど薄く表示（log_idx=0 が最新）
             alpha = 255 if log_idx == 0 else safe_alpha(max(100, 200 - log_idx * 40))
-            txt   = self.font_sm.render(row_text, True, C_WHITE)
+            txt = self.font_sm.render(row_text, True, C_WHITE)
             txt.set_alpha(alpha)
             surface.blit(txt, (log_x, log_y + row_i * 22))
 
         # ── 区切り線
-        pygame.draw.line(surface, C_WINDOW_BORDER,
-                         (WINDOW_W - 200, BATTLE_CMD_Y + 10),
-                         (WINDOW_W - 200, WINDOW_H - 10), 1)
+        pygame.draw.line(
+            surface,
+            C_WINDOW_BORDER,
+            (WINDOW_W - 200, BATTLE_CMD_Y + 10),
+            (WINDOW_W - 200, WINDOW_H - 10),
+            1,
+        )
 
         # ── 右側：コマンド一覧
-        cmd_x   = WINDOW_W - 185
-        cmd_y   = BATTLE_CMD_Y + 20
+        cmd_x = WINDOW_W - 185
+        cmd_y = BATTLE_CMD_Y + 20
         cmd_gap = 44
 
         for i, (name, implemented) in enumerate(COMMANDS):
@@ -840,7 +889,9 @@ class Battle:
     # ── 結果表示 ──────────────────────────────────────────
     def _draw_result(self, surface: pygame.Surface):
         """勝利・敗北・逃走の結果オーバーレイ"""
-        alpha   = lerp_alpha(ANIM_RESULT - self.result_timer, ANIM_RESULT, max_alpha=160)  # safe
+        alpha = lerp_alpha(
+            ANIM_RESULT - self.result_timer, ANIM_RESULT, max_alpha=160
+        )  # safe
         overlay = pygame.Surface((WINDOW_W, BATTLE_TOP_H), pygame.SRCALPHA)
         overlay.fill(make_rgba(0, 0, 0, alpha))
         surface.blit(overlay, (0, 0))
@@ -854,5 +905,10 @@ class Battle:
             color = (180, 180, 220)
 
         txt = self.font_lg.render(self.result_text, True, color)
-        surface.blit(txt, (WINDOW_W // 2 - txt.get_width() // 2,
-                           BATTLE_TOP_H // 2 - txt.get_height() // 2))
+        surface.blit(
+            txt,
+            (
+                WINDOW_W // 2 - txt.get_width() // 2,
+                BATTLE_TOP_H // 2 - txt.get_height() // 2,
+            ),
+        )

@@ -269,6 +269,7 @@ class Game:
         job_name = new_job["name"]
 
         if self.player.change_job(new_job_id):
+            self.player.action_log.record_job_change()
             self._add_message(f"ジョブチェンジ：{job_name}！", new_job["color"])
         else:
             self._add_message(f"すでに {job_name} です", C_GRAY)
