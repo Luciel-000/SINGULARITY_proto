@@ -199,6 +199,26 @@ class Player:
 
         return True
 
+    def update_unlocked_jobs(self) -> list[str]:
+        """行動ログを参照して解放候補を追加する。
+        新たに追加されたジョブIDのリストを返す。
+        """
+        newly_unlocked: list[str] = []
+        try:
+            # インポートは内部で行い循環参照を避ける
+            from .job_unlock import get_unlocked_jobs
+
+            candidates = get_unlocked_jobs(self.action_log)
+        except Exception:
+            candidates = []
+
+        for job_id in candidates:
+            if job_id not in self.unlocked_jobs:
+                self.unlocked_jobs.append(job_id)
+                newly_unlocked.append(job_id)
+
+        return newly_unlocked
+
     # ──────────────────────────────────────────────────────
     #  移動・当たり判定（変更なし）
     # ──────────────────────────────────────────────────────
