@@ -63,7 +63,7 @@ from .world import World
 from .battle import Battle
 from .font_manager import FontManager
 from .sprite_manager import SpriteManager
-from .job_data import get_job, get_evolutions, JOB_DATA  # ★ 0.4
+from .job_data import get_job, get_evolutions, all_job_ids, JOB_DATA  # ★ 0.4
 from .element_system import (
     get_element_name,
     get_element_color,
@@ -238,8 +238,18 @@ class Game:
                 )
 
         # 現在のジョブから選択可能なジョブを取得
-        # ★ 「全ジョブ選択可能」にしたい場合は get_evolutions を all_job_ids に変える
-        options = get_evolutions(self.player.current_job_id)
+        if constants.DEBUG_MODE:
+            # 開発用チート：全ジョブを選択可能にする
+            options = [
+                jid for jid in all_job_ids() if jid != self.player.current_job_id
+            ]
+        else:
+            # 通常時：解放済みの進化先ジョブのみ表示
+            options = [
+                jid
+                for jid in get_evolutions(self.player.current_job_id)
+                if jid in self.player.unlocked_jobs
+            ]
 
         # 現在のジョブも「戻る」として含める（ノービスに戻れるなど）
         # ただし同じジョブへのチェンジは change_job() 側で弾く
@@ -278,6 +288,10 @@ class Game:
 
         new_job = get_job(new_job_id)
         job_name = new_job["name"]
+
+        if not constants.DEBUG_MODE and not self.player.is_job_unlocked(new_job_id):
+            self._add_message("このジョブはまだ解放されていません", C_GRAY)
+            return
 
         if self.player.change_job(new_job_id):
             self.player.action_log.record_job_change()

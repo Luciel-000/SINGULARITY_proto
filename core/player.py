@@ -143,6 +143,10 @@ class Player:
         """
         return self.current_job.get("element", "none")
 
+    def is_job_unlocked(self, job_id: str) -> bool:
+        """指定ジョブが解放済みかどうかを返す。"""
+        return job_id in self.unlocked_jobs
+
     def _calc_max_hp(self) -> int:
         """ベースHP + ジョブボーナスを合計して返す"""
         return self._base_max_hp + self.current_job.get("hp_bonus", 0)
