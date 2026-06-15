@@ -102,3 +102,36 @@ LUCIEL_000
 ### 次の予定
 
 - Prototype 0.9: セーブ/ロードの土台を検討
+
+---
+
+## Prototype 0.9 - Save & Load System
+
+### 実装済み
+
+- セーブ/ロード機能の土台を追加
+- `save_system.py` を追加
+- JSON形式でセーブデータを保存
+- `current_job_id` を保存/ロード
+- `unlocked_jobs` を保存/ロード
+- `action_log` を保存/ロード
+- player位置を保存/ロード
+- 現在zoneを保存/ロード
+- `save_data/` を `.gitignore` に追加
+- `DEBUG_MODE=True` の開発用として F5 セーブ / F9 ロードを追加
+- タイトル画面で L キーからロードできるようにした
+
+### 最新コミット
+
+- Step1: b4cab11
+- ignore save_data: 6caa42c
+- Step2: fa085c5
+- Step3: d31dfb9
+
+### 注意事項
+
+- セーブ画面UIはまだ未実装
+- 複数セーブスロットはまだ未実装
+- ストーリー進行フラグの保存はまだ未実装
+- F5/F9 は開発用
+- 次は Prototype 0.9 Step4 としてセーブ画面UI、または Prototype 1.0 に向けた整理を検討
