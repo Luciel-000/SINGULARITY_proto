@@ -99,6 +99,9 @@ class Player:
         # battle.py が Step8 でスキルメニュー構築に参照する。
         self.learned_skills: list[str] = list(self.current_job.get("skills", []))
         self.action_log = ActionLog()
+        # 解放済みジョブ一覧（将来の自動解放やUI参照用）
+        # 初期は現在のジョブのみ解放されている想定
+        self.unlocked_jobs: list[str] = [self.current_job_id]
 
     # ──────────────────────────────────────────────────────
     #  ★ 0.4: ジョブ関連

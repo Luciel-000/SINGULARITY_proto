@@ -75,6 +75,7 @@ from .dialogue_data import (  # ★ 0.7 Step5-B: 会話データ
     get_dialogue_speaker,
     get_dialogue_on_end,
 )
+from .job_unlock import get_unlocked_jobs, get_unlock_reasons
 
 # ★ 0.4: ジョブチェンジメニューの状態定数
 STATE_JOB_MENU = "job_menu"
@@ -226,9 +227,18 @@ class Game:
         if not self.player:
             return
 
+        # ジョブメニューを開く前に行動ログから解放候補を算出して保持する
+        # （自動解放はしない。UIや将来の処理で参照するための土台）
+        try:
+            unlocked = get_unlocked_jobs(self.player.action_log)
+        except Exception:
+            unlocked = []
         # 現在のジョブから選択可能なジョブを取得
         # ★ 「全ジョブ選択可能」にしたい場合は get_evolutions を all_job_ids に変える
         options = get_evolutions(self.player.current_job_id)
+        # unlocked を player.unlocked_jobs に保存（重複削除）
+        existing = getattr(self.player, "unlocked_jobs", [self.player.current_job_id])
+        self.player.unlocked_jobs = list(dict.fromkeys(existing + unlocked))
 
         # 現在のジョブも「戻る」として含める（ノービスに戻れるなど）
         # ただし同じジョブへのチェンジは change_job() 側で弾く
@@ -327,6 +337,16 @@ class Game:
                         self.state = STATE_PLAY
                 else:
                     self.state = STATE_PLAY
+                # 行動ログを見て解放候補を更新（自動チェンジは行わない）
+                if self.player:
+                    try:
+                        unlocked = get_unlocked_jobs(self.player.action_log)
+                    except Exception:
+                        unlocked = []
+                    existing = getattr(
+                        self.player, "unlocked_jobs", [self.player.current_job_id]
+                    )
+                    self.player.unlocked_jobs = list(dict.fromkeys(existing + unlocked))
                 self.enemies = [e for e in self.enemies if e is not self.battle_enemy]
                 self.battle = None
                 self.battle_enemy = None
