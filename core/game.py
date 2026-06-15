@@ -198,6 +198,22 @@ class Game:
                 )
             )
 
+    def _load_title_save(self) -> None:
+        """タイトル画面でロードしたときにセーブデータを復元して探索状態へ遷移する。"""
+        if self.player is None:
+            # タイトル画面時は player が None のことがあるため先に生成する
+            self.player = Player(0, 0)
+
+        ok, reason = load_game(self.player, game=self)
+        if ok:
+            self.state = STATE_PLAY
+            self._add_message("ロードしました", C_GREEN_DIM)
+        else:
+            if reason == "no_file":
+                self._add_message("セーブデータがありません", C_CRIMSON_LT)
+            else:
+                self._add_message("ロードに失敗しました", C_CRIMSON_LT)
+
     # ──────────────────────────────────────────────────────
     #  イベント処理
     # ──────────────────────────────────────────────────────
@@ -209,13 +225,6 @@ class Game:
             return
 
         key = event.key
-
-        # DEBUG_MODE のときだけ表示トグルを許可（F3 または L）
-        if constants.DEBUG_MODE and key in (pygame.K_F3, pygame.K_l):
-            self.show_debug_overlay = not getattr(self, "show_debug_overlay", False)
-            status = "ON" if self.show_debug_overlay else "OFF"
-            self._add_message(f"DEBUG OVERLAY {status}", C_GRAY)
-            return
 
         # DEBUG_MODE のときだけ F5/F9 でセーブ/ロードを行う
         if constants.DEBUG_MODE and key == pygame.K_F5:
@@ -241,9 +250,19 @@ class Game:
 
         # ── タイトル
         if self.state == STATE_TITLE:
-            if key == pygame.K_SPACE:
+            if key in (pygame.K_SPACE, pygame.K_RETURN):
                 self._init_game()
                 self._start_prologue()
+                return
+            if key == pygame.K_l:
+                self._load_title_save()
+                return
+
+        # DEBUG_MODE のときだけ表示トグルを許可（F3 または L）
+        if constants.DEBUG_MODE and key in (pygame.K_F3, pygame.K_l):
+            self.show_debug_overlay = not getattr(self, "show_debug_overlay", False)
+            status = "ON" if self.show_debug_overlay else "OFF"
+            self._add_message(f"DEBUG OVERLAY {status}", C_GRAY)
             return
 
         # ── プロローグ
@@ -735,9 +754,11 @@ class Game:
         t1 = self.font_lg.render("SINGULARITY", True, C_WHITE)
         t2 = self.font_md.render("- Chronicle of Origin -", True, C_GOLD)
         t3 = self.font_sm.render("Prototype  0.7", True, C_GRAY)
+        t4 = self.font_sm.render("[ L ] でロード", True, C_GRAY)
         surface.blit(t1, (WINDOW_W // 2 - t1.get_width() // 2, 110))
         surface.blit(t2, (WINDOW_W // 2 - t2.get_width() // 2, 158))
         surface.blit(t3, (WINDOW_W // 2 - t3.get_width() // 2, 192))
+        surface.blit(t4, (WINDOW_W // 2 - t4.get_width() // 2, 218))
 
         img = self.sprite_mgr.get_player("novice_m", size=(64, 64))
         if img:
@@ -767,7 +788,11 @@ class Game:
 
         if (self.title_timer // 30) % 2 == 0:
             start = self.font_md.render("[ SPACE ] でゲーム開始", True, C_GOLD)
-            surface.blit(start, (WINDOW_W // 2 - start.get_width() // 2, WINDOW_H - 55))
+            load_text = self.font_sm.render("[ L ] でロード", True, C_GOLD)
+            surface.blit(start, (WINDOW_W // 2 - start.get_width() // 2, WINDOW_H - 75))
+            surface.blit(
+                load_text, (WINDOW_W // 2 - load_text.get_width() // 2, WINDOW_H - 45)
+            )
 
     # ── 探索マップ ────────────────────────────────────────
     def _draw_play(self, surface: pygame.Surface):
