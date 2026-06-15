@@ -68,7 +68,6 @@ from .element_system import (
     get_element_name,
     get_element_color,
 )  # ★ 0.5: 属性名・属性カラー
-from .zone_data import get_zone_name, get_zone_exits  # ★ 0.6: ゾーン情報
 from .npc import NPC  # ★ 0.7: NPC
 from .dialogue_data import (  # ★ 0.7 Step5-B: 会話データ
     get_dialogue_lines,
@@ -76,6 +75,8 @@ from .dialogue_data import (  # ★ 0.7 Step5-B: 会話データ
     get_dialogue_on_end,
 )
 from .job_unlock import get_unlocked_jobs, get_unlock_reasons
+from .save_system import save_game, load_game
+from .zone_data import get_zone_name, get_zone_exits, DEFAULT_ZONE_ID, all_zone_ids
 
 # ★ 0.4: ジョブチェンジメニューの状態定数
 STATE_JOB_MENU = "job_menu"
@@ -105,6 +106,7 @@ class Game:
 
         # ★ 0.6: 現在のゾーンID（ゲーム開始時は "town"）
         self.current_zone_id: str = "town"
+        self.current_zone_name: str = ""
 
         # ★ 0.7 Step5-B: 会話状態管理変数
         self.current_dialogue_id: str = ""  # 現在表示中の会話ID
@@ -128,6 +130,7 @@ class Game:
         # ★ 0.6: ゲーム開始は「始まりの町」から
         self.current_zone_id = "town"
         self.world = World(self.current_zone_id)
+        self.current_zone_name = self.world.zone_name
         px, py = self.world.player_spawn
         self.player = Player(px, py)
         self.enemies = []
@@ -148,6 +151,42 @@ class Game:
                 )
 
         # ★ 0.7: NPC をスポーン（town: 謎の老人、field: なし）
+        for nx, ny in self.world.get_npc_spawns():
+            self.npcs.append(
+                NPC(
+                    nx,
+                    ny,
+                    name="謎の老人",
+                    dialogue_id="elder_first",
+                    repeat_dialogue_id="elder_repeat",
+                )
+            )
+
+    def load_save_data(self, data: dict) -> None:
+        """セーブデータの world 部分を復元する。"""
+        if not isinstance(data, dict):
+            return
+
+        world_data = data.get("world") if isinstance(data.get("world"), dict) else {}
+        zone_id = world_data.get("current_zone_id")
+        if not isinstance(zone_id, str) or zone_id not in all_zone_ids():
+            zone_id = DEFAULT_ZONE_ID
+
+        self.current_zone_id = zone_id
+        self.world = World(self.current_zone_id)
+        self.current_zone_name = self.world.zone_name
+        self.enemies = []
+        self.npcs = []
+        self.battle = None
+        self.battle_enemy = None
+
+        if self.world.has_enemies:
+            spawn_positions = self.world.get_enemy_spawns(6)
+            for i, (ex, ey) in enumerate(spawn_positions):
+                self.enemies.append(
+                    Enemy(ex, ey, variant_index=i % len(SLIME_VARIANTS))
+                )
+
         for nx, ny in self.world.get_npc_spawns():
             self.npcs.append(
                 NPC(
@@ -180,12 +219,9 @@ class Game:
 
         # DEBUG_MODE のときだけ F5/F9 でセーブ/ロードを行う
         if constants.DEBUG_MODE and key == pygame.K_F5:
-            try:
-                from .save_system import save_game
-
-                ok = save_game(self.player)
-            except Exception:
-                ok = False
+            ok = save_game(
+                self.player, world_data={"current_zone_id": self.current_zone_id}
+            )
             if ok:
                 self._add_message("セーブしました", C_GRAY)
             else:
@@ -193,13 +229,7 @@ class Game:
             return
 
         if constants.DEBUG_MODE and key == pygame.K_F9:
-            try:
-                from .save_system import load_game
-
-                ok, reason = load_game(self.player)
-            except Exception:
-                ok, reason = False, "error"
-
+            ok, reason = load_game(self.player, game=self)
             if ok:
                 self._add_message("ロードしました", C_GREEN_DIM)
             else:

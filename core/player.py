@@ -237,6 +237,10 @@ class Player:
                 if hasattr(self.action_log, "to_dict")
                 else self.action_log.get_summary()
             ),
+            "position": {
+                "x": int(self.rect.x),
+                "y": int(self.rect.y),
+            },
         }
 
     def load_from_save_dict(self, data: dict) -> None:
@@ -264,6 +268,15 @@ class Player:
         al = data.get("action_log") if isinstance(data, dict) else None
         if isinstance(al, dict) and hasattr(self.action_log, "load_from_dict"):
             self.action_log.load_from_dict(al)
+
+        # position
+        position = data.get("position") if isinstance(data, dict) else None
+        if isinstance(position, dict):
+            x = position.get("x")
+            y = position.get("y")
+            if isinstance(x, int) and isinstance(y, int):
+                self.rect.x = x
+                self.rect.y = y
 
         # 再計算：ステータス・スキルリストを current_job に合わせる
         self.current_job = get_job(self.current_job_id)
