@@ -143,6 +143,15 @@ LUCIEL_000
 - sage_boot 完了時に sage_booted を記録
 - 古いセーブデータに story が無くても落ちないようにした
 
+### Final Check
+
+- main.py 起動確認 OK
+- タイトル画面確認 OK
+- NEW GAME 確認 OK
+- LOAD GAME がセーブなしでも落ちないことを確認
+- プロローグ開始確認 OK
+- 町/探索状態への遷移確認 OK
+
 ### 最新コミット
 
 - Step1: b4cab11
