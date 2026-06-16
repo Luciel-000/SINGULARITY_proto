@@ -81,6 +81,7 @@ from .zone_data import get_zone_name, get_zone_exits, DEFAULT_ZONE_ID, all_zone_
 # ★ 0.4: ジョブチェンジメニューの状態定数
 STATE_JOB_MENU = "job_menu"
 STATE_SAVE_MENU = "save_menu"
+STATE_SUPPORT_NAME_INPUT = "support_name_input"
 
 
 class Game:
@@ -125,6 +126,7 @@ class Game:
         self.save_menu_cursor: int = 0
         self.title_menu_options: list[str] = ["new_game", "load_game", "quit"]
         self.title_menu_cursor: int = 0
+        self.support_name_input: str = ""
         # 開発用デバッグ表示トグル（F3 / L キー）
         self.show_debug_overlay: bool = False
 
@@ -262,6 +264,40 @@ class Game:
                 name = player_name.strip()
         return f"《{name}》"
 
+    def _handle_support_name_input_key(self, event: pygame.event.Event) -> None:
+        key = event.key
+        if key in (pygame.K_RETURN, pygame.K_z):
+            self._finish_support_name_input(self.support_name_input)
+            return
+
+        if key == pygame.K_ESCAPE:
+            self._finish_support_name_input("")
+            return
+
+        if key == pygame.K_BACKSPACE:
+            self.support_name_input = self.support_name_input[:-1]
+            return
+
+        char = getattr(event, "unicode", "")
+        if char and char.isprintable() and len(self.support_name_input) < 12:
+            self.support_name_input += char
+
+    def _finish_support_name_input(self, name: str) -> None:
+        if self.player and hasattr(self.player, "set_support_system_name"):
+            self.player.set_support_system_name(name)
+            display_name = self.player.support_system_name
+        else:
+            display_name = DEFAULT_SUPPORT_SYSTEM_NAME
+
+        self.support_name_input = ""
+        self.current_dialogue_id = ""
+        self.dialogue_lines = []
+        self.dialogue_speaker = ""
+        self.dialogue_index = 0
+        self.talking_npc = None
+        self.state = STATE_PLAY
+        self._add_message(f"観測補助機構名を {display_name} に設定しました", C_GOLD)
+
     def handle_event(self, event: pygame.event.Event):
         if event.type != pygame.KEYDOWN:
             # バトル中はバトルへ全イベントを渡す
@@ -307,6 +343,10 @@ class Game:
             return
 
         # DEBUG_MODE のときだけ表示トグルを許可（F3 または L）
+        if self.state == STATE_SUPPORT_NAME_INPUT:
+            self._handle_support_name_input_key(event)
+            return
+
         if constants.DEBUG_MODE and key in (pygame.K_F3, pygame.K_l):
             self.show_debug_overlay = not getattr(self, "show_debug_overlay", False)
             status = "ON" if self.show_debug_overlay else "OFF"
@@ -779,6 +819,14 @@ class Game:
             self.player, "set_story_flag"
         ):
             self.player.set_story_flag("sage_booted", True)
+            self.support_name_input = ""
+            self.current_dialogue_id = ""
+            self.dialogue_lines = []
+            self.dialogue_speaker = ""
+            self.dialogue_index = 0
+            self.talking_npc = None
+            self.state = STATE_SUPPORT_NAME_INPUT
+            return
 
         # その他は通常通り探索に戻す
         self.current_dialogue_id = ""
@@ -825,6 +873,9 @@ class Game:
         elif self.state == STATE_PROLOGUE:
             self._draw_play(surface)
             self._draw_dialogue_window(surface)
+        elif self.state == STATE_SUPPORT_NAME_INPUT:
+            self._draw_play(surface)
+            self._draw_support_name_input(surface)
         elif self.state in (STATE_PLAY, STATE_LEVELUP):
             self._draw_play(surface)
         elif self.state == STATE_GAMEOVER:
@@ -913,6 +964,40 @@ class Game:
         return lines if lines else [""]
 
     # ── タイトル画面 ──────────────────────────────────────
+    def _draw_support_name_input(self, surface: pygame.Surface):
+        overlay = pygame.Surface((WINDOW_W, GAME_AREA_H), pygame.SRCALPHA)
+        overlay.fill((0, 0, 0, 150))
+        surface.blit(overlay, (0, 0))
+
+        box_w, box_h = 620, 210
+        box_x = WINDOW_W // 2 - box_w // 2
+        box_y = GAME_AREA_H // 2 - box_h // 2
+        pygame.draw.rect(
+            surface, C_WINDOW_BG, (box_x, box_y, box_w, box_h), border_radius=6
+        )
+        pygame.draw.rect(
+            surface, C_WINDOW_BORDER, (box_x, box_y, box_w, box_h), 2, border_radius=6
+        )
+
+        title = self.font_md.render(
+            "この観測補助機構に名前を付けてください", True, C_GOLD
+        )
+        name = self.support_name_input
+        if (self.title_timer // 30) % 2 == 0:
+            name += "_"
+        name_text = self.font_md.render(f"名前：{name}", True, C_WHITE)
+        enter_hint = self.font_sm.render("Enter/Z：決定", True, C_GRAY)
+        backspace_hint = self.font_sm.render("Backspace：削除", True, C_GRAY)
+        cancel_hint = self.font_sm.render(
+            "Esc：観測補助機構として決定", True, C_DARK_GRAY
+        )
+
+        surface.blit(title, (WINDOW_W // 2 - title.get_width() // 2, box_y + 34))
+        surface.blit(name_text, (box_x + 70, box_y + 86))
+        surface.blit(enter_hint, (box_x + 70, box_y + 138))
+        surface.blit(backspace_hint, (box_x + 250, box_y + 138))
+        surface.blit(cancel_hint, (box_x + 70, box_y + 166))
+
     def _draw_title(self, surface: pygame.Surface):
         surface.fill(C_DARK_BG)
         pygame.draw.line(surface, C_GOLD, (40, 80), (WINDOW_W - 40, 80), 1)
