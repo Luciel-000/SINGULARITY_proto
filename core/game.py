@@ -647,6 +647,14 @@ class Game:
     # ──────────────────────────────────────────────────────
     #  ★ 0.7 Step5-B: 会話処理
     # ──────────────────────────────────────────────────────
+    def _mark_story_event_seen(self, event_id: str):
+        if self.player and hasattr(self.player, "mark_event_seen"):
+            self.player.mark_event_seen(event_id)
+
+    def _mark_story_event_completed(self, event_id: str):
+        if self.player and hasattr(self.player, "mark_event_completed"):
+            self.player.mark_event_completed(event_id)
+
     def _start_dialogue(self, npc: "NPC"):
         """
         NPC との会話を開始する。
@@ -664,6 +672,7 @@ class Game:
         self.dialogue_speaker = get_dialogue_speaker(d_id)
         self.dialogue_index = 0
         self.talking_npc = npc
+        self._mark_story_event_seen(d_id)
         self.state = STATE_DIALOGUE
 
     def _start_prologue(self):
@@ -673,6 +682,7 @@ class Game:
         self.dialogue_speaker = get_dialogue_speaker("prologue_intro")
         self.dialogue_index = 0
         self.talking_npc = None
+        self._mark_story_event_seen("prologue_intro")
         self.state = STATE_PROLOGUE
 
     def _advance_dialogue(self):
@@ -690,11 +700,18 @@ class Game:
         on_end イベント処理はここで行う。
         """
 
+        finished_dialogue_id = self.current_dialogue_id
+
         # on_end の取得
         on_end = get_dialogue_on_end(self.current_dialogue_id)
 
         # Step5-C: on_end == "sage_activate" → 《観測補助機構》起動イベントを連続表示
         if on_end == "sage_activate":
+            self._mark_story_event_completed(finished_dialogue_id)
+            if finished_dialogue_id == "elder_first":
+                self._mark_story_event_completed("first_elder_talk")
+                if self.player and hasattr(self.player, "set_story_flag"):
+                    self.player.set_story_flag("met_elder", True)
             if self.talking_npc:
                 self.talking_npc.mark_talked()  # 初回会話フラグを立てる
             self.talking_npc = None
@@ -702,10 +719,21 @@ class Game:
             self.dialogue_lines = get_dialogue_lines("sage_boot")
             self.dialogue_speaker = get_dialogue_speaker("sage_boot")
             self.dialogue_index = 0
+            self._mark_story_event_seen("sage_boot")
             return
 
         if self.talking_npc:
             self.talking_npc.mark_talked()  # 初回会話フラグを立てる
+
+        self._mark_story_event_completed(finished_dialogue_id)
+        if finished_dialogue_id == "elder_first":
+            self._mark_story_event_completed("first_elder_talk")
+            if self.player and hasattr(self.player, "set_story_flag"):
+                self.player.set_story_flag("met_elder", True)
+        if finished_dialogue_id == "sage_boot" and self.player and hasattr(
+            self.player, "set_story_flag"
+        ):
+            self.player.set_story_flag("sage_booted", True)
 
         # その他は通常通り探索に戻す
         self.current_dialogue_id = ""

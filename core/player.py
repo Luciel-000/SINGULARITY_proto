@@ -104,6 +104,9 @@ class Player:
         # 解放済みジョブ一覧（将来の自動解放やUI参照用）
         # 初期は現在のジョブのみ解放されている想定
         self.unlocked_jobs: list[str] = [self.current_job_id]
+        self.seen_events: set[str] = set()
+        self.completed_events: set[str] = set()
+        self.story_flags: dict[str, bool] = {}
 
     # ──────────────────────────────────────────────────────
     #  ★ 0.4: ジョブ関連
@@ -225,6 +228,33 @@ class Player:
 
         return newly_unlocked
 
+    def mark_event_seen(self, event_id: str) -> None:
+        """イベントを見たものとして記録する。"""
+        if isinstance(event_id, str) and event_id:
+            self.seen_events.add(event_id)
+
+    def mark_event_completed(self, event_id: str) -> None:
+        """イベントを完了したものとして記録する。"""
+        if isinstance(event_id, str) and event_id:
+            self.completed_events.add(event_id)
+
+    def set_story_flag(self, flag_name: str, value: bool = True) -> None:
+        """ストーリー進行用の簡易フラグを設定する。"""
+        if isinstance(flag_name, str) and flag_name:
+            self.story_flags[flag_name] = bool(value)
+
+    def has_seen_event(self, event_id: str) -> bool:
+        """指定イベントを見たかどうかを返す。"""
+        return event_id in self.seen_events
+
+    def has_completed_event(self, event_id: str) -> bool:
+        """指定イベントを完了したかどうかを返す。"""
+        return event_id in self.completed_events
+
+    def get_story_flag(self, flag_name: str, default: bool = False) -> bool:
+        """ストーリー進行用フラグを返す。"""
+        return self.story_flags.get(flag_name, default)
+
     def to_save_dict(self) -> dict:
         """セーブデータとして書き出す辞書を返す。"""
         return {
@@ -252,6 +282,11 @@ class Player:
                 "defense": int(self.defense),
                 "magic_attack": int(getattr(self, "magic_attack", 0)),
                 "magic_defense": int(getattr(self, "magic_defense", 0)),
+            },
+            "story": {
+                "seen_events": sorted(self.seen_events),
+                "completed_events": sorted(self.completed_events),
+                "story_flags": dict(self.story_flags),
             },
         }
 
@@ -304,6 +339,14 @@ class Player:
         else:
             self.hp = max(0, min(self.hp, self.max_hp))
 
+        story = data.get("story") if isinstance(data, dict) else None
+        if isinstance(story, dict):
+            self._load_story_from_save_dict(story)
+        else:
+            self.seen_events = set()
+            self.completed_events = set()
+            self.story_flags = {}
+
     def _load_status_from_save_dict(self, status: dict) -> None:
         """古いセーブに影響しない範囲で基本ステータスを復元する。"""
 
@@ -343,6 +386,26 @@ class Player:
     # ──────────────────────────────────────────────────────
     #  移動・当たり判定（変更なし）
     # ──────────────────────────────────────────────────────
+    def _load_story_from_save_dict(self, story: dict) -> None:
+        """ストーリー進行フラグを復元する。"""
+
+        def clean_event_set(value) -> set[str]:
+            if not isinstance(value, list):
+                return set()
+            return {item for item in value if isinstance(item, str) and item}
+
+        flags = story.get("story_flags")
+        if not isinstance(flags, dict):
+            flags = {}
+
+        self.seen_events = clean_event_set(story.get("seen_events"))
+        self.completed_events = clean_event_set(story.get("completed_events"))
+        self.story_flags = {
+            key: bool(value)
+            for key, value in flags.items()
+            if isinstance(key, str) and key
+        }
+
     def update(self, walls: list[pygame.Rect]):
         """毎フレーム呼ぶ。キー入力を読んで移動し壁との当たり判定を行う。"""
         keys = pygame.key.get_pressed()
