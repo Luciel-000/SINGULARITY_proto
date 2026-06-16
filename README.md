@@ -170,3 +170,23 @@ LUCIEL_000
 - 本格的なセーブ画面デザインは今後調整
 - F5/F9 は開発用
 - 次は Prototype 1.0 に向けた整理を検討
+
+---
+
+## Prototype 1.0 - Stable Start Flow
+
+### Step1
+
+- タイトル画面に選択式メニューを追加
+- NEW GAME / LOAD GAME / QUIT を表示
+- ↑ / ↓ または W / S で選択
+- Z / Enter / Space で決定
+- NEW GAME は既存のプロローグ開始フローへ接続
+- LOAD GAME は既存ロード処理へ接続
+- セーブデータなしでも落ちずにタイトルへ留まる
+- QUIT でゲーム終了できるようにした
+- 既存の Lキー直接ロードは維持
+
+### 最新コミット
+
+- Step1: 43e48fa
