@@ -63,7 +63,7 @@ from .world import World
 from .battle import Battle
 from .font_manager import FontManager
 from .sprite_manager import SpriteManager
-from .job_data import get_job, get_evolutions, all_job_ids, JOB_DATA  # ★ 0.4
+from .job_data import get_job, get_evolutions, all_job_ids, JOB_DATA, DEFAULT_JOB_ID  # ★ 0.4
 from .element_system import (
     get_element_name,
     get_element_color,
@@ -75,11 +75,12 @@ from .dialogue_data import (  # ★ 0.7 Step5-B: 会話データ
     get_dialogue_on_end,
 )
 from .job_unlock import get_unlocked_jobs, get_unlock_reasons
-from .save_system import save_game, load_game
+from .save_system import save_game, load_game, get_save_info
 from .zone_data import get_zone_name, get_zone_exits, DEFAULT_ZONE_ID, all_zone_ids
 
 # ★ 0.4: ジョブチェンジメニューの状態定数
 STATE_JOB_MENU = "job_menu"
+STATE_SAVE_MENU = "save_menu"
 
 
 class Game:
@@ -120,6 +121,8 @@ class Game:
         # job_menu_cursor  : カーソル位置
         self.job_menu_options: list[str] = []
         self.job_menu_cursor: int = 0
+        self.save_menu_options: list[str] = ["save", "load", "cancel"]
+        self.save_menu_cursor: int = 0
         # 開発用デバッグ表示トグル（F3 / L キー）
         self.show_debug_overlay: bool = False
 
@@ -287,6 +290,10 @@ class Game:
             self._handle_job_menu_key(key)
             return
 
+        if self.state == STATE_SAVE_MENU:
+            self._handle_save_menu_key(key)
+            return
+
         # ── 会話中 ★ 0.7 Step5-B
         if self.state == STATE_DIALOGUE:
             if key in (pygame.K_z, pygame.K_RETURN, pygame.K_SPACE):
@@ -301,6 +308,8 @@ class Game:
                 # J キーでジョブメニューを開く（DEBUG_MODE が有効な場合のみ）
                 if constants.DEBUG_MODE:
                     self._open_job_menu()
+            elif key == pygame.K_ESCAPE:
+                self._open_save_menu()
             elif key == pygame.K_z:
                 # ★ 0.7 Step5-B: Z キーで近くの NPC に話しかける
                 for npc in self.npcs:
@@ -390,6 +399,87 @@ class Game:
 
         self.state = STATE_PLAY
 
+    def _open_save_menu(self):
+        """探索中に開くセーブ/ロードメニュー。"""
+        if not self.player or not self.world:
+            return
+        self.save_menu_cursor = 0
+        self.state = STATE_SAVE_MENU
+
+    def _handle_save_menu_key(self, key: int):
+        """セーブ/ロードメニュー中のキー操作。"""
+        options = self.save_menu_options
+
+        if key in (pygame.K_UP, pygame.K_w):
+            self.save_menu_cursor = (self.save_menu_cursor - 1) % len(options)
+
+        elif key in (pygame.K_DOWN, pygame.K_s):
+            self.save_menu_cursor = (self.save_menu_cursor + 1) % len(options)
+
+        elif key in (pygame.K_ESCAPE, pygame.K_x):
+            self.state = STATE_PLAY
+
+        elif key in (pygame.K_z, pygame.K_RETURN, pygame.K_SPACE):
+            chosen = options[self.save_menu_cursor]
+            if chosen == "save":
+                self._save_current_slot()
+            elif chosen == "load":
+                self._load_current_slot()
+            else:
+                self.state = STATE_PLAY
+
+    def _save_current_slot(self):
+        """現在の単一スロットに保存する。"""
+        if not self.player:
+            self._add_message("セーブに失敗しました", C_CRIMSON_LT)
+            self.state = STATE_PLAY
+            return
+
+        ok = save_game(
+            self.player, world_data={"current_zone_id": self.current_zone_id}
+        )
+        if ok:
+            self._add_message("セーブしました", C_GRAY)
+        else:
+            self._add_message("セーブに失敗しました", C_CRIMSON_LT)
+        self.state = STATE_PLAY
+
+    def _load_current_slot(self):
+        """現在の単一スロットからロードする。"""
+        if self.player is None:
+            self.player = Player(0, 0)
+
+        ok, reason = load_game(self.player, game=self)
+        if ok:
+            self.state = STATE_PLAY
+            self._add_message("ロードしました", C_GREEN_DIM)
+        else:
+            self.state = STATE_PLAY
+            if reason == "no_file":
+                self._add_message("セーブデータがありません", C_CRIMSON_LT)
+            else:
+                self._add_message("ロードに失敗しました", C_CRIMSON_LT)
+
+    def _get_save_summary_lines(self) -> list[tuple[str, tuple]]:
+        """セーブメニューに表示する単一スロット概要を返す。"""
+        exists, info = get_save_info()
+        if not exists:
+            return [("Slot 1: Empty", C_DARK_GRAY)]
+
+        zone_id = info.get("current_zone_id") or DEFAULT_ZONE_ID
+        zone_name = get_zone_name(zone_id)
+        job_id = info.get("current_job_id") or DEFAULT_JOB_ID
+        if job_id not in JOB_DATA:
+            job_id = DEFAULT_JOB_ID
+        job = get_job(job_id)
+        saved_at = info.get("saved_at") or "Unknown time"
+        version = info.get("version") or "unknown"
+        return [
+            (f"Slot 1: {saved_at}", C_WHITE),
+            (f"Zone: {zone_name}   Job: {job['name']}", C_GRAY),
+            (f"Version: {version}", C_DARK_GRAY),
+        ]
+
     # ──────────────────────────────────────────────────────
     #  毎フレーム更新
     # ──────────────────────────────────────────────────────
@@ -405,6 +495,9 @@ class Game:
 
         # ジョブメニュー中はプレイヤーを更新しない
         if self.state == STATE_JOB_MENU:
+            return
+
+        if self.state == STATE_SAVE_MENU:
             return
 
         if self.state == STATE_PROLOGUE:
@@ -649,6 +742,9 @@ class Game:
         elif self.state == STATE_JOB_MENU:
             self._draw_play(surface)
             self._draw_job_menu(surface)
+        elif self.state == STATE_SAVE_MENU:
+            self._draw_play(surface)
+            self._draw_save_menu(surface)
         elif self.state == STATE_DIALOGUE:
             # ★ 0.7 Step5-B: マップの上に会話ウィンドウを重ねる
             self._draw_play(surface)
@@ -885,6 +981,7 @@ class Game:
         hint_text = f"[ {zone_name} ]"
         if constants.DEBUG_MODE:
             hint_text += "  J：ジョブチェンジ"
+        hint_text += "  Esc：セーブ"
         hint = self.font_sm.render(hint_text, True, C_DARK_GRAY)
         surface.blit(hint, (WINDOW_W - hint.get_width() - 10, GAME_AREA_H + 10))
 
@@ -1005,6 +1102,55 @@ class Game:
             surface.blit(preview, (wx + 38, opt_y + i * 66 + 26))
 
         # 操作ヒント
+        hint = self.font_sm.render(
+            "↑↓ 選択   Z/Enter 決定   Esc/X キャンセル", True, C_DARK_GRAY
+        )
+        surface.blit(hint, (wx + WIN_W // 2 - hint.get_width() // 2, wy + WIN_H - 26))
+
+    def _draw_save_menu(self, surface: pygame.Surface):
+        """探索マップの上にセーブ/ロードメニューを表示する。"""
+        overlay = pygame.Surface((WINDOW_W, GAME_AREA_H), pygame.SRCALPHA)
+        overlay.fill(make_rgba(0, 0, 0, 150))
+        surface.blit(overlay, (0, 0))
+
+        WIN_W, WIN_H = 460, 300
+        wx = WINDOW_W // 2 - WIN_W // 2
+        wy = GAME_AREA_H // 2 - WIN_H // 2
+        pygame.draw.rect(surface, C_WINDOW_BG, (wx, wy, WIN_W, WIN_H), border_radius=6)
+        pygame.draw.rect(
+            surface, C_WINDOW_BORDER, (wx, wy, WIN_W, WIN_H), 2, border_radius=6
+        )
+        pygame.draw.line(
+            surface, C_GOLD, (wx + 1, wy + 42), (wx + WIN_W - 1, wy + 42), 1
+        )
+
+        title = self.font_md.render("SAVE / LOAD", True, C_GOLD)
+        surface.blit(title, (wx + WIN_W // 2 - title.get_width() // 2, wy + 12))
+
+        summary_y = wy + 58
+        for i, (line, color) in enumerate(self._get_save_summary_lines()):
+            txt = self.font_sm.render(line, True, color)
+            surface.blit(txt, (wx + 24, summary_y + i * 22))
+
+        label_map = {
+            "save": "Save",
+            "load": "Load",
+            "cancel": "Cancel",
+        }
+        opt_y = wy + 146
+        for i, option in enumerate(self.save_menu_options):
+            is_sel = i == self.save_menu_cursor
+            row = pygame.Rect(wx + 18, opt_y + i * 36 - 5, WIN_W - 36, 32)
+            if is_sel:
+                pygame.draw.rect(surface, (35, 28, 55), row, border_radius=4)
+                pygame.draw.rect(surface, C_GOLD, row, 1, border_radius=4)
+                cursor = self.font_md.render(">", True, C_GOLD)
+                surface.blit(cursor, (wx + 34, opt_y + i * 36 - 2))
+
+            color = C_GOLD if is_sel else C_WHITE
+            text = self.font_md.render(label_map.get(option, option), True, color)
+            surface.blit(text, (wx + 62, opt_y + i * 36 - 1))
+
         hint = self.font_sm.render(
             "↑↓ 選択   Z/Enter 決定   Esc/X キャンセル", True, C_DARK_GRAY
         )

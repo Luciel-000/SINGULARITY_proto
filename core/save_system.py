@@ -1,5 +1,6 @@
 import json
 import os
+import time
 from typing import Tuple
 
 SAVE_DIR = "save_data"
@@ -26,6 +27,7 @@ def save_game(
         path = _full_path(filepath)
         data = {
             "version": "0.9.0",
+            "saved_at": time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()),
             "player": player.to_save_dict(),
         }
         if isinstance(world_data, dict) and world_data:
@@ -35,6 +37,36 @@ def save_game(
         return True
     except Exception:
         return False
+
+
+def get_save_info(filepath: str = DEFAULT_SLOT) -> Tuple[bool, dict]:
+    """Return a small summary for the save menu without mutating game state."""
+    try:
+        path = _full_path(filepath)
+        if not os.path.isfile(path):
+            return False, {}
+        with open(path, "r", encoding="utf-8") as f:
+            data = json.load(f)
+        if not isinstance(data, dict):
+            return False, {}
+
+        info = {
+            "version": data.get("version", ""),
+            "saved_at": data.get("saved_at", ""),
+        }
+
+        player_data = data.get("player")
+        if isinstance(player_data, dict):
+            info["current_job_id"] = player_data.get("current_job_id", "")
+            info["position"] = player_data.get("position", {})
+
+        world_data = data.get("world")
+        if isinstance(world_data, dict):
+            info["current_zone_id"] = world_data.get("current_zone_id", "")
+
+        return True, info
+    except Exception:
+        return False, {}
 
 
 def load_game(player, filepath: str = DEFAULT_SLOT, game=None) -> Tuple[bool, str]:
