@@ -123,6 +123,8 @@ class Game:
         self.job_menu_cursor: int = 0
         self.save_menu_options: list[str] = ["save", "load", "cancel"]
         self.save_menu_cursor: int = 0
+        self.title_menu_options: list[str] = ["new_game", "load_game", "quit"]
+        self.title_menu_cursor: int = 0
         # 開発用デバッグ表示トグル（F3 / L キー）
         self.show_debug_overlay: bool = False
 
@@ -217,6 +219,38 @@ class Game:
             else:
                 self._add_message("ロードに失敗しました", C_CRIMSON_LT)
 
+    def _start_new_game(self) -> None:
+        self._init_game()
+        self._start_prologue()
+
+    def _handle_title_key(self, key: int) -> None:
+        if key in (pygame.K_UP, pygame.K_w):
+            self.title_menu_cursor = (self.title_menu_cursor - 1) % len(
+                self.title_menu_options
+            )
+            return
+
+        if key in (pygame.K_DOWN, pygame.K_s):
+            self.title_menu_cursor = (self.title_menu_cursor + 1) % len(
+                self.title_menu_options
+            )
+            return
+
+        if key == pygame.K_l:
+            self._load_title_save()
+            return
+
+        if key not in (pygame.K_z, pygame.K_RETURN, pygame.K_SPACE):
+            return
+
+        selected = self.title_menu_options[self.title_menu_cursor]
+        if selected == "new_game":
+            self._start_new_game()
+        elif selected == "load_game":
+            self._load_title_save()
+        elif selected == "quit":
+            pygame.event.post(pygame.event.Event(pygame.QUIT))
+
     # ──────────────────────────────────────────────────────
     #  イベント処理
     # ──────────────────────────────────────────────────────
@@ -253,13 +287,8 @@ class Game:
 
         # ── タイトル
         if self.state == STATE_TITLE:
-            if key in (pygame.K_SPACE, pygame.K_RETURN):
-                self._init_game()
-                self._start_prologue()
-                return
-            if key == pygame.K_l:
-                self._load_title_save()
-                return
+            self._handle_title_key(key)
+            return
 
         # DEBUG_MODE のときだけ表示トグルを許可（F3 または L）
         if constants.DEBUG_MODE and key in (pygame.K_F3, pygame.K_l):
@@ -877,46 +906,47 @@ class Game:
 
         t1 = self.font_lg.render("SINGULARITY", True, C_WHITE)
         t2 = self.font_md.render("- Chronicle of Origin -", True, C_GOLD)
-        t3 = self.font_sm.render("Prototype  0.7", True, C_GRAY)
-        t4 = self.font_sm.render("[ L ] でロード", True, C_GRAY)
+        t3 = self.font_sm.render("Prototype  1.0", True, C_GRAY)
         surface.blit(t1, (WINDOW_W // 2 - t1.get_width() // 2, 110))
         surface.blit(t2, (WINDOW_W // 2 - t2.get_width() // 2, 158))
         surface.blit(t3, (WINDOW_W // 2 - t3.get_width() // 2, 192))
-        surface.blit(t4, (WINDOW_W // 2 - t4.get_width() // 2, 218))
 
         img = self.sprite_mgr.get_player("novice_m", size=(64, 64))
         if img:
-            surface.blit(img, (WINDOW_W // 2 - 32, 230))
+            surface.blit(img, (WINDOW_W // 2 - 32, 222))
         else:
-            pygame.draw.circle(surface, C_WHITE, (WINDOW_W // 2, 258), 18)
+            pygame.draw.circle(surface, C_WHITE, (WINDOW_W // 2, 250), 18)
             pygame.draw.rect(
                 surface,
                 C_WHITE,
-                pygame.Rect(WINDOW_W // 2 - 10, 275, 20, 30),
+                pygame.Rect(WINDOW_W // 2 - 10, 267, 20, 30),
                 border_radius=4,
             )
 
         desc = self.font_sm.render("主人公：ノービス", True, C_GRAY)
-        surface.blit(desc, (WINDOW_W // 2 - desc.get_width() // 2, 306))
+        surface.blit(desc, (WINDOW_W // 2 - desc.get_width() // 2, 298))
 
-        info_lines = [
-            "移動：WASD / 矢印キー",
-            "コマンド：↑↓ 選択  Z/Enter 決定",
-            "敵に接触するとバトル開始！",
+        labels = {
+            "new_game": "NEW GAME",
+            "load_game": "LOAD GAME",
+            "quit": "QUIT",
+        }
+        menu_y = 350
+        for i, option in enumerate(self.title_menu_options):
+            selected = i == self.title_menu_cursor
+            color = C_GOLD if selected else C_GRAY
+            cursor = "> " if selected else "  "
+            text = self.font_md.render(f"{cursor}{labels[option]}", True, color)
+            surface.blit(text, (WINDOW_W // 2 - text.get_width() // 2, menu_y + i * 36))
+
+        guide_lines = [
+            "Up / Down : Select",
+            "Z / Enter / Space : Confirm",
+            "L : Load Game",
         ]
-        if constants.DEBUG_MODE:
-            info_lines.insert(2, "J キー：ジョブチェンジ")
-        for i, line in enumerate(info_lines):
+        for i, line in enumerate(guide_lines):
             txt = self.font_sm.render(line, True, C_GRAY)
-            surface.blit(txt, (WINDOW_W // 2 - txt.get_width() // 2, 352 + i * 22))
-
-        if (self.title_timer // 30) % 2 == 0:
-            start = self.font_md.render("[ SPACE ] でゲーム開始", True, C_GOLD)
-            load_text = self.font_sm.render("[ L ] でロード", True, C_GOLD)
-            surface.blit(start, (WINDOW_W // 2 - start.get_width() // 2, WINDOW_H - 75))
-            surface.blit(
-                load_text, (WINDOW_W // 2 - load_text.get_width() // 2, WINDOW_H - 45)
-            )
+            surface.blit(txt, (WINDOW_W // 2 - txt.get_width() // 2, 474 + i * 20))
 
     # ── 探索マップ ────────────────────────────────────────
     def _draw_play(self, surface: pygame.Surface):
