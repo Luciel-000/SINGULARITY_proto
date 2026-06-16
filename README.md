@@ -187,6 +187,17 @@ LUCIEL_000
 - QUIT でゲーム終了できるようにした
 - 既存の Lキー直接ロードは維持
 
+### Step2
+
+- NEW GAME 後の prologue_intro 文面を調整
+- 「名もなき祈り」
+- 「世界の叡智」
+- 「未完成の観測補助機構」へ自然につながる導入にした
+- prologue_intro → sage_boot → 探索 の既存フローは維持
+- story_flags の prologue_intro / sage_boot 記録が壊れていないことを確認
+- 「大賢者」表記が出ていないことを確認
+
 ### 最新コミット
 
 - Step1: 43e48fa
+- Step2: fa53e87
