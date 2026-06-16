@@ -81,6 +81,8 @@ class Player:
         self.hp = self.max_hp
         self.atk = self._calc_atk()
         self.defense = self._calc_defense()
+        self.magic_attack = 0
+        self.magic_defense = 0
 
         # ── タイマー類
         self.attack_cd = 0
@@ -241,6 +243,16 @@ class Player:
                 "x": int(self.rect.x),
                 "y": int(self.rect.y),
             },
+            "status": {
+                "level": int(self.level),
+                "exp": int(self.exp),
+                "hp": int(self.hp),
+                "max_hp": int(self.max_hp),
+                "atk": int(self.atk),
+                "defense": int(self.defense),
+                "magic_attack": int(getattr(self, "magic_attack", 0)),
+                "magic_defense": int(getattr(self, "magic_defense", 0)),
+            },
         }
 
     def load_from_save_dict(self, data: dict) -> None:
@@ -286,7 +298,47 @@ class Player:
         self.atk = self._calc_atk()
         self.defense = self._calc_defense()
         # HP が最大を越えていたら調整
-        self.hp = min(self.hp, self.max_hp)
+        status = data.get("status") if isinstance(data, dict) else None
+        if isinstance(status, dict):
+            self._load_status_from_save_dict(status)
+        else:
+            self.hp = max(0, min(self.hp, self.max_hp))
+
+    def _load_status_from_save_dict(self, status: dict) -> None:
+        """古いセーブに影響しない範囲で基本ステータスを復元する。"""
+
+        def valid_int(value) -> bool:
+            return isinstance(value, int) and not isinstance(value, bool)
+
+        def get_int(name: str, current: int, minimum: int | None = None) -> int:
+            value = status.get(name)
+            if not valid_int(value):
+                return current
+            if minimum is not None:
+                value = max(minimum, value)
+            return value
+
+        self.level = get_int("level", self.level, 1)
+        self.exp = get_int("exp", self.exp, 0)
+
+        self.max_hp = get_int("max_hp", self.max_hp, 1)
+        self.atk = get_int("atk", self.atk, 0)
+        self.defense = get_int("defense", self.defense, 0)
+        self.magic_attack = get_int(
+            "magic_attack", getattr(self, "magic_attack", 0), 0
+        )
+        self.magic_defense = get_int(
+            "magic_defense", getattr(self, "magic_defense", 0), 0
+        )
+
+        hp = get_int("hp", self.hp, 0)
+        self.hp = max(0, min(hp, self.max_hp))
+
+        self._base_max_hp = max(1, self.max_hp - self.current_job.get("hp_bonus", 0))
+        self._base_atk = max(0, self.atk - self.current_job.get("atk_bonus", 0))
+        self._base_defense = max(
+            0, self.defense - self.current_job.get("def_bonus", 0)
+        )
 
     # ──────────────────────────────────────────────────────
     #  移動・当たり判定（変更なし）
