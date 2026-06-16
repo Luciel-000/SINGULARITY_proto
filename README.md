@@ -134,6 +134,14 @@ LUCIEL_000
 - magic_attack / magic_defense を保存/ロード
 - 古いセーブデータに status が無くても落ちないようにした
 - hp が 0 未満や max_hp 超えにならないよう補正
+- ストーリー進行フラグ保存の土台を追加
+- seen_events を保存/ロード
+- completed_events を保存/ロード
+- story_flags を保存/ロード
+- prologue_intro / sage_boot / NPC会話ID の最低限の記録に対応
+- elder_first 完了時に first_elder_talk / met_elder を記録
+- sage_boot 完了時に sage_booted を記録
+- 古いセーブデータに story が無くても落ちないようにした
 
 ### 最新コミット
 
@@ -143,10 +151,12 @@ LUCIEL_000
 - Step3: d31dfb9
 - Step4: 4212619
 - Step5: 89d9953
+- Step6: 099916a
 
 ### 注意事項
 
-- ストーリー進行フラグ保存はまだ未実装
+- 本格的なクエスト管理はまだ未実装
+- 複雑な分岐管理はまだ未実装
 - 複数セーブスロットはまだ未実装
 - 本格的なセーブ画面デザインは今後調整
 - F5/F9 は開発用
