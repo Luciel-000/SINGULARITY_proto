@@ -120,6 +120,12 @@ LUCIEL_000
 - `save_data/` を `.gitignore` に追加
 - `DEBUG_MODE=True` の開発用として F5 セーブ / F9 ロードを追加
 - タイトル画面で L キーからロードできるようにした
+- 探索中に Esc で SAVE / LOAD メニューを開けるようにした
+- SAVE / LOAD / CANCEL を選択できるようにした
+- ↑ / ↓ で選択、Z / Enter で決定、Esc / X で閉じる
+- セーブスロット概要として保存時刻、Zone、Job、version を表示
+- `save_system.py` に `saved_at` を保存
+- UI表示用の `get_save_info()` を追加
 
 ### 最新コミット
 
@@ -127,11 +133,12 @@ LUCIEL_000
 - ignore save_data: 6caa42c
 - Step2: fa085c5
 - Step3: d31dfb9
+- Step4: 4212619
 
 ### 注意事項
 
-- セーブ画面UIはまだ未実装
 - 複数セーブスロットはまだ未実装
+- 本格的なセーブ画面デザインは今後調整
 - ストーリー進行フラグの保存はまだ未実装
 - F5/F9 は開発用
-- 次は Prototype 0.9 Step4 としてセーブ画面UI、または Prototype 1.0 に向けた整理を検討
+- 次は Prototype 1.0 に向けた整理を検討
