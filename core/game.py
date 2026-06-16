@@ -57,7 +57,7 @@ from .constants import (
     SLIME_VARIANTS,
 )
 from . import constants
-from .player import Player
+from .player import Player, DEFAULT_SUPPORT_SYSTEM_NAME
 from .enemy import Enemy
 from .world import World
 from .battle import Battle
@@ -254,6 +254,14 @@ class Game:
     # ──────────────────────────────────────────────────────
     #  イベント処理
     # ──────────────────────────────────────────────────────
+    def get_support_system_display_name(self) -> str:
+        name = DEFAULT_SUPPORT_SYSTEM_NAME
+        if self.player and hasattr(self.player, "support_system_name"):
+            player_name = getattr(self.player, "support_system_name", "")
+            if isinstance(player_name, str) and player_name.strip():
+                name = player_name.strip()
+        return f"《{name}》"
+
     def handle_event(self, event: pygame.event.Event):
         if event.type != pygame.KEYDOWN:
             # バトル中はバトルへ全イベントを渡す
@@ -283,6 +291,14 @@ class Game:
                     self._add_message("セーブデータがありません", C_CRIMSON_LT)
                 else:
                     self._add_message("ロードに失敗しました", C_CRIMSON_LT)
+            return
+
+        if constants.DEBUG_MODE and key == pygame.K_F6:
+            if self.player and hasattr(self.player, "set_support_system_name"):
+                self.player.set_support_system_name("ルシエル")
+                self._add_message(
+                    "観測補助機構名を ルシエル に設定しました", C_GOLD
+                )
             return
 
         # ── タイトル
@@ -746,7 +762,7 @@ class Game:
             self.talking_npc = None
             self.current_dialogue_id = "sage_boot"
             self.dialogue_lines = get_dialogue_lines("sage_boot")
-            self.dialogue_speaker = get_dialogue_speaker("sage_boot")
+            self.dialogue_speaker = self.get_support_system_display_name()
             self.dialogue_index = 0
             self._mark_story_event_seen("sage_boot")
             return

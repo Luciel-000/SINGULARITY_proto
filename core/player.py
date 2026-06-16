@@ -45,6 +45,8 @@ from .constants import (
     EXP_TABLE,
 )
 
+DEFAULT_SUPPORT_SYSTEM_NAME = "観測補助機構"
+
 
 class Player:
     """
@@ -107,6 +109,7 @@ class Player:
         self.seen_events: set[str] = set()
         self.completed_events: set[str] = set()
         self.story_flags: dict[str, bool] = {}
+        self.support_system_name: str = DEFAULT_SUPPORT_SYSTEM_NAME
 
     # ──────────────────────────────────────────────────────
     #  ★ 0.4: ジョブ関連
@@ -255,10 +258,19 @@ class Player:
         """ストーリー進行用フラグを返す。"""
         return self.story_flags.get(flag_name, default)
 
+    def set_support_system_name(self, name: str) -> None:
+        """観測補助機構の表示名を設定する。空文字はデフォルト名に戻す。"""
+        if not isinstance(name, str):
+            self.support_system_name = DEFAULT_SUPPORT_SYSTEM_NAME
+            return
+        cleaned = name.strip()
+        self.support_system_name = cleaned or DEFAULT_SUPPORT_SYSTEM_NAME
+
     def to_save_dict(self) -> dict:
         """セーブデータとして書き出す辞書を返す。"""
         return {
             "current_job_id": self.current_job_id,
+            "support_system_name": self.support_system_name,
             "unlocked_jobs": (
                 list(self.unlocked_jobs)
                 if isinstance(self.unlocked_jobs, list)
@@ -300,6 +312,11 @@ class Player:
             job_id = DEFAULT_JOB_ID
         self.current_job_id = job_id
         self.current_job = get_job(self.current_job_id)
+
+        support_system_name = (
+            data.get("support_system_name") if isinstance(data, dict) else None
+        )
+        self.set_support_system_name(support_system_name)
 
         # unlocked_jobs
         uj = data.get("unlocked_jobs") if isinstance(data, dict) else None
