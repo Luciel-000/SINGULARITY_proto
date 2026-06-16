@@ -197,7 +197,19 @@ LUCIEL_000
 - story_flags の prologue_intro / sage_boot 記録が壊れていないことを確認
 - 「大賢者」表記が出ていないことを確認
 
+### Step3
+
+- Player に support_system_name を追加
+- デフォルト名は「観測補助機構」
+- support_system_name をセーブ/ロード対象に追加
+- 古いセーブデータや空文字でも「観測補助機構」にフォールバック
+- Game に get_support_system_display_name() を追加
+- sage_boot 開始時の話者名に表示名ヘルパーを使用
+- DEBUG_MODE=True のとき F6 で仮に「ルシエル」へ変更できるようにした
+- 本格的な名前入力UIはまだ未実装
+
 ### 最新コミット
 
 - Step1: 43e48fa
 - Step2: fa53e87
+- Step3: bb130a0
