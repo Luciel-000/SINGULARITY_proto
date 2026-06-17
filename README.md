@@ -296,3 +296,23 @@ LUCIEL_000
 ### 最新コミット
 
 - Step2 docs: fb93e08
+
+---
+
+## Prototype 1.2 - Story Progression / NPC Dialogue
+
+### Step1
+
+- NPC会話の条件分岐土台を追加
+- 謎の老人の会話IDを進行状況で切り替え
+- battle_win_count >= 1 の場合は elder_after_battle を優先
+- sage_booted が True の場合は elder_after_sage を使用
+- 条件なしの場合は elder_first を使用
+- elder_after_sage / elder_after_battle の会話を追加
+- story_flags / action_log の保存・復元後も会話分岐が維持されることを確認
+- core/*.py に「大賢者」表記が残っていないことを確認
+- save_data やテスト用スクリプトは commit 対象外
+
+### 最新コミット
+
+- Step1: 0162cd7
