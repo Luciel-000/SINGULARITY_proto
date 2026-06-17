@@ -208,8 +208,24 @@ LUCIEL_000
 - DEBUG_MODE=True のとき F6 で仮に「ルシエル」へ変更できるようにした
 - 本格的な名前入力UIはまだ未実装
 
+### Step4
+
+- 観測補助機構の名前入力UIを追加
+- sage_boot 完了後に名前入力画面へ進む
+- 入力後に探索へ進む流れに変更
+- 空入力時は「観測補助機構」にフォールバック
+- 最大12文字まで入力可能
+- Backspace で削除
+- Enter / Z で決定
+- Esc でキャンセルし「観測補助機構」に決定
+- 入力した名前は support_system_name に保存される
+- SAVE / LOAD で名前が復元される
+- LOAD GAME では名前入力画面に行かない
+- DEBUG F6 の仮変更機能は維持
+
 ### 最新コミット
 
 - Step1: 43e48fa
 - Step2: fa53e87
 - Step3: bb130a0
+- Step4: b47ce55
