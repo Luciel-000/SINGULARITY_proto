@@ -246,3 +246,22 @@ LUCIEL_000
 - Step3: bb130a0
 - Step4: b47ce55
 - Step4 docs: 1bd1a93
+
+---
+
+## Prototype 1.1 - Cleanup / Naming Polish
+
+### Step1
+
+- 旧称「大賢者」表記を整理
+- README / コメント / 説明文の表記を「観測補助機構」系へ統一
+- 大賢者システム → 観測補助機構システム
+- 大賢者メッセージ → 観測補助メッセージ
+- スキル説明文の旧称も整理
+- Select-String で「大賢者」0件を確認
+- 機能変更なし
+- save_data やテスト用スクリプトは commit 対象外
+
+### 最新コミット
+
+- Step1: e4bd386
