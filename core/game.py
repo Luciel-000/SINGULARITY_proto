@@ -740,17 +740,37 @@ class Game:
         if self.player and hasattr(self.player, "mark_event_completed"):
             self.player.mark_event_completed(event_id)
 
+    def _resolve_npc_dialogue_id(self, npc: "NPC") -> str:
+        """NPC and player stateから、今回表示する会話IDを決める。"""
+        base_dialogue_id = npc.get_current_dialogue_id()
+        if npc.dialogue_id != "elder_first" or not self.player:
+            return base_dialogue_id
+
+        action_log = getattr(self.player, "action_log", None)
+        battle_win_count = 0
+        if action_log and hasattr(action_log, "get_summary"):
+            summary = action_log.get_summary()
+            battle_win_count = int(summary.get("battle_win_count", 0))
+
+        if battle_win_count >= 1:
+            return "elder_after_battle"
+
+        if (
+            hasattr(self.player, "get_story_flag")
+            and self.player.get_story_flag("sage_booted", False)
+        ):
+            return "elder_after_sage"
+
+        return base_dialogue_id
+
     def _start_dialogue(self, npc: "NPC"):
         """
         NPC との会話を開始する。
         NPC が初回未会話なら dialogue_id、
         2回目以降なら repeat_dialogue_id の会話を使う。
         """
-        # talked フラグを見て初回/2回目以降を選択
-        if npc.talked and npc.repeat_dialogue_id:
-            d_id = npc.repeat_dialogue_id
-        else:
-            d_id = npc.dialogue_id
+        # NPCとplayer状態を見て今回の会話IDを選択
+        d_id = self._resolve_npc_dialogue_id(npc)
 
         self.current_dialogue_id = d_id
         self.dialogue_lines = get_dialogue_lines(d_id)
