@@ -326,7 +326,22 @@ LUCIEL_000
 - クエスト一覧UIや報酬処理はまだ未実装
 - save_data やテスト用スクリプトは commit 対象外
 
+### Step3
+
+- 現在の目的表示を追加
+- get_current_objective_text() を追加
+- quest_check_field=True の場合は「目的：村の外を確認する」を表示
+- quest_check_field_done=True の場合は「目的：老人に報告する」を表示
+- フラグなしの場合は目的表示なし
+- 探索中 STATE_PLAY のみ右上に目的を1行表示
+- 戦闘中・会話中には表示しない
+- SAVE / LOAD 後も目的表示が復元されることを確認
+- core/*.py に「大賢者」表記が残っていないことを確認
+- クエスト一覧UIや報酬処理はまだ未実装
+- save_data やテスト用スクリプトは commit 対象外
+
 ### 最新コミット
 
 - Step1: 0162cd7
 - Step2: bb58527
+- Step3: b63ae9e
