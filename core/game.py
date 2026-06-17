@@ -601,6 +601,7 @@ class Game:
         if self.state == STATE_BATTLE and self.battle:
             result = self.battle.update()
             if result == "win":
+                self._set_story_flag("quest_check_field_done", True)
                 enemy = self.battle_enemy
                 if enemy:
                     leveled = self.player.gain_exp(enemy.exp_val)
@@ -740,25 +741,41 @@ class Game:
         if self.player and hasattr(self.player, "mark_event_completed"):
             self.player.mark_event_completed(event_id)
 
+    def _set_story_flag(self, flag_name: str, value: bool = True):
+        if self.player and hasattr(self.player, "set_story_flag"):
+            self.player.set_story_flag(flag_name, value)
+
+    def _get_story_flag(self, flag_name: str, default: bool = False) -> bool:
+        if self.player and hasattr(self.player, "get_story_flag"):
+            return self.player.get_story_flag(flag_name, default)
+        return default
+
+    def _get_battle_win_count(self) -> int:
+        if not self.player:
+            return 0
+        action_log = getattr(self.player, "action_log", None)
+        if action_log and hasattr(action_log, "get_summary"):
+            summary = action_log.get_summary()
+            return int(summary.get("battle_win_count", 0))
+        return 0
+
     def _resolve_npc_dialogue_id(self, npc: "NPC") -> str:
         """NPC and player stateから、今回表示する会話IDを決める。"""
         base_dialogue_id = npc.get_current_dialogue_id()
         if npc.dialogue_id != "elder_first" or not self.player:
             return base_dialogue_id
 
-        action_log = getattr(self.player, "action_log", None)
-        battle_win_count = 0
-        if action_log and hasattr(action_log, "get_summary"):
-            summary = action_log.get_summary()
-            battle_win_count = int(summary.get("battle_win_count", 0))
+        if self._get_story_flag("quest_check_field_done", False):
+            return "elder_after_quest_done"
 
+        battle_win_count = self._get_battle_win_count()
         if battle_win_count >= 1:
+            self._set_story_flag("quest_check_field_done", True)
             return "elder_after_battle"
 
-        if (
-            hasattr(self.player, "get_story_flag")
-            and self.player.get_story_flag("sage_booted", False)
-        ):
+        if self._get_story_flag("sage_booted", False):
+            if not self._get_story_flag("quest_check_field", False):
+                self._set_story_flag("quest_check_field", True)
             return "elder_after_sage"
 
         return base_dialogue_id
@@ -815,8 +832,8 @@ class Game:
             self._mark_story_event_completed(finished_dialogue_id)
             if finished_dialogue_id == "elder_first":
                 self._mark_story_event_completed("first_elder_talk")
-                if self.player and hasattr(self.player, "set_story_flag"):
-                    self.player.set_story_flag("met_elder", True)
+                self._set_story_flag("met_elder", True)
+                self._set_story_flag("quest_check_field", True)
             if self.talking_npc:
                 self.talking_npc.mark_talked()  # 初回会話フラグを立てる
             self.talking_npc = None
@@ -833,8 +850,8 @@ class Game:
         self._mark_story_event_completed(finished_dialogue_id)
         if finished_dialogue_id == "elder_first":
             self._mark_story_event_completed("first_elder_talk")
-            if self.player and hasattr(self.player, "set_story_flag"):
-                self.player.set_story_flag("met_elder", True)
+            self._set_story_flag("met_elder", True)
+            self._set_story_flag("quest_check_field", True)
         if finished_dialogue_id == "sage_boot" and self.player and hasattr(
             self.player, "set_story_flag"
         ):

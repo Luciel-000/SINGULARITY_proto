@@ -131,6 +131,16 @@ DIALOGUE_DATA: dict[str, dict] = {
         "on_end" : None,
     },
 
+    "elder_after_quest_done": {
+        "speaker": "髫ｰ蠑ｱ繝ｻ髢竏ｽ・ｺ・ｺ",
+        "lines"  : [
+            "よく戻ったな。",
+            "外の魔物を退けたのなら、少しはこの地の危うさも見えただろう。",
+            "だが、これは始まりにすぎん。焦らず進め。",
+        ],
+        "on_end" : None,
+    },
+
     "sage_boot": {
         "speaker": "《観測補助機構》",
         "lines"  : [
