@@ -22,7 +22,7 @@
     - 敵撃破で勝利処理、生存で敵ターンへ進む
 
   [0.5 Step8-D 変更点]
-    - sage_messages を import し、大賢者メッセージをログに追加
+    - sage_messages を import し、観測補助メッセージをログに追加
     - バトル開始時: get_battle_start_message(enemy.name, enemy.element)
     - 通常攻撃時 : get_affinity_message(player.element, enemy.element)
     - 敵攻撃時   : get_affinity_message(enemy.element, player.element)
@@ -34,7 +34,7 @@
     - ターン進行管理（プレイヤーターン → 敵ターン → ...）
     - 攻撃アニメーション（前進 → 剣エフェクト → 後退）
     - ダメージ計算と浮き上がり数字（属性倍率込み）
-    - スキル発動・属性相性・大賢者メッセージの連携
+    - スキル発動・属性相性・観測補助メッセージの連携
     - 勝利 / 敗北 / 逃走の判定
 
   用語:
@@ -52,7 +52,7 @@ import math
 import random
 from .utils import safe_alpha, make_rgba, lerp_alpha  # ★ 0.3.1: alpha安全変換
 from .element_system import get_multiplier  # ★ 0.5: 属性相性倍率
-from .sage_messages import (  # ★ 0.5 Step8-D: 大賢者メッセージ
+from .sage_messages import (  # ★ 0.5 Step8-D: 観測補助メッセージ
     get_battle_start_message,
     get_affinity_message,
     get_skill_message,
@@ -155,7 +155,7 @@ class Battle:
         # ── バトルログ（画面下コマンドウィンドウ内に表示）
         self.log: list[str] = ["バトル開始！"]
 
-        # ★ 0.5 Step8-D: バトル開始時の大賢者メッセージ
+        # ★ 0.5 Step8-D: バトル開始時の観測補助メッセージ
         sage_start = get_battle_start_message(
             enemy_name=enemy.name,
             enemy_element=enemy.element,
@@ -293,7 +293,7 @@ class Battle:
             if skill_id == "observe":
                 self._add_log(f"「{skill_name}」で観察した。")
                 self._add_log("解析処理は後で実装")
-                # ★ 0.5 Step8-D: observe 専用の大賢者メッセージ
+                # ★ 0.5 Step8-D: observe 専用の観測補助メッセージ
                 self._add_log(
                     get_observe_message(
                         enemy_name=self.enemy.name,
@@ -309,7 +309,7 @@ class Battle:
         # ── 攻撃スキル（power > 0.0）────────────────────────
         # スキル発動ログ
         self._add_log(f"ノービスは「{skill_name}」を使った！")
-        # ★ 0.5 Step8-D: スキル使用の大賢者メッセージ
+        # ★ 0.5 Step8-D: スキル使用の観測補助メッセージ
         self._add_log(get_skill_message(skill_id))
         # 属性相性倍率を計算
         mult = get_multiplier(skill_elem, self.enemy.element)
@@ -770,8 +770,8 @@ class Battle:
             list[str] : 折り返し済みの行リスト（1件以上）
 
         例:
-            _wrap_text("《大賢者》長いメッセージ…", font, 570)
-            → ["《大賢者》長いメッセ", "ージ…"]
+            _wrap_text("《観測補助機構》長いメッセージ…", font, 570)
+            → ["《観測補助機構》長いメ", "ッセージ…"]
         """
         lines: list[str] = []
         current = ""

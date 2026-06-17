@@ -189,7 +189,7 @@ def get_element_color(element_id: str) -> tuple[int, int, int]:
 def get_affinity_label(multiplier: float) -> str:
     """
     倍率から「有利 / 不利 / 通常」の日本語ラベルを返す。
-    バトルログや大賢者メッセージの判定に使う。
+    バトルログや観測補助メッセージの判定に使う。
 
     使用例:
         get_affinity_label(1.5)   → "有利"

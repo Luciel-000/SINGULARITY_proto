@@ -79,7 +79,7 @@ SKILL_DATA: dict[str, dict] = {
         "name"   : "観察",
         "element": "none",
         "power"  : 0.0,       # ダメージなし（情報取得スキル）
-        "desc"   : "敵の情報を観察する。大賢者メッセージと連携予定。",
+        "desc"   : "敵の情報を観察する。観測補助メッセージと連携予定。",
         "jobs"   : ["novice"],
     },
 
