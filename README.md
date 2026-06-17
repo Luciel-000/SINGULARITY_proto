@@ -382,6 +382,19 @@ LUCIEL_000
 - 報酬UI / アイテム報酬 / クエスト一覧UI はまだ未実装
 - save_data やテスト用スクリプトは commit 対象外
 
+### Step2
+
+- クエスト報告後の次目的フラグを追加
+- elder_after_quest_done 完了時に quest_go_north=True を設定
+- quest_go_north=True の場合は「目的：村の北へ向かう」を表示
+- quest_go_north は quest_check_field_reported より優先表示
+- elder_after_report の会話に北へ向かう示唆を追加
+- SAVE / LOAD 後も quest_go_north が復元されることを確認
+- core/*.py に「大賢者」表記が残っていないことを確認
+- 新マップ / 北の祠イベント / クエスト一覧UI / 報酬UI はまだ未実装
+- save_data やテスト用スクリプトは commit 対象外
+
 ### 最新コミット
 
 - Step1: b6357e2
+- Step2: a395398
