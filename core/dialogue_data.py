@@ -141,6 +141,16 @@ DIALOGUE_DATA: dict[str, dict] = {
         "on_end" : None,
     },
 
+    "elder_after_report": {
+        "speaker": "謎の老人",
+        "lines"  : [
+            "少しは落ち着いた顔になったな。",
+            "この村の外には、まだ分からぬことが多い。",
+            "だが、お前なら進めるかもしれん。",
+        ],
+        "on_end" : None,
+    },
+
     "sage_boot": {
         "speaker": "《観測補助機構》",
         "lines"  : [

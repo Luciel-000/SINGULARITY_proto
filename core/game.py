@@ -760,6 +760,8 @@ class Game:
         return 0
 
     def get_current_objective_text(self) -> str:
+        if self._get_story_flag("quest_check_field_reported", False):
+            return ""
         if self._get_story_flag("quest_check_field_done", False):
             return "目的：老人に報告する"
         if self._get_story_flag("quest_check_field", False):
@@ -771,6 +773,9 @@ class Game:
         base_dialogue_id = npc.get_current_dialogue_id()
         if npc.dialogue_id != "elder_first" or not self.player:
             return base_dialogue_id
+
+        if self._get_story_flag("quest_check_field_reported", False):
+            return "elder_after_report"
 
         if self._get_story_flag("quest_check_field_done", False):
             return "elder_after_quest_done"
@@ -859,6 +864,8 @@ class Game:
             self._mark_story_event_completed("first_elder_talk")
             self._set_story_flag("met_elder", True)
             self._set_story_flag("quest_check_field", True)
+        if finished_dialogue_id == "elder_after_quest_done":
+            self._set_story_flag("quest_check_field_reported", True)
         if finished_dialogue_id == "sage_boot" and self.player and hasattr(
             self.player, "set_story_flag"
         ):
