@@ -366,3 +366,22 @@ LUCIEL_000
 - Step2: bb58527
 - Step3: b63ae9e
 - Step3 docs: caddc50
+
+---
+
+## Prototype 1.3 - Quest Completion / Progression Unlock
+
+### Step1
+
+- 老人への報告で最初の簡易クエストを完了できるようにした
+- quest_check_field_done=True の状態で elder_after_quest_done を完了すると quest_check_field_reported=True を設定
+- quest_check_field_reported=True の場合は目的表示を消す
+- 報告後の老人会話 elder_after_report を追加
+- SAVE / LOAD 後も quest_check_field_reported が復元されることを確認
+- core/*.py に「大賢者」表記が残っていないことを確認
+- 報酬UI / アイテム報酬 / クエスト一覧UI はまだ未実装
+- save_data やテスト用スクリプトは commit 対象外
+
+### 最新コミット
+
+- Step1: b6357e2
