@@ -313,6 +313,20 @@ LUCIEL_000
 - core/*.py に「大賢者」表記が残っていないことを確認
 - save_data やテスト用スクリプトは commit 対象外
 
+### Step2
+
+- 簡易クエスト用 story_flags を追加
+- elder_first 完了後に quest_check_field=True を設定
+- sage_booted 後の老人会話でも必要に応じて quest_check_field=True を設定
+- 戦闘勝利後に quest_check_field_done=True を設定
+- quest_check_field_done=True の場合は elder_after_quest_done を優先
+- elder_after_quest_done の会話を追加
+- SAVE / LOAD 後も quest_check_field / quest_check_field_done が復元されることを確認
+- core/*.py に「大賢者」表記が残っていないことを確認
+- クエスト一覧UIや報酬処理はまだ未実装
+- save_data やテスト用スクリプトは commit 対象外
+
 ### 最新コミット
 
 - Step1: 0162cd7
+- Step2: bb58527
