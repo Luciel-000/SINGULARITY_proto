@@ -223,9 +223,26 @@ LUCIEL_000
 - LOAD GAME では名前入力画面に行かない
 - DEBUG F6 の仮変更機能は維持
 
+### Final Check
+
+- 構文チェック OK
+- main.py 起動確認 OK
+- タイトルメニュー NEW GAME / LOAD GAME / QUIT OK
+- NEW GAME → prologue_intro → sage_boot → 名前入力 → 探索 の流れ OK
+- 観測補助機構の名前入力 OK
+- 空入力時の「観測補助機構」フォールバック OK
+- support_system_name の SAVE / LOAD 復元 OK
+- LOAD GAME では名前入力画面に戻らないことを確認
+- story_flags の prologue_intro / sage_boot 記録 OK
+- DEBUG F6 / F5 / F9 OK
+- 探索・NPC会話・戦闘開始に影響なし
+- save_data やテスト用スクリプトは commit 対象外
+- Prototype 1.0 完了
+
 ### 最新コミット
 
 - Step1: 43e48fa
 - Step2: fa53e87
 - Step3: bb130a0
 - Step4: b47ce55
+- Step4 docs: 1bd1a93
