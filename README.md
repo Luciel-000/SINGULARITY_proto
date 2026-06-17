@@ -276,3 +276,23 @@ LUCIEL_000
 
 - Step1: e4bd386
 - Step2: 7dd8216
+
+### Final Check
+
+- 構文チェック OK
+- core/*.py に「大賢者」表記が残っていないことを確認
+- デフォルト名では戦闘ログが《観測補助機構》になることを確認
+- 名前変更時は戦闘ログが《ルシエル》などの設定名になることを確認
+- 空文字 / None は《観測補助機構》にフォールバック
+- support_system_name の SAVE / LOAD 復元 OK
+- LOAD GAME では名前入力画面に戻らないことを確認
+- NEW GAME → prologue_intro → sage_boot → 名前入力 → 探索 OK
+- 通常攻撃 / スキル / 観察 / 勝利 / 敗北 / 逃走 / action_log OK
+- NPC会話 OK
+- DEBUG F6 / F5 / F9 OK
+- save_data やテスト用スクリプトは commit 対象外
+- Prototype 1.1 完了
+
+### 最新コミット
+
+- Step2 docs: fb93e08
