@@ -53,6 +53,7 @@ import random
 from .utils import safe_alpha, make_rgba, lerp_alpha  # ★ 0.3.1: alpha安全変換
 from .element_system import get_multiplier  # ★ 0.5: 属性相性倍率
 from .sage_messages import (  # ★ 0.5 Step8-D: 観測補助メッセージ
+    SAGE_PREFIX,
     get_battle_start_message,
     get_affinity_message,
     get_skill_message,
@@ -160,7 +161,7 @@ class Battle:
             enemy_name=enemy.name,
             enemy_element=enemy.element,
         )
-        self.log.insert(0, sage_start)
+        self._add_log(sage_start)
 
         # ── 最終結果（update() の戻り値になる）
         self._result: str | None = None
@@ -567,9 +568,23 @@ class Battle:
     # ──────────────────────────────────────────────────────
     def _add_log(self, text: str):
         """バトルログに1行追加する（最新4件を表示）"""
+        text = self._format_support_message(text)
         self.log.insert(0, text)
         if len(self.log) > 8:
             self.log.pop()
+
+    def _get_support_system_prefix(self) -> str:
+        name = getattr(self.player, "support_system_name", "")
+        if not isinstance(name, str) or not name.strip():
+            name = "観測補助機構"
+        return f"《{name.strip()}》"
+
+    def _format_support_message(self, text: str) -> str:
+        if not isinstance(text, str):
+            return text
+        if text.startswith(SAGE_PREFIX):
+            return self._get_support_system_prefix() + text[len(SAGE_PREFIX):]
+        return text
 
     # ──────────────────────────────────────────────────────
     #  描画
