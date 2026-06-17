@@ -760,6 +760,8 @@ class Game:
         return 0
 
     def get_current_objective_text(self) -> str:
+        if self._get_story_flag("quest_go_north", False):
+            return "目的：村の北へ向かう"
         if self._get_story_flag("quest_check_field_reported", False):
             return ""
         if self._get_story_flag("quest_check_field_done", False):
@@ -866,6 +868,7 @@ class Game:
             self._set_story_flag("quest_check_field", True)
         if finished_dialogue_id == "elder_after_quest_done":
             self._set_story_flag("quest_check_field_reported", True)
+            self._set_story_flag("quest_go_north", True)
         if finished_dialogue_id == "sage_boot" and self.player and hasattr(
             self.player, "set_story_flag"
         ):
