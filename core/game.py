@@ -759,6 +759,13 @@ class Game:
             return int(summary.get("battle_win_count", 0))
         return 0
 
+    def get_current_objective_text(self) -> str:
+        if self._get_story_flag("quest_check_field_done", False):
+            return "目的：老人に報告する"
+        if self._get_story_flag("quest_check_field", False):
+            return "目的：村の外を確認する"
+        return ""
+
     def _resolve_npc_dialogue_id(self, npc: "NPC") -> str:
         """NPC and player stateから、今回表示する会話IDを決める。"""
         base_dialogue_id = npc.get_current_dialogue_id()
@@ -1099,7 +1106,33 @@ class Game:
         self.player.draw(surface, self.sprite_mgr)
         if self.state == STATE_LEVELUP:
             self._draw_levelup_overlay(surface)
+        if self.state == STATE_PLAY:
+            self._draw_current_objective(surface)
         self._draw_hud(surface)
+
+    def _draw_current_objective(self, surface: pygame.Surface):
+        objective = self.get_current_objective_text()
+        if not objective:
+            return
+
+        txt = self.font_sm.render(objective, True, C_WHITE)
+        pad_x, pad_y = 10, 6
+        box_w = txt.get_width() + pad_x * 2
+        box_h = txt.get_height() + pad_y * 2
+        box_x = WINDOW_W - box_w - 12
+        box_y = 12
+
+        box = pygame.Surface((box_w, box_h), pygame.SRCALPHA)
+        box.fill(make_rgba(8, 6, 14, 190))
+        surface.blit(box, (box_x, box_y))
+        pygame.draw.rect(
+            surface,
+            C_WINDOW_BORDER,
+            pygame.Rect(box_x, box_y, box_w, box_h),
+            1,
+            border_radius=4,
+        )
+        surface.blit(txt, (box_x + pad_x, box_y + pad_y))
 
     def _draw_levelup_overlay(self, surface: pygame.Surface):
         overlay = pygame.Surface((WINDOW_W, GAME_AREA_H), pygame.SRCALPHA)
