@@ -151,6 +151,16 @@ DIALOGUE_DATA: dict[str, dict] = {
         "on_end" : None,
     },
 
+    "elder_after_go_north_reached": {
+        "speaker": "謎の老人",
+        "lines"  : [
+            "北の方へ向かったのか。",
+            "ならば、お前も感じただろう。あの辺りの空気の重さを。",
+            "まだ深入りはするな。準備を整えてから進め。",
+        ],
+        "on_end" : None,
+    },
+
     "sage_boot": {
         "speaker": "《観測補助機構》",
         "lines"  : [

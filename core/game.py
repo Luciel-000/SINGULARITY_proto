@@ -648,6 +648,7 @@ class Game:
 
         if self.state == STATE_PLAY and self.player and self.world:
             self.player.update(self.world.wall_rects)
+            self._update_story_progress_by_position()
 
             # ★ 0.7: NPC を更新（アニメーションタイマー）
             for npc in self.npcs:
@@ -760,6 +761,8 @@ class Game:
         return 0
 
     def get_current_objective_text(self) -> str:
+        if self._get_story_flag("quest_go_north_reached", False):
+            return "目的：北の異変を調べる"
         if self._get_story_flag("quest_go_north", False):
             return "目的：村の北へ向かう"
         if self._get_story_flag("quest_check_field_reported", False):
@@ -775,6 +778,9 @@ class Game:
         base_dialogue_id = npc.get_current_dialogue_id()
         if npc.dialogue_id != "elder_first" or not self.player:
             return base_dialogue_id
+
+        if self._get_story_flag("quest_go_north_reached", False):
+            return "elder_after_go_north_reached"
 
         if self._get_story_flag("quest_check_field_reported", False):
             return "elder_after_report"
@@ -793,6 +799,18 @@ class Game:
             return "elder_after_sage"
 
         return base_dialogue_id
+
+    def _update_story_progress_by_position(self) -> None:
+        if self.current_zone_id != "town" or not self.player:
+            return
+        if not self._get_story_flag("quest_go_north", False):
+            return
+        if self._get_story_flag("quest_go_north_reached", False):
+            return
+
+        north_threshold_y = TILE * 5
+        if self.player.rect.centery <= north_threshold_y:
+            self._set_story_flag("quest_go_north_reached", True)
 
     def _start_dialogue(self, npc: "NPC"):
         """
