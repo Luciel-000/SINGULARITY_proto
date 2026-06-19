@@ -49,6 +49,7 @@ MAP_ROWS = GAME_AREA_H // TILE   # 縦方向のタイル数 = 15
 TILE_WALL   = 1   # 壁
 TILE_FLOOR  = 0   # 床
 TILE_EXIT   = 2   # 出口タイル（★ 0.6 追加）
+TILE_SHRINE = 3   # 古い祠の入口イベント地点
 
 
 class Room:
@@ -120,6 +121,7 @@ class World:
 
         # ── ★ 0.6: 出口タイルの当たり判定 Rect リスト
         self.exit_rects: list[pygame.Rect]  = []
+        self.shrine_rects: list[pygame.Rect] = []
 
         # ── ★ 0.7: NPC 配置座標リスト（ピクセル座標）
         # _generate_town() が _npc_tile_positions に記録し、
@@ -132,6 +134,7 @@ class World:
         self._build_surface()
         self._build_wall_rects()
         self._build_exit_rects()
+        self._build_shrine_rects()
         self._build_npc_spawns()  # ★ 0.7
 
     # ──────────────────────────────────────────────────────
@@ -275,6 +278,11 @@ class World:
         for row in range(1, road_row):
             self._tiles[row][south_exit_col] = TILE_FLOOR
 
+        # 奥に古い祠の入口を置く。内部マップへの遷移はまだ作らない。
+        shrine_col = south_exit_col
+        shrine_row = 1
+        self._tiles[shrine_row][shrine_col] = TILE_SHRINE
+
     # ──────────────────────────────────────────────────────
     #  部屋・通路の掘削ヘルパー（変更なし）
     # ──────────────────────────────────────────────────────
@@ -323,7 +331,7 @@ class World:
                 px = c * TILE
                 py = r * TILE
 
-                if tile in (TILE_FLOOR, TILE_EXIT):
+                if tile in (TILE_FLOOR, TILE_EXIT, TILE_SHRINE):
                     # 床（出口も床として下地を描く）
                     shade = random.randint(-5, 5)
                     col   = tuple(max(0, min(255, v + shade)) for v in fc)
@@ -370,6 +378,16 @@ class World:
             for c, tile in enumerate(row):
                 if tile == TILE_EXIT:
                     self.exit_rects.append(
+                        pygame.Rect(c * TILE, r * TILE, TILE, TILE)
+                    )
+
+    def _build_shrine_rects(self):
+        """古い祠の入口イベント地点の Rect リストを作る。"""
+        self.shrine_rects = []
+        for r, row in enumerate(self._tiles):
+            for c, tile in enumerate(row):
+                if tile == TILE_SHRINE:
+                    self.shrine_rects.append(
                         pygame.Rect(c * TILE, r * TILE, TILE, TILE)
                     )
 
@@ -460,3 +478,8 @@ class World:
             pygame.draw.rect(surface, C_EXIT_TILE, rect)
             # 枠線で目立たせる
             pygame.draw.rect(surface, (200, 180, 80), rect, 2)
+
+        for rect in self.shrine_rects:
+            pygame.draw.rect(surface, (68, 68, 86), rect)
+            pygame.draw.rect(surface, (155, 150, 180), rect, 2)
+            pygame.draw.line(surface, (205, 200, 230), rect.midtop, rect.center, 2)

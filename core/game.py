@@ -780,6 +780,8 @@ class Game:
         return 0
 
     def get_current_objective_text(self) -> str:
+        if self._get_story_flag("shrine_anomaly_seen", False):
+            return "目的：古い祠の封印を調べる"
         if self._get_story_flag("quest_go_north_reached", False):
             return "目的：北の異変を調べる"
         if self._get_story_flag("quest_go_north", False):
@@ -820,8 +822,19 @@ class Game:
         return base_dialogue_id
 
     def _update_story_progress_by_position(self) -> None:
-        if self.current_zone_id != "town" or not self.player:
+        if not self.player:
             return
+
+        if self.current_zone_id == "north_road":
+            self._update_shrine_anomaly_progress()
+            return
+
+        if self.current_zone_id != "town":
+            return
+
+        self._update_town_north_progress()
+
+    def _update_town_north_progress(self) -> None:
         if not self._get_story_flag("quest_go_north", False):
             return
         if self._get_story_flag("quest_go_north_reached", False):
@@ -830,6 +843,29 @@ class Game:
         north_threshold_y = TILE * 5
         if self.player.rect.centery <= north_threshold_y:
             self._set_story_flag("quest_go_north_reached", True)
+
+    def _update_shrine_anomaly_progress(self) -> None:
+        if not self.world or not self.player:
+            return
+        if not self._get_story_flag("quest_go_north_reached", False):
+            return
+        if self._get_story_flag("shrine_anomaly_seen", False):
+            return
+
+        for shrine_rect in getattr(self.world, "shrine_rects", []):
+            if self.player.rect.colliderect(shrine_rect):
+                self._start_shrine_anomaly_event()
+                return
+
+    def _start_shrine_anomaly_event(self) -> None:
+        self._set_story_flag("shrine_anomaly_seen", True)
+        self.current_dialogue_id = "shrine_anomaly"
+        self.dialogue_lines = get_dialogue_lines("shrine_anomaly")
+        self.dialogue_speaker = self.get_support_system_display_name()
+        self.dialogue_index = 0
+        self.talking_npc = None
+        self._mark_story_event_seen("shrine_anomaly")
+        self.state = STATE_DIALOGUE
 
     def _start_dialogue(self, npc: "NPC"):
         """
