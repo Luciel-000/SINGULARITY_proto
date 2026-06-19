@@ -433,6 +433,20 @@ LUCIEL_000
 - 祠内部マップ・ボス戦・報酬はまだ未実装
 - save_data やテスト用スクリプトは commit 対象外
 
+### Step6
+
+- 古い祠の異変を見た後、老人から封印に関する手がかりを得る進行を追加
+- shrine_anomaly_seen=True かつ shrine_hint_received=False の場合は「目的：老人に祠のことを尋ねる」を表示
+- elder_after_shrine_anomaly の会話を追加
+- elder_after_shrine_anomaly 完了時に shrine_hint_received=True を設定
+- shrine_hint_received=True の場合は「目的：封印の欠片を探す」を表示
+- elder_after_shrine_hint の会話を追加
+- 老人は封印や欠片について答えを言い切らず、ヒント中心にする
+- SAVE / LOAD 後も shrine_hint_received が復元されることを確認
+- core/*.py に「大賢者」表記が残っていないことを確認
+- 封印の欠片取得・祠内部マップ・封印解除はまだ未実装
+- save_data やテスト用スクリプトは commit 対象外
+
 ### 最新コミット
 
 - Step1: b6357e2
@@ -440,3 +454,4 @@ LUCIEL_000
 - Step3: 5e2844b
 - Step4: 244feac
 - Step5: 78d07ce
+- Step6: 0e5c2b6
