@@ -405,8 +405,24 @@ LUCIEL_000
 - 新マップ・北の祠イベント・報酬UIはまだ未実装
 - save_data やテスト用スクリプトは commit 対象外
 
+### Step4
+
+- 新しい zone「north_road（北の道）」を追加
+- ルミナ村北側から北の道へ移動できるようにした
+- quest_go_north_reached=True のときだけ北出口から north_road へ遷移
+- 未達成時は「まだ北へ進む理由がないようだ」と表示して遷移しない
+- north_road は古い祠へ続く道の入口として配置
+- north_road から town へ戻れる
+- north_road は敵なしの小規模固定マップ
+- north_road で SAVE / LOAD 後も復帰できることを確認
+- 既存 town ↔ field 遷移を維持
+- core/*.py に「大賢者」表記が残っていないことを確認
+- 北の祠イベント・敵配置・報酬UIはまだ未実装
+- save_data やテスト用スクリプトは commit 対象外
+
 ### 最新コミット
 
 - Step1: b6357e2
 - Step2: a395398
 - Step3: 5e2844b
+- Step4: 244feac
