@@ -145,6 +145,8 @@ class World:
         """
         if self.map_type == "dungeon":
             self._generate_dungeon()
+        elif self.map_type == "north_road":
+            self._generate_north_road()
         else:
             self._generate_town()
 
@@ -235,6 +237,11 @@ class World:
         exit_row = town_row + town_h // 2  # 広間の縦中央
         self._tiles[exit_row][exit_col] = TILE_EXIT
 
+        # 北の道へ向かう出口。解放前は game.py 側で遷移を止める。
+        north_exit_col = town_col + town_w // 2
+        north_exit_row = town_row
+        self._tiles[north_exit_row][north_exit_col] = TILE_EXIT
+
         # ── ★ 0.7: NPC（謎の老人）のタイル座標を記録
         # プレイヤーの正面（右側2〜3マス先）に立たせる
         # プレイヤーは広間左寄り（col+2, row+h//2）なので
@@ -242,6 +249,31 @@ class World:
         npc_col = town_col + town_w // 2   # 広間の横中央
         npc_row = town_row + town_h // 2   # 広間の縦中央
         self._npc_tile_positions.append((npc_col, npc_row))
+
+    def _generate_north_road(self):
+        """ルミナ村の北へ続く小規模な道マップを生成する。"""
+        self._tiles = [[TILE_WALL] * MAP_COLS for _ in range(MAP_ROWS)]
+
+        road_col = MAP_COLS // 2 - 3
+        road_row = 2
+        road_w = 7
+        road_h = MAP_ROWS - 4
+
+        road_room = Room(road_col, road_row, road_w, road_h)
+        self._carve_room(road_room)
+        self.rooms.append(road_room)
+
+        # 村から入ってきた位置。南側の戻り口近くに置く。
+        self.player_spawn = ((MAP_COLS // 2) * TILE + 4, (MAP_ROWS - 4) * TILE + 4)
+
+        # town へ戻る出口。
+        south_exit_col = MAP_COLS // 2
+        south_exit_row = MAP_ROWS - 3
+        self._tiles[south_exit_row][south_exit_col] = TILE_EXIT
+
+        # 北側は古い祠へ続く方向を床で示すだけに留める。
+        for row in range(1, road_row):
+            self._tiles[row][south_exit_col] = TILE_FLOOR
 
     # ──────────────────────────────────────────────────────
     #  部屋・通路の掘削ヘルパー（変更なし）

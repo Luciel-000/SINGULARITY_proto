@@ -655,9 +655,7 @@ class Game:
                 npc.update(self.player.rect)  # ★ 0.6: 出口タイルへの接触でゾーン遷移
             for exit_rect in self.world.exit_rects:
                 if self.player.rect.colliderect(exit_rect):
-                    exits = get_zone_exits(self.current_zone_id)
-                    if exits:
-                        self._transition_zone(exits[0]["to"])
+                    self._handle_exit_transition(exit_rect)
                     break
 
             for enemy in self.enemies:
@@ -698,6 +696,7 @@ class Game:
         """
         self.current_zone_id = next_zone_id
         self.world = World(next_zone_id)
+        self.current_zone_name = self.world.zone_name
         self.enemies = []
         self.npcs = []  # ★ 0.7: NPC をリセット
         self.battle = None
@@ -730,6 +729,26 @@ class Game:
 
         zone_name = self.world.zone_name
         self._add_message(f"ここは {zone_name}", C_GOLD)
+
+    def _handle_exit_transition(self, exit_rect: pygame.Rect) -> None:
+        if self.current_zone_id == "town":
+            if self._is_town_north_exit(exit_rect):
+                if self._get_story_flag("quest_go_north_reached", False):
+                    self._transition_zone("north_road")
+                else:
+                    self._add_message("まだ北へ進む理由がないようだ", C_GRAY)
+                    self.player.rect.top = exit_rect.bottom + 2
+                return
+
+            self._transition_zone("field")
+            return
+
+        exits = get_zone_exits(self.current_zone_id)
+        if exits:
+            self._transition_zone(exits[0]["to"])
+
+    def _is_town_north_exit(self, exit_rect: pygame.Rect) -> bool:
+        return exit_rect.centery <= TILE * 4
 
     # ──────────────────────────────────────────────────────
     #  ★ 0.7 Step5-B: 会話処理
