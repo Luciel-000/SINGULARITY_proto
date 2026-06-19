@@ -420,9 +420,23 @@ LUCIEL_000
 - 北の祠イベント・敵配置・報酬UIはまだ未実装
 - save_data やテスト用スクリプトは commit 対象外
 
+### Step5
+
+- north_road 北側に古い祠の入口イベント地点を追加
+- 初回到達時に shrine_anomaly_seen=True を設定
+- 北の空気の重さ、祈りの気配、封じられた祠の演出を追加
+- 観測補助機構の設定名を話者名として使用
+- イベント後の目的を「目的：古い祠の封印を調べる」に更新
+- shrine_anomaly_seen=True 後は同じイベントが再発しない
+- SAVE / LOAD 後も shrine_anomaly_seen が復元されることを確認
+- north_road と town の往復を維持
+- 祠内部マップ・ボス戦・報酬はまだ未実装
+- save_data やテスト用スクリプトは commit 対象外
+
 ### 最新コミット
 
 - Step1: b6357e2
 - Step2: a395398
 - Step3: 5e2844b
 - Step4: 244feac
+- Step5: 78d07ce
