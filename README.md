@@ -394,7 +394,19 @@ LUCIEL_000
 - 新マップ / 北の祠イベント / クエスト一覧UI / 報酬UI はまだ未実装
 - save_data やテスト用スクリプトは commit 対象外
 
+### Step3
+
+- 村の北へ向かう目的に位置ベースの進行判定を追加
+- town 内で quest_go_north=True の状態で北側しきい値へ入ると quest_go_north_reached=True を設定
+- quest_go_north_reached=True の場合は「目的：北の異変を調べる」を表示
+- elder_after_go_north_reached の会話を追加
+- SAVE / LOAD 後も quest_go_north_reached が復元されることを確認
+- core/*.py に「大賢者」表記が残っていないことを確認
+- 新マップ・北の祠イベント・報酬UIはまだ未実装
+- save_data やテスト用スクリプトは commit 対象外
+
 ### 最新コミット
 
 - Step1: b6357e2
 - Step2: a395398
+- Step3: 5e2844b
