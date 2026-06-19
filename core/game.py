@@ -780,8 +780,10 @@ class Game:
         return 0
 
     def get_current_objective_text(self) -> str:
+        if self._get_story_flag("shrine_hint_received", False):
+            return "目的：封印の欠片を探す"
         if self._get_story_flag("shrine_anomaly_seen", False):
-            return "目的：古い祠の封印を調べる"
+            return "目的：老人に祠のことを尋ねる"
         if self._get_story_flag("quest_go_north_reached", False):
             return "目的：北の異変を調べる"
         if self._get_story_flag("quest_go_north", False):
@@ -799,6 +801,12 @@ class Game:
         base_dialogue_id = npc.get_current_dialogue_id()
         if npc.dialogue_id != "elder_first" or not self.player:
             return base_dialogue_id
+
+        if self._get_story_flag("shrine_hint_received", False):
+            return "elder_after_shrine_hint"
+
+        if self._get_story_flag("shrine_anomaly_seen", False):
+            return "elder_after_shrine_anomaly"
 
         if self._get_story_flag("quest_go_north_reached", False):
             return "elder_after_go_north_reached"
@@ -942,6 +950,8 @@ class Game:
         if finished_dialogue_id == "elder_after_quest_done":
             self._set_story_flag("quest_check_field_reported", True)
             self._set_story_flag("quest_go_north", True)
+        if finished_dialogue_id == "elder_after_shrine_anomaly":
+            self._set_story_flag("shrine_hint_received", True)
         if finished_dialogue_id == "sage_boot" and self.player and hasattr(
             self.player, "set_story_flag"
         ):

@@ -161,6 +161,27 @@ DIALOGUE_DATA: dict[str, dict] = {
         "on_end" : None,
     },
 
+    "elder_after_shrine_anomaly": {
+        "speaker": "謎の老人",
+        "lines"  : [
+            "北の祠を見たのか。",
+            "あれは、ただ古びただけの建物ではない。",
+            "かつて、均衡を保つための封印が施されていた。",
+            "封印が揺らいでいるなら、欠片を探す必要があるだろう。",
+        ],
+        "on_end" : None,
+    },
+
+    "elder_after_shrine_hint": {
+        "speaker": "謎の老人",
+        "lines"  : [
+            "封印の欠片は、力だけで見つかるものではない。",
+            "よく見て、よく選べ。",
+            "お前の中の声も、無視するな。",
+        ],
+        "on_end" : None,
+    },
+
     "sage_boot": {
         "speaker": "《観測補助機構》",
         "lines"  : [
