@@ -493,6 +493,20 @@ LUCIEL_000
 - 祭壇を調べる本イベント・ボス戦・封印の完全解除はまだ未実装
 - save_data やテスト用スクリプトは commit 対象外
 
+### Step10
+
+- shrine_inner の祭壇付近でZを押して調べる処理を追加
+- 初回調査時に shrine_altar_investigated=True / shrine_altar_resonance_seen=True を設定
+- shrine_altar_investigation 会話イベントを追加
+- 観測補助機構の設定名を祭壇イベントの話者名に使用
+- 祭壇から欠片と同じ淡い光、不安定な反応、封印の奥に何かがいる気配を確認する演出を追加
+- shrine_altar_investigated=True の場合は「目的：老人に祭壇のことを報告する」を表示
+- 調査済み後は本イベントを再発させず、短い反応のみ表示
+- SAVE / LOAD 後も shrine_altar_investigated / shrine_altar_resonance_seen が復元されることを確認
+- core/*.py に「大賢者」表記が残っていないことを確認
+- ボス戦・封印解除・真相開示・新マップ追加はまだ未実装
+- save_data やテスト用スクリプトは commit 対象外
+
 ### 最新コミット
 
 - Step1: b6357e2
@@ -504,3 +518,4 @@ LUCIEL_000
 - Step7: 8b57ca4
 - Step8: 30350dd
 - Step9: a31b155
+- Step10: 515f221
