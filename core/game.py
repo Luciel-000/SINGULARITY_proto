@@ -396,6 +396,8 @@ class Game:
             elif key == pygame.K_ESCAPE:
                 self._open_save_menu()
             elif key == pygame.K_z:
+                if self._try_investigate_shrine_altar():
+                    return
                 if self._try_offer_shrine_fragment():
                     return
                 if self._try_collect_shrine_fragment():
@@ -789,6 +791,8 @@ class Game:
         return 0
 
     def get_current_objective_text(self) -> str:
+        if self._get_story_flag("shrine_altar_investigated", False):
+            return "目的：老人に祭壇のことを報告する"
         if self._get_story_flag("shrine_inner_entered", False) and not self._get_story_flag(
             "shrine_altar_investigated", False
         ):
@@ -975,6 +979,35 @@ class Game:
         self.dialogue_index = 0
         self.talking_npc = None
         self._mark_story_event_seen("shrine_inner_arrival")
+        self.state = STATE_DIALOGUE
+
+    def _try_investigate_shrine_altar(self) -> bool:
+        if not self.world or not self.player:
+            return False
+        if self.current_zone_id != "shrine_inner":
+            return False
+        if not self._get_story_flag("shrine_inner_entered", False):
+            return False
+
+        for altar_rect in getattr(self.world, "altar_rects", []):
+            if self.player.rect.colliderect(altar_rect.inflate(TILE, TILE)):
+                if self._get_story_flag("shrine_altar_investigated", False):
+                    self._add_message("祭壇の光は静かに揺れている", C_GRAY)
+                else:
+                    self._start_shrine_altar_investigation_event()
+                return True
+
+        return False
+
+    def _start_shrine_altar_investigation_event(self) -> None:
+        self._set_story_flag("shrine_altar_investigated", True)
+        self._set_story_flag("shrine_altar_resonance_seen", True)
+        self.current_dialogue_id = "shrine_altar_investigation"
+        self.dialogue_lines = get_dialogue_lines("shrine_altar_investigation")
+        self.dialogue_speaker = self.get_support_system_display_name()
+        self.dialogue_index = 0
+        self.talking_npc = None
+        self._mark_story_event_seen("shrine_altar_investigation")
         self.state = STATE_DIALOGUE
 
     def _start_dialogue(self, npc: "NPC"):
