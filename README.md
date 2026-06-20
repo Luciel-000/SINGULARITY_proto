@@ -447,6 +447,20 @@ LUCIEL_000
 - 封印の欠片取得・祠内部マップ・封印解除はまだ未実装
 - save_data やテスト用スクリプトは commit 対象外
 
+### Step7
+
+- field に最初の封印の欠片イベント地点を追加
+- shrine_hint_received=True かつ shrine_fragment_1_obtained=False の時だけ欠片を表示
+- 欠片付近でZを押すと shrine_fragment_1_found イベントを開始
+- 取得時に shrine_fragment_1_seen=True / shrine_fragment_1_obtained=True を設定
+- 取得後の目的を「目的：古い祠へ戻る」に更新
+- 取得済みの欠片は非表示となり、再取得できない
+- 観測補助機構の設定名を欠片イベントの話者名に使用
+- SAVE / LOAD 後も shrine_fragment_1_obtained が復元されることを確認
+- core/*.py に「大賢者」表記が残っていないことを確認
+- 祠で欠片を使う処理・封印解除・祠内部マップ・ボス戦はまだ未実装
+- save_data やテスト用スクリプトは commit 対象外
+
 ### 最新コミット
 
 - Step1: b6357e2
@@ -455,3 +469,4 @@ LUCIEL_000
 - Step4: 244feac
 - Step5: 78d07ce
 - Step6: 0e5c2b6
+- Step7: 8b57ca4
