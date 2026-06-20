@@ -507,6 +507,21 @@ LUCIEL_000
 - ボス戦・封印解除・真相開示・新マップ追加はまだ未実装
 - save_data やテスト用スクリプトは commit 対象外
 
+### Step11
+
+- 祠内部の祭壇を調べた後、謎の老人へ報告する進行を追加
+- shrine_altar_investigated=True かつ shrine_altar_reported=False の場合は「目的：老人に祭壇のことを報告する」を表示
+- elder_after_altar_investigation を追加
+- elder_after_altar_investigation 完了時に shrine_altar_reported=True / next_fragment_hint_received=True を設定
+- next_fragment_hint_received=True の場合は「目的：風の吹く場所を探す」を表示
+- elder_after_next_fragment_hint を追加
+- 老人は次の欠片について、風が絶えず通り抜ける場所という手がかりのみ示す
+- 真相、天使・悪魔、ソロモンの正体はまだ明かさない
+- SAVE / LOAD 後も shrine_altar_reported / next_fragment_hint_received が復元されることを確認
+- core/*.py に「大賢者」表記が残っていないことを確認
+- 新マップ・次の欠片取得・ボス戦はまだ未実装
+- save_data やテスト用スクリプトは commit 対象外
+
 ### 最新コミット
 
 - Step1: b6357e2
@@ -519,3 +534,4 @@ LUCIEL_000
 - Step8: 30350dd
 - Step9: a31b155
 - Step10: 515f221
+- Step11: a4f7184
