@@ -483,7 +483,7 @@ class World:
     # ──────────────────────────────────────────────────────
     #  描画（★ 0.6: 出口タイルを重ね描き）
     # ──────────────────────────────────────────────────────
-    def draw(self, surface: pygame.Surface):
+    def draw(self, surface: pygame.Surface, shrine_seal_reacted: bool = False):
         """
         キャッシュしたサーフェスを貼り付け、
         その上に出口タイルをくすんだゴールドで重ね描きする。
@@ -500,6 +500,13 @@ class World:
             pygame.draw.rect(surface, (200, 180, 80), rect, 2)
 
         for rect in self.shrine_rects:
-            pygame.draw.rect(surface, (68, 68, 86), rect)
-            pygame.draw.rect(surface, (155, 150, 180), rect, 2)
-            pygame.draw.line(surface, (205, 200, 230), rect.midtop, rect.center, 2)
+            if shrine_seal_reacted:
+                pygame.draw.rect(surface, (42, 38, 52), rect)
+                pygame.draw.rect(surface, (110, 160, 180), rect, 2)
+                passage = rect.inflate(-TILE // 3, -TILE // 4)
+                pygame.draw.rect(surface, (18, 16, 26), passage)
+                pygame.draw.line(surface, (105, 190, 210), rect.midtop, rect.center, 1)
+            else:
+                pygame.draw.rect(surface, (68, 68, 86), rect)
+                pygame.draw.rect(surface, (155, 150, 180), rect, 2)
+                pygame.draw.line(surface, (205, 200, 230), rect.midtop, rect.center, 2)

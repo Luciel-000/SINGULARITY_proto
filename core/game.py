@@ -396,6 +396,8 @@ class Game:
             elif key == pygame.K_ESCAPE:
                 self._open_save_menu()
             elif key == pygame.K_z:
+                if self._try_offer_shrine_fragment():
+                    return
                 if self._try_collect_shrine_fragment():
                     return
                 # ★ 0.7 Step5-B: Z キーで近くの NPC に話しかける
@@ -782,6 +784,8 @@ class Game:
         return 0
 
     def get_current_objective_text(self) -> str:
+        if self._get_story_flag("shrine_seal_reacted", False):
+            return "目的：祠の奥へ進む"
         if self._get_story_flag("shrine_fragment_1_obtained", False):
             return "目的：古い祠へ戻る"
         if self._get_story_flag("shrine_hint_received", False):
@@ -908,6 +912,35 @@ class Game:
         self.dialogue_index = 0
         self.talking_npc = None
         self._mark_story_event_seen("shrine_fragment_1_found")
+        self.state = STATE_DIALOGUE
+
+    def _try_offer_shrine_fragment(self) -> bool:
+        if not self.world or not self.player:
+            return False
+        if self.current_zone_id != "north_road":
+            return False
+        if not self._get_story_flag("shrine_fragment_1_obtained", False):
+            return False
+
+        for shrine_rect in getattr(self.world, "shrine_rects", []):
+            if self.player.rect.colliderect(shrine_rect.inflate(TILE, TILE)):
+                if self._get_story_flag("shrine_fragment_1_offered", False):
+                    self._add_message("封印はわずかに開いている", C_GRAY)
+                else:
+                    self._start_shrine_fragment_1_offered_event()
+                return True
+
+        return False
+
+    def _start_shrine_fragment_1_offered_event(self) -> None:
+        self._set_story_flag("shrine_fragment_1_offered", True)
+        self._set_story_flag("shrine_seal_reacted", True)
+        self.current_dialogue_id = "shrine_fragment_1_offered"
+        self.dialogue_lines = get_dialogue_lines("shrine_fragment_1_offered")
+        self.dialogue_speaker = self.get_support_system_display_name()
+        self.dialogue_index = 0
+        self.talking_npc = None
+        self._mark_story_event_seen("shrine_fragment_1_offered")
         self.state = STATE_DIALOGUE
 
     def _start_dialogue(self, npc: "NPC"):
@@ -1225,7 +1258,10 @@ class Game:
     def _draw_play(self, surface: pygame.Surface):
         if not self.world or not self.player:
             return
-        self.world.draw(surface)
+        self.world.draw(
+            surface,
+            shrine_seal_reacted=self._get_story_flag("shrine_seal_reacted", False),
+        )
         self._draw_shrine_fragment(surface)
         for enemy in self.enemies:
             enemy.draw(surface, self.font_sm, self.sprite_mgr)
