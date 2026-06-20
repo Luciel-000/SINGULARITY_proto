@@ -461,6 +461,21 @@ LUCIEL_000
 - 祠で欠片を使う処理・封印解除・祠内部マップ・ボス戦はまだ未実装
 - save_data やテスト用スクリプトは commit 対象外
 
+### Step8
+
+- 最初の封印の欠片を取得後、north_road 北側の古い祠でZを押す進行を追加
+- shrine_fragment_1_obtained=True かつ shrine_fragment_1_offered=False の時だけ封印反応イベントを開始
+- イベント時に shrine_fragment_1_offered=True / shrine_seal_reacted=True を設定
+- 欠片をかざすと封印の紋様へ光が流れ、祠の奥へ続く道がわずかに開く演出を追加
+- 観測補助機構の設定名をイベント話者名に使用
+- shrine_seal_reacted=True の場合は「目的：祠の奥へ進む」を表示
+- 祠入口の見た目を、封印反応後に変化させる
+- 再度Zを押してもイベントは再発せず、「封印はわずかに開いている」などの短い反応のみ
+- SAVE / LOAD 後も shrine_fragment_1_offered / shrine_seal_reacted が復元されることを確認
+- core/*.py に「大賢者」表記が残っていないことを確認
+- 祠内部マップ・実際の遷移・ボス戦・封印の完全解除はまだ未実装
+- save_data やテスト用スクリプトは commit 対象外
+
 ### 最新コミット
 
 - Step1: b6357e2
@@ -470,3 +485,4 @@ LUCIEL_000
 - Step5: 78d07ce
 - Step6: 0e5c2b6
 - Step7: 8b57ca4
+- Step8: 30350dd
