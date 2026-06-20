@@ -50,6 +50,7 @@ TILE_WALL   = 1   # 壁
 TILE_FLOOR  = 0   # 床
 TILE_EXIT   = 2   # 出口タイル（★ 0.6 追加）
 TILE_SHRINE = 3   # 古い祠の入口イベント地点
+TILE_FRAGMENT = 4  # 封印の欠片イベント地点
 
 
 class Room:
@@ -122,6 +123,7 @@ class World:
         # ── ★ 0.6: 出口タイルの当たり判定 Rect リスト
         self.exit_rects: list[pygame.Rect]  = []
         self.shrine_rects: list[pygame.Rect] = []
+        self.fragment_rects: list[pygame.Rect] = []
 
         # ── ★ 0.7: NPC 配置座標リスト（ピクセル座標）
         # _generate_town() が _npc_tile_positions に記録し、
@@ -135,6 +137,7 @@ class World:
         self._build_wall_rects()
         self._build_exit_rects()
         self._build_shrine_rects()
+        self._build_fragment_rects()
         self._build_npc_spawns()  # ★ 0.7
 
     # ──────────────────────────────────────────────────────
@@ -204,6 +207,13 @@ class World:
             ey_tile = min(ey + 1, MAP_ROWS - 2)
             if self._tiles[ey_tile][ex_tile] == TILE_FLOOR:
                 self._tiles[ey_tile][ex_tile] = TILE_EXIT
+
+        # 封印の欠片候補地点。表示や取得可否は game.py 側の story_flags で制御する。
+        if len(self.rooms) >= 2:
+            target_room = self.rooms[-1]
+            fx, fy = target_room.center()
+            if self._tiles[fy][fx] == TILE_FLOOR:
+                self._tiles[fy][fx] = TILE_FRAGMENT
 
     # ──────────────────────────────────────────────────────
     #  町生成（★ 0.6 新規、town 用）
@@ -331,7 +341,7 @@ class World:
                 px = c * TILE
                 py = r * TILE
 
-                if tile in (TILE_FLOOR, TILE_EXIT, TILE_SHRINE):
+                if tile in (TILE_FLOOR, TILE_EXIT, TILE_SHRINE, TILE_FRAGMENT):
                     # 床（出口も床として下地を描く）
                     shade = random.randint(-5, 5)
                     col   = tuple(max(0, min(255, v + shade)) for v in fc)
@@ -388,6 +398,16 @@ class World:
             for c, tile in enumerate(row):
                 if tile == TILE_SHRINE:
                     self.shrine_rects.append(
+                        pygame.Rect(c * TILE, r * TILE, TILE, TILE)
+                    )
+
+    def _build_fragment_rects(self):
+        """封印の欠片イベント地点の Rect リストを作る。"""
+        self.fragment_rects = []
+        for r, row in enumerate(self._tiles):
+            for c, tile in enumerate(row):
+                if tile == TILE_FRAGMENT:
+                    self.fragment_rects.append(
                         pygame.Rect(c * TILE, r * TILE, TILE, TILE)
                     )
 

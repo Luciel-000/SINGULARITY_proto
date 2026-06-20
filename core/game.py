@@ -396,6 +396,8 @@ class Game:
             elif key == pygame.K_ESCAPE:
                 self._open_save_menu()
             elif key == pygame.K_z:
+                if self._try_collect_shrine_fragment():
+                    return
                 # ★ 0.7 Step5-B: Z キーで近くの NPC に話しかける
                 for npc in self.npcs:
                     if npc.is_near(self.player.rect):
@@ -780,6 +782,8 @@ class Game:
         return 0
 
     def get_current_objective_text(self) -> str:
+        if self._get_story_flag("shrine_fragment_1_obtained", False):
+            return "目的：古い祠へ戻る"
         if self._get_story_flag("shrine_hint_received", False):
             return "目的：封印の欠片を探す"
         if self._get_story_flag("shrine_anomaly_seen", False):
@@ -873,6 +877,37 @@ class Game:
         self.dialogue_index = 0
         self.talking_npc = None
         self._mark_story_event_seen("shrine_anomaly")
+        self.state = STATE_DIALOGUE
+
+    def _is_shrine_fragment_available(self) -> bool:
+        return (
+            self.current_zone_id == "field"
+            and self._get_story_flag("shrine_hint_received", False)
+            and not self._get_story_flag("shrine_fragment_1_obtained", False)
+        )
+
+    def _try_collect_shrine_fragment(self) -> bool:
+        if not self.world or not self.player:
+            return False
+        if not self._is_shrine_fragment_available():
+            return False
+
+        for fragment_rect in getattr(self.world, "fragment_rects", []):
+            if self.player.rect.colliderect(fragment_rect.inflate(TILE, TILE)):
+                self._start_shrine_fragment_1_event()
+                return True
+
+        return False
+
+    def _start_shrine_fragment_1_event(self) -> None:
+        self._set_story_flag("shrine_fragment_1_seen", True)
+        self._set_story_flag("shrine_fragment_1_obtained", True)
+        self.current_dialogue_id = "shrine_fragment_1_found"
+        self.dialogue_lines = get_dialogue_lines("shrine_fragment_1_found")
+        self.dialogue_speaker = self.get_support_system_display_name()
+        self.dialogue_index = 0
+        self.talking_npc = None
+        self._mark_story_event_seen("shrine_fragment_1_found")
         self.state = STATE_DIALOGUE
 
     def _start_dialogue(self, npc: "NPC"):
@@ -1191,6 +1226,7 @@ class Game:
         if not self.world or not self.player:
             return
         self.world.draw(surface)
+        self._draw_shrine_fragment(surface)
         for enemy in self.enemies:
             enemy.draw(surface, self.font_sm, self.sprite_mgr)
         # ★ 0.7: NPC を描画（プレイヤーが近いと「！」が出る）
@@ -1202,6 +1238,36 @@ class Game:
         if self.state == STATE_PLAY:
             self._draw_current_objective(surface)
         self._draw_hud(surface)
+
+    def _draw_shrine_fragment(self, surface: pygame.Surface):
+        if not self.world or not self._is_shrine_fragment_available():
+            return
+
+        pulse = (self.title_timer // 10) % 2
+        for rect in getattr(self.world, "fragment_rects", []):
+            glow = rect.inflate(12 + pulse * 4, 12 + pulse * 4)
+            pygame.draw.ellipse(surface, make_rgba(160, 220, 255, 70), glow)
+            pygame.draw.polygon(
+                surface,
+                (185, 235, 255),
+                [
+                    rect.midtop,
+                    (rect.right - 7, rect.centery),
+                    rect.midbottom,
+                    (rect.left + 7, rect.centery),
+                ],
+            )
+            pygame.draw.polygon(
+                surface,
+                C_WHITE,
+                [
+                    rect.midtop,
+                    (rect.right - 7, rect.centery),
+                    rect.midbottom,
+                    (rect.left + 7, rect.centery),
+                ],
+                1,
+            )
 
     def _draw_current_objective(self, surface: pygame.Surface):
         objective = self.get_current_objective_text()
