@@ -734,6 +734,11 @@ class Game:
         zone_name = self.world.zone_name
         self._add_message(f"ここは {zone_name}", C_GOLD)
 
+        if next_zone_id == "shrine_inner" and not self._get_story_flag(
+            "shrine_inner_entered", False
+        ):
+            self._start_shrine_inner_arrival_event()
+
     def _handle_exit_transition(self, exit_rect: pygame.Rect) -> None:
         if self.current_zone_id == "town":
             if self._is_town_north_exit(exit_rect):
@@ -784,6 +789,10 @@ class Game:
         return 0
 
     def get_current_objective_text(self) -> str:
+        if self._get_story_flag("shrine_inner_entered", False) and not self._get_story_flag(
+            "shrine_altar_investigated", False
+        ):
+            return "目的：祠の祭壇を調べる"
         if self._get_story_flag("shrine_seal_reacted", False):
             return "目的：祠の奥へ進む"
         if self._get_story_flag("shrine_fragment_1_obtained", False):
@@ -842,7 +851,7 @@ class Game:
             return
 
         if self.current_zone_id == "north_road":
-            self._update_shrine_anomaly_progress()
+            self._update_north_road_shrine_progress()
             return
 
         if self.current_zone_id != "town":
@@ -859,6 +868,21 @@ class Game:
         north_threshold_y = TILE * 5
         if self.player.rect.centery <= north_threshold_y:
             self._set_story_flag("quest_go_north_reached", True)
+
+    def _update_north_road_shrine_progress(self) -> None:
+        if not self.world or not self.player:
+            return
+
+        for shrine_rect in getattr(self.world, "shrine_rects", []):
+            if not self.player.rect.colliderect(shrine_rect):
+                continue
+
+            if self._get_story_flag("shrine_seal_reacted", False):
+                self._transition_zone("shrine_inner")
+                return
+
+            self._update_shrine_anomaly_progress()
+            return
 
     def _update_shrine_anomaly_progress(self) -> None:
         if not self.world or not self.player:
@@ -941,6 +965,16 @@ class Game:
         self.dialogue_index = 0
         self.talking_npc = None
         self._mark_story_event_seen("shrine_fragment_1_offered")
+        self.state = STATE_DIALOGUE
+
+    def _start_shrine_inner_arrival_event(self) -> None:
+        self._set_story_flag("shrine_inner_entered", True)
+        self.current_dialogue_id = "shrine_inner_arrival"
+        self.dialogue_lines = get_dialogue_lines("shrine_inner_arrival")
+        self.dialogue_speaker = self.get_support_system_display_name()
+        self.dialogue_index = 0
+        self.talking_npc = None
+        self._mark_story_event_seen("shrine_inner_arrival")
         self.state = STATE_DIALOGUE
 
     def _start_dialogue(self, npc: "NPC"):

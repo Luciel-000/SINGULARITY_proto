@@ -51,6 +51,7 @@ TILE_FLOOR  = 0   # 床
 TILE_EXIT   = 2   # 出口タイル（★ 0.6 追加）
 TILE_SHRINE = 3   # 古い祠の入口イベント地点
 TILE_FRAGMENT = 4  # 封印の欠片イベント地点
+TILE_ALTAR = 5     # 祠内部の祭壇地点
 
 
 class Room:
@@ -124,6 +125,7 @@ class World:
         self.exit_rects: list[pygame.Rect]  = []
         self.shrine_rects: list[pygame.Rect] = []
         self.fragment_rects: list[pygame.Rect] = []
+        self.altar_rects: list[pygame.Rect] = []
 
         # ── ★ 0.7: NPC 配置座標リスト（ピクセル座標）
         # _generate_town() が _npc_tile_positions に記録し、
@@ -138,6 +140,7 @@ class World:
         self._build_exit_rects()
         self._build_shrine_rects()
         self._build_fragment_rects()
+        self._build_altar_rects()
         self._build_npc_spawns()  # ★ 0.7
 
     # ──────────────────────────────────────────────────────
@@ -153,6 +156,8 @@ class World:
             self._generate_dungeon()
         elif self.map_type == "north_road":
             self._generate_north_road()
+        elif self.map_type == "shrine_inner":
+            self._generate_shrine_inner()
         else:
             self._generate_town()
 
@@ -293,6 +298,37 @@ class World:
         shrine_row = 1
         self._tiles[shrine_row][shrine_col] = TILE_SHRINE
 
+    def _generate_shrine_inner(self):
+        """古い祠内部の小規模な固定マップを生成する。"""
+        self._tiles = [[TILE_WALL] * MAP_COLS for _ in range(MAP_ROWS)]
+
+        room_col = MAP_COLS // 2 - 5
+        room_row = 2
+        room_w = 11
+        room_h = 10
+
+        for row in range(room_row, room_row + room_h):
+            for col in range(room_col, room_col + room_w):
+                self._tiles[row][col] = TILE_FLOOR
+
+        # 古い柱。壁として置き、内部の雰囲気と進路の輪郭を作る。
+        for col, row in (
+            (room_col + 2, room_row + 3),
+            (room_col + room_w - 3, room_row + 3),
+            (room_col + 2, room_row + room_h - 4),
+            (room_col + room_w - 3, room_row + room_h - 4),
+        ):
+            self._tiles[row][col] = TILE_WALL
+
+        altar_col = room_col + room_w // 2
+        altar_row = room_row + 1
+        self._tiles[altar_row][altar_col] = TILE_ALTAR
+
+        exit_col = room_col + room_w // 2
+        exit_row = room_row + room_h - 1
+        self._tiles[exit_row][exit_col] = TILE_EXIT
+        self.player_spawn = (exit_col * TILE + 4, (exit_row - 1) * TILE + 4)
+
     # ──────────────────────────────────────────────────────
     #  部屋・通路の掘削ヘルパー（変更なし）
     # ──────────────────────────────────────────────────────
@@ -341,7 +377,7 @@ class World:
                 px = c * TILE
                 py = r * TILE
 
-                if tile in (TILE_FLOOR, TILE_EXIT, TILE_SHRINE, TILE_FRAGMENT):
+                if tile in (TILE_FLOOR, TILE_EXIT, TILE_SHRINE, TILE_FRAGMENT, TILE_ALTAR):
                     # 床（出口も床として下地を描く）
                     shade = random.randint(-5, 5)
                     col   = tuple(max(0, min(255, v + shade)) for v in fc)
@@ -408,6 +444,16 @@ class World:
             for c, tile in enumerate(row):
                 if tile == TILE_FRAGMENT:
                     self.fragment_rects.append(
+                        pygame.Rect(c * TILE, r * TILE, TILE, TILE)
+                    )
+
+    def _build_altar_rects(self):
+        """祠内部の祭壇地点の Rect リストを作る。"""
+        self.altar_rects = []
+        for r, row in enumerate(self._tiles):
+            for c, tile in enumerate(row):
+                if tile == TILE_ALTAR:
+                    self.altar_rects.append(
                         pygame.Rect(c * TILE, r * TILE, TILE, TILE)
                     )
 
@@ -510,3 +556,9 @@ class World:
                 pygame.draw.rect(surface, (68, 68, 86), rect)
                 pygame.draw.rect(surface, (155, 150, 180), rect, 2)
                 pygame.draw.line(surface, (205, 200, 230), rect.midtop, rect.center, 2)
+
+        for rect in self.altar_rects:
+            pygame.draw.rect(surface, (64, 58, 78), rect)
+            pygame.draw.rect(surface, (150, 145, 175), rect, 2)
+            glow_rect = rect.inflate(-TILE // 3, -TILE // 3)
+            pygame.draw.rect(surface, (110, 165, 185), glow_rect, 1)
