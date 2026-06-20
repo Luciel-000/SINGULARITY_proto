@@ -476,6 +476,23 @@ LUCIEL_000
 - 祠内部マップ・実際の遷移・ボス戦・封印の完全解除はまだ未実装
 - save_data やテスト用スクリプトは commit 対象外
 
+### Step9
+
+- 新ゾーン shrine_inner を追加
+- 表示名を「古い祠・内部」に設定
+- 敵が出現しない小規模固定マップを追加
+- 石壁・石床・柱・祭壇地点を配置
+- shrine_seal_reacted=True の時だけ north_road の祠入口から入場可能
+- shrine_inner の出口から north_road へ戻れる
+- 初回入場時に shrine_inner_entered=True を設定
+- 初回のみ shrine_inner_arrival イベントを表示
+- 観測補助機構の設定名を初回入場イベントの話者名に使用
+- shrine_inner_entered=True かつ shrine_altar_investigated=False の場合は「目的：祠の祭壇を調べる」を表示
+- SAVE / LOAD 後も current_zone_id と shrine_inner_entered が復元されることを確認
+- core/*.py に「大賢者」表記が残っていないことを確認
+- 祭壇を調べる本イベント・ボス戦・封印の完全解除はまだ未実装
+- save_data やテスト用スクリプトは commit 対象外
+
 ### 最新コミット
 
 - Step1: b6357e2
@@ -486,3 +503,4 @@ LUCIEL_000
 - Step6: 0e5c2b6
 - Step7: 8b57ca4
 - Step8: 30350dd
+- Step9: a31b155
