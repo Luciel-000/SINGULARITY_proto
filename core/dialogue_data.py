@@ -182,6 +182,28 @@ DIALOGUE_DATA: dict[str, dict] = {
         "on_end" : None,
     },
 
+    "elder_after_altar_investigation": {
+        "speaker": "謎の老人",
+        "lines"  : [
+            "祭壇が反応したか。",
+            "あの場所は、ただ何かを閉じ込めるためだけの場所ではない。",
+            "封印は、複数の欠片で均衡を保っている。",
+            "次の気配は、風が絶えず通り抜ける場所から感じる。",
+            "急ぐな。見落とすな。道は一つではない。",
+        ],
+        "on_end" : None,
+    },
+
+    "elder_after_next_fragment_hint": {
+        "speaker": "謎の老人",
+        "lines"  : [
+            "風は、隠されたものまで運んでくる。",
+            "聞こえぬ声ほど、よく耳を澄ませることだ。",
+            "お前自身の選択もな。",
+        ],
+        "on_end" : None,
+    },
+
     "sage_boot": {
         "speaker": "《観測補助機構》",
         "lines"  : [
