@@ -522,6 +522,24 @@ LUCIEL_000
 - 新マップ・次の欠片取得・ボス戦はまだ未実装
 - save_data やテスト用スクリプトは commit 対象外
 
+### Step12
+
+- 新ゾーン wind_gorge を追加
+- 表示名を「風鳴きの峡谷」に設定
+- 敵が出現しない小規模固定マップを追加
+- 岩場・崖・風が通り抜ける道・峡谷奥の淡い光地点を配置
+- next_fragment_hint_received=True の時だけ field から wind_gorge へ入場可能
+- 手がかり未取得時は短いメッセージを表示して遷移しない
+- wind_gorge の出口から field へ戻れる
+- 初回入場時に wind_gorge_entered=True を設定
+- 初回のみ wind_gorge_arrival イベントを表示
+- 観測補助機構の設定名を初回入場イベントの話者名に使用
+- wind_gorge_entered=True かつ wind_gorge_anomaly_seen=False の場合は「目的：峡谷の奥を調べる」を表示
+- SAVE / LOAD 後も current_zone_id と wind_gorge_entered が復元されることを確認
+- core/*.py に「大賢者」表記が残っていないことを確認
+- 峡谷奥の異変調査・次の欠片取得・ボス戦はまだ未実装
+- save_data やテスト用スクリプトは commit 対象外
+
 ### 最新コミット
 
 - Step1: b6357e2
@@ -535,3 +553,4 @@ LUCIEL_000
 - Step9: a31b155
 - Step10: 515f221
 - Step11: a4f7184
+- Step12: 40fd929
