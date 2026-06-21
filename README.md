@@ -556,6 +556,22 @@ LUCIEL_000
 - 次の欠片取得・新敵・ボス戦・新マップはまだ未実装
 - save_data やテスト用スクリプトは commit 対象外
 
+### Step15
+
+- wind_gorge の風の中心で、四大精霊の一柱「シルフ」と初めて遭遇するイベントを追加
+- wind_center_route_found=True かつ sylph_encountered=False の時だけ遭遇地点が有効
+- Zで sylph_first_encounter イベントを開始
+- 初回遭遇時に sylph_encountered=True / sylph_trial_available=True を設定
+- シルフは風の欠片を守る存在として、主人公を試す守護者として登場
+- 観測補助機構の設定名をイベント話者名に使用
+- sylph_trial_available=True かつ sylph_trial_cleared=False の場合は「目的：シルフの試練を受ける」を表示
+- 初回イベント後は再発させず、再度Zでは短いシルフ反応のみ表示
+- 風の中心に淡い人影・粒子・風の渦を追加して、シルフの気配を表現
+- SAVE / LOAD 後も sylph_encountered / sylph_trial_available が復元されることを確認
+- core/*.py に「大賢者」表記が残っていないことを確認
+- シルフ戦・仲間化・2つ目の封印の欠片取得・新マップはまだ未実装
+- save_data やテスト用スクリプトは commit 対象外
+
 ### 最新コミット
 
 - Step1: b6357e2
@@ -571,3 +587,4 @@ LUCIEL_000
 - Step11: a4f7184
 - Step12: 40fd929
 - Step13: b8702c9
+- Step15: 712a289
