@@ -52,6 +52,7 @@ TILE_EXIT   = 2   # 出口タイル（★ 0.6 追加）
 TILE_SHRINE = 3   # 古い祠の入口イベント地点
 TILE_FRAGMENT = 4  # 封印の欠片イベント地点
 TILE_ALTAR = 5     # 祠内部の祭壇地点
+TILE_WIND = 6      # 風鳴きの峡谷入口・異変地点
 
 
 class Room:
@@ -126,6 +127,7 @@ class World:
         self.shrine_rects: list[pygame.Rect] = []
         self.fragment_rects: list[pygame.Rect] = []
         self.altar_rects: list[pygame.Rect] = []
+        self.wind_rects: list[pygame.Rect] = []
 
         # ── ★ 0.7: NPC 配置座標リスト（ピクセル座標）
         # _generate_town() が _npc_tile_positions に記録し、
@@ -141,6 +143,7 @@ class World:
         self._build_shrine_rects()
         self._build_fragment_rects()
         self._build_altar_rects()
+        self._build_wind_rects()
         self._build_npc_spawns()  # ★ 0.7
 
     # ──────────────────────────────────────────────────────
@@ -158,6 +161,8 @@ class World:
             self._generate_north_road()
         elif self.map_type == "shrine_inner":
             self._generate_shrine_inner()
+        elif self.map_type == "wind_gorge":
+            self._generate_wind_gorge()
         else:
             self._generate_town()
 
@@ -219,6 +224,11 @@ class World:
             fx, fy = target_room.center()
             if self._tiles[fy][fx] == TILE_FLOOR:
                 self._tiles[fy][fx] = TILE_FRAGMENT
+
+            wind_x = max(target_room.col + 1, fx - 1)
+            wind_y = max(target_room.row + 1, fy - 1)
+            if self._tiles[wind_y][wind_x] == TILE_FLOOR:
+                self._tiles[wind_y][wind_x] = TILE_WIND
 
     # ──────────────────────────────────────────────────────
     #  町生成（★ 0.6 新規、town 用）
@@ -329,6 +339,33 @@ class World:
         self._tiles[exit_row][exit_col] = TILE_EXIT
         self.player_spawn = (exit_col * TILE + 4, (exit_row - 1) * TILE + 4)
 
+    def _generate_wind_gorge(self):
+        """風鳴きの峡谷の小規模な固定マップを生成する。"""
+        self._tiles = [[TILE_WALL] * MAP_COLS for _ in range(MAP_ROWS)]
+
+        path_col = MAP_COLS // 2 - 2
+        path_row = 2
+        path_w = 5
+        path_h = 11
+
+        for row in range(path_row, path_row + path_h):
+            width = path_w + (1 if row % 3 == 0 else 0)
+            for col in range(path_col, path_col + width):
+                self._tiles[row][col] = TILE_FLOOR
+
+        # 崖の隙間を抜ける横道。
+        for col in range(path_col - 3, path_col + path_w + 4):
+            self._tiles[path_row + 5][col] = TILE_FLOOR
+
+        wind_col = path_col + path_w // 2
+        wind_row = path_row + 1
+        self._tiles[wind_row][wind_col] = TILE_WIND
+
+        exit_col = path_col + path_w // 2
+        exit_row = path_row + path_h - 1
+        self._tiles[exit_row][exit_col] = TILE_EXIT
+        self.player_spawn = (exit_col * TILE + 4, (exit_row - 1) * TILE + 4)
+
     # ──────────────────────────────────────────────────────
     #  部屋・通路の掘削ヘルパー（変更なし）
     # ──────────────────────────────────────────────────────
@@ -377,7 +414,14 @@ class World:
                 px = c * TILE
                 py = r * TILE
 
-                if tile in (TILE_FLOOR, TILE_EXIT, TILE_SHRINE, TILE_FRAGMENT, TILE_ALTAR):
+                if tile in (
+                    TILE_FLOOR,
+                    TILE_EXIT,
+                    TILE_SHRINE,
+                    TILE_FRAGMENT,
+                    TILE_ALTAR,
+                    TILE_WIND,
+                ):
                     # 床（出口も床として下地を描く）
                     shade = random.randint(-5, 5)
                     col   = tuple(max(0, min(255, v + shade)) for v in fc)
@@ -454,6 +498,16 @@ class World:
             for c, tile in enumerate(row):
                 if tile == TILE_ALTAR:
                     self.altar_rects.append(
+                        pygame.Rect(c * TILE, r * TILE, TILE, TILE)
+                    )
+
+    def _build_wind_rects(self):
+        """風の異変・峡谷入口地点の Rect リストを作る。"""
+        self.wind_rects = []
+        for r, row in enumerate(self._tiles):
+            for c, tile in enumerate(row):
+                if tile == TILE_WIND:
+                    self.wind_rects.append(
                         pygame.Rect(c * TILE, r * TILE, TILE, TILE)
                     )
 
@@ -562,3 +616,9 @@ class World:
             pygame.draw.rect(surface, (150, 145, 175), rect, 2)
             glow_rect = rect.inflate(-TILE // 3, -TILE // 3)
             pygame.draw.rect(surface, (110, 165, 185), glow_rect, 1)
+
+        for rect in self.wind_rects:
+            pygame.draw.rect(surface, (48, 68, 78), rect)
+            pygame.draw.rect(surface, (120, 190, 210), rect, 2)
+            pygame.draw.arc(surface, (180, 225, 235), rect.inflate(-6, -8), 0.2, 2.8, 2)
+            pygame.draw.arc(surface, (150, 205, 220), rect.inflate(-12, -14), 3.3, 5.8, 1)

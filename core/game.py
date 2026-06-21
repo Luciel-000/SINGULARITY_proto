@@ -655,6 +655,7 @@ class Game:
         if self.state == STATE_PLAY and self.player and self.world:
             self.player.update(self.world.wall_rects)
             self._update_story_progress_by_position()
+            self._update_wind_gorge_transition()
 
             # ★ 0.7: NPC を更新（アニメーションタイマー）
             for npc in self.npcs:
@@ -740,6 +741,10 @@ class Game:
             "shrine_inner_entered", False
         ):
             self._start_shrine_inner_arrival_event()
+        if next_zone_id == "wind_gorge" and not self._get_story_flag(
+            "wind_gorge_entered", False
+        ):
+            self._start_wind_gorge_arrival_event()
 
     def _handle_exit_transition(self, exit_rect: pygame.Rect) -> None:
         if self.current_zone_id == "town":
@@ -791,6 +796,10 @@ class Game:
         return 0
 
     def get_current_objective_text(self) -> str:
+        if self._get_story_flag("wind_gorge_entered", False) and not self._get_story_flag(
+            "wind_gorge_anomaly_seen", False
+        ):
+            return "目的：峡谷の奥を調べる"
         if self._get_story_flag("next_fragment_hint_received", False):
             return "目的：風の吹く場所を探す"
         if self._get_story_flag("shrine_altar_investigated", False):
@@ -870,6 +879,23 @@ class Game:
             return
 
         self._update_town_north_progress()
+
+    def _update_wind_gorge_transition(self) -> None:
+        if not self.world or not self.player:
+            return
+        if self.current_zone_id != "field":
+            return
+
+        for wind_rect in getattr(self.world, "wind_rects", []):
+            if not self.player.rect.colliderect(wind_rect):
+                continue
+
+            if self._get_story_flag("next_fragment_hint_received", False):
+                self._transition_zone("wind_gorge")
+            else:
+                self._add_message("強い風が吹く方向が気になるが、まだ手がかりが足りない。", C_GRAY)
+                self.player.rect.top = wind_rect.bottom + 2
+            return
 
     def _update_town_north_progress(self) -> None:
         if not self._get_story_flag("quest_go_north", False):
@@ -987,6 +1013,16 @@ class Game:
         self.dialogue_index = 0
         self.talking_npc = None
         self._mark_story_event_seen("shrine_inner_arrival")
+        self.state = STATE_DIALOGUE
+
+    def _start_wind_gorge_arrival_event(self) -> None:
+        self._set_story_flag("wind_gorge_entered", True)
+        self.current_dialogue_id = "wind_gorge_arrival"
+        self.dialogue_lines = get_dialogue_lines("wind_gorge_arrival")
+        self.dialogue_speaker = self.get_support_system_display_name()
+        self.dialogue_index = 0
+        self.talking_npc = None
+        self._mark_story_event_seen("wind_gorge_arrival")
         self.state = STATE_DIALOGUE
 
     def _try_investigate_shrine_altar(self) -> bool:
