@@ -396,6 +396,8 @@ class Game:
             elif key == pygame.K_ESCAPE:
                 self._open_save_menu()
             elif key == pygame.K_z:
+                if self._try_investigate_wind_gorge_anomaly():
+                    return
                 if self._try_investigate_shrine_altar():
                     return
                 if self._try_offer_shrine_fragment():
@@ -796,6 +798,8 @@ class Game:
         return 0
 
     def get_current_objective_text(self) -> str:
+        if self._get_story_flag("wind_gorge_anomaly_seen", False):
+            return "目的：風の流れを調べる"
         if self._get_story_flag("wind_gorge_entered", False) and not self._get_story_flag(
             "wind_gorge_anomaly_seen", False
         ):
@@ -1023,6 +1027,35 @@ class Game:
         self.dialogue_index = 0
         self.talking_npc = None
         self._mark_story_event_seen("wind_gorge_arrival")
+        self.state = STATE_DIALOGUE
+
+    def _try_investigate_wind_gorge_anomaly(self) -> bool:
+        if not self.world or not self.player:
+            return False
+        if self.current_zone_id != "wind_gorge":
+            return False
+        if not self._get_story_flag("wind_gorge_entered", False):
+            return False
+
+        for wind_rect in getattr(self.world, "wind_rects", []):
+            if self.player.rect.colliderect(wind_rect.inflate(TILE, TILE)):
+                if self._get_story_flag("wind_gorge_anomaly_seen", False):
+                    self._add_message("風はなおも光を守るように渦巻いている", C_GRAY)
+                else:
+                    self._start_wind_gorge_anomaly_event()
+                return True
+
+        return False
+
+    def _start_wind_gorge_anomaly_event(self) -> None:
+        self._set_story_flag("wind_gorge_anomaly_seen", True)
+        self._set_story_flag("wind_gorge_wind_resonance_seen", True)
+        self.current_dialogue_id = "wind_gorge_anomaly"
+        self.dialogue_lines = get_dialogue_lines("wind_gorge_anomaly")
+        self.dialogue_speaker = self.get_support_system_display_name()
+        self.dialogue_index = 0
+        self.talking_npc = None
+        self._mark_story_event_seen("wind_gorge_anomaly")
         self.state = STATE_DIALOGUE
 
     def _try_investigate_shrine_altar(self) -> bool:
@@ -1375,6 +1408,7 @@ class Game:
         self.world.draw(
             surface,
             shrine_seal_reacted=self._get_story_flag("shrine_seal_reacted", False),
+            wind_gorge_anomaly_seen=self._get_story_flag("wind_gorge_anomaly_seen", False),
         )
         self._draw_shrine_fragment(surface)
         for enemy in self.enemies:

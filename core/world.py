@@ -583,7 +583,12 @@ class World:
     # ──────────────────────────────────────────────────────
     #  描画（★ 0.6: 出口タイルを重ね描き）
     # ──────────────────────────────────────────────────────
-    def draw(self, surface: pygame.Surface, shrine_seal_reacted: bool = False):
+    def draw(
+        self,
+        surface: pygame.Surface,
+        shrine_seal_reacted: bool = False,
+        wind_gorge_anomaly_seen: bool = False,
+    ):
         """
         キャッシュしたサーフェスを貼り付け、
         その上に出口タイルをくすんだゴールドで重ね描きする。
@@ -618,7 +623,15 @@ class World:
             pygame.draw.rect(surface, (110, 165, 185), glow_rect, 1)
 
         for rect in self.wind_rects:
-            pygame.draw.rect(surface, (48, 68, 78), rect)
-            pygame.draw.rect(surface, (120, 190, 210), rect, 2)
-            pygame.draw.arc(surface, (180, 225, 235), rect.inflate(-6, -8), 0.2, 2.8, 2)
-            pygame.draw.arc(surface, (150, 205, 220), rect.inflate(-12, -14), 3.3, 5.8, 1)
+            if wind_gorge_anomaly_seen:
+                pygame.draw.rect(surface, (54, 78, 88), rect)
+                pygame.draw.rect(surface, (170, 225, 235), rect, 2)
+                glow_rect = rect.inflate(-TILE // 4, -TILE // 4)
+                pygame.draw.rect(surface, (190, 235, 240), glow_rect, 1)
+                pygame.draw.arc(surface, (220, 245, 248), rect.inflate(-4, -6), 0.0, 3.0, 2)
+                pygame.draw.arc(surface, (160, 215, 230), rect.inflate(-10, -12), 3.1, 6.0, 2)
+            else:
+                pygame.draw.rect(surface, (48, 68, 78), rect)
+                pygame.draw.rect(surface, (120, 190, 210), rect, 2)
+                pygame.draw.arc(surface, (180, 225, 235), rect.inflate(-6, -8), 0.2, 2.8, 2)
+                pygame.draw.arc(surface, (150, 205, 220), rect.inflate(-12, -14), 3.3, 5.8, 1)
