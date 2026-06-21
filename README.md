@@ -540,6 +540,22 @@ LUCIEL_000
 - 峡谷奥の異変調査・次の欠片取得・ボス戦はまだ未実装
 - save_data やテスト用スクリプトは commit 対象外
 
+### Step13
+
+- wind_gorge 奥の異変地点でZを押して調べる処理を追加
+- 初回調査時に wind_gorge_anomaly_seen=True / wind_gorge_wind_resonance_seen=True を設定
+- wind_gorge_anomaly 会話イベントを追加
+- 観測補助機構の設定名を異変イベントの話者名に使用
+- 峡谷奥で風が円を描くように流れ、淡い光を守るように集まる演出を追加
+- 祠の封印や最初の欠片と似た反応を検出するが、次の欠片はまだ取得できない構成
+- wind_gorge_anomaly_seen=True の場合は「目的：風の流れを調べる」を表示
+- 調査済み後は本イベントを再発させず、短い反応のみ表示
+- wind_gorge_anomaly_seen=True の場合、異変地点の光と風の描画を少し強化
+- SAVE / LOAD 後も wind_gorge_anomaly_seen / wind_gorge_wind_resonance_seen が復元されることを確認
+- core/*.py に「大賢者」表記が残っていないことを確認
+- 次の欠片取得・新敵・ボス戦・新マップはまだ未実装
+- save_data やテスト用スクリプトは commit 対象外
+
 ### 最新コミット
 
 - Step1: b6357e2
@@ -554,3 +570,4 @@ LUCIEL_000
 - Step10: 515f221
 - Step11: a4f7184
 - Step12: 40fd929
+- Step13: b8702c9
