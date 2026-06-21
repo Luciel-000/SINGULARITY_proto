@@ -53,6 +53,7 @@ TILE_SHRINE = 3   # 古い祠の入口イベント地点
 TILE_FRAGMENT = 4  # 封印の欠片イベント地点
 TILE_ALTAR = 5     # 祠内部の祭壇地点
 TILE_WIND = 6      # 風鳴きの峡谷入口・異変地点
+TILE_WIND_OBSERVATION = 7  # 風の観測地点
 
 
 class Room:
@@ -128,6 +129,7 @@ class World:
         self.fragment_rects: list[pygame.Rect] = []
         self.altar_rects: list[pygame.Rect] = []
         self.wind_rects: list[pygame.Rect] = []
+        self.wind_observation_rects: list[pygame.Rect] = []
 
         # ── ★ 0.7: NPC 配置座標リスト（ピクセル座標）
         # _generate_town() が _npc_tile_positions に記録し、
@@ -144,6 +146,7 @@ class World:
         self._build_fragment_rects()
         self._build_altar_rects()
         self._build_wind_rects()
+        self._build_wind_observation_rects()
         self._build_npc_spawns()  # ★ 0.7
 
     # ──────────────────────────────────────────────────────
@@ -361,6 +364,10 @@ class World:
         wind_row = path_row + 1
         self._tiles[wind_row][wind_col] = TILE_WIND
 
+        observation_col = path_col - 2
+        observation_row = path_row + 5
+        self._tiles[observation_row][observation_col] = TILE_WIND_OBSERVATION
+
         exit_col = path_col + path_w // 2
         exit_row = path_row + path_h - 1
         self._tiles[exit_row][exit_col] = TILE_EXIT
@@ -421,6 +428,7 @@ class World:
                     TILE_FRAGMENT,
                     TILE_ALTAR,
                     TILE_WIND,
+                    TILE_WIND_OBSERVATION,
                 ):
                     # 床（出口も床として下地を描く）
                     shade = random.randint(-5, 5)
@@ -511,6 +519,16 @@ class World:
                         pygame.Rect(c * TILE, r * TILE, TILE, TILE)
                     )
 
+    def _build_wind_observation_rects(self):
+        """風の観測地点の Rect リストを作る。"""
+        self.wind_observation_rects = []
+        for r, row in enumerate(self._tiles):
+            for c, tile in enumerate(row):
+                if tile == TILE_WIND_OBSERVATION:
+                    self.wind_observation_rects.append(
+                        pygame.Rect(c * TILE, r * TILE, TILE, TILE)
+                    )
+
     # ──────────────────────────────────────────────────────
     #  NPC スポーン位置の構築（★ 0.7 新規）
     # ──────────────────────────────────────────────────────
@@ -588,6 +606,7 @@ class World:
         surface: pygame.Surface,
         shrine_seal_reacted: bool = False,
         wind_gorge_anomaly_seen: bool = False,
+        wind_center_route_found: bool = False,
     ):
         """
         キャッシュしたサーフェスを貼り付け、
@@ -635,3 +654,17 @@ class World:
                 pygame.draw.rect(surface, (120, 190, 210), rect, 2)
                 pygame.draw.arc(surface, (180, 225, 235), rect.inflate(-6, -8), 0.2, 2.8, 2)
                 pygame.draw.arc(surface, (150, 205, 220), rect.inflate(-12, -14), 3.3, 5.8, 1)
+
+        for rect in self.wind_observation_rects:
+            pygame.draw.rect(surface, (58, 64, 70), rect)
+            pygame.draw.rect(surface, (130, 185, 195), rect, 2)
+            pygame.draw.line(surface, (185, 220, 225), rect.midleft, rect.midright, 1)
+            pygame.draw.line(surface, (145, 205, 215), rect.midtop, rect.midbottom, 1)
+
+        if wind_center_route_found and self.wind_rects and self.wind_observation_rects:
+            start = self.wind_observation_rects[0].center
+            end = self.wind_rects[0].center
+            pygame.draw.line(surface, (150, 220, 230), start, end, 2)
+            mid_x = (start[0] + end[0]) // 2
+            mid_y = (start[1] + end[1]) // 2
+            pygame.draw.circle(surface, (190, 240, 245), (mid_x, mid_y), 4, 1)

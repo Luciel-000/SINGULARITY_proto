@@ -396,6 +396,8 @@ class Game:
             elif key == pygame.K_ESCAPE:
                 self._open_save_menu()
             elif key == pygame.K_z:
+                if self._try_analyze_wind_flow():
+                    return
                 if self._try_investigate_wind_gorge_anomaly():
                     return
                 if self._try_investigate_shrine_altar():
@@ -798,6 +800,8 @@ class Game:
         return 0
 
     def get_current_objective_text(self) -> str:
+        if self._get_story_flag("wind_center_route_found", False):
+            return "目的：風の中心へ向かう"
         if self._get_story_flag("wind_gorge_anomaly_seen", False):
             return "目的：風の流れを調べる"
         if self._get_story_flag("wind_gorge_entered", False) and not self._get_story_flag(
@@ -1056,6 +1060,35 @@ class Game:
         self.dialogue_index = 0
         self.talking_npc = None
         self._mark_story_event_seen("wind_gorge_anomaly")
+        self.state = STATE_DIALOGUE
+
+    def _try_analyze_wind_flow(self) -> bool:
+        if not self.world or not self.player:
+            return False
+        if self.current_zone_id != "wind_gorge":
+            return False
+        if not self._get_story_flag("wind_gorge_anomaly_seen", False):
+            return False
+
+        for observation_rect in getattr(self.world, "wind_observation_rects", []):
+            if self.player.rect.colliderect(observation_rect.inflate(TILE, TILE)):
+                if self._get_story_flag("wind_flow_analyzed", False):
+                    self._add_message("風の流れは、一定の間隔で弱まっている", C_GRAY)
+                else:
+                    self._start_wind_flow_analysis_event()
+                return True
+
+        return False
+
+    def _start_wind_flow_analysis_event(self) -> None:
+        self._set_story_flag("wind_flow_analyzed", True)
+        self._set_story_flag("wind_center_route_found", True)
+        self.current_dialogue_id = "wind_flow_analysis"
+        self.dialogue_lines = get_dialogue_lines("wind_flow_analysis")
+        self.dialogue_speaker = self.get_support_system_display_name()
+        self.dialogue_index = 0
+        self.talking_npc = None
+        self._mark_story_event_seen("wind_flow_analysis")
         self.state = STATE_DIALOGUE
 
     def _try_investigate_shrine_altar(self) -> bool:
@@ -1409,6 +1442,7 @@ class Game:
             surface,
             shrine_seal_reacted=self._get_story_flag("shrine_seal_reacted", False),
             wind_gorge_anomaly_seen=self._get_story_flag("wind_gorge_anomaly_seen", False),
+            wind_center_route_found=self._get_story_flag("wind_center_route_found", False),
         )
         self._draw_shrine_fragment(surface)
         for enemy in self.enemies:
