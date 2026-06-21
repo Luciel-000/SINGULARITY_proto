@@ -607,6 +607,7 @@ class World:
         shrine_seal_reacted: bool = False,
         wind_gorge_anomaly_seen: bool = False,
         wind_center_route_found: bool = False,
+        sylph_encountered: bool = False,
     ):
         """
         キャッシュしたサーフェスを貼り付け、
@@ -649,6 +650,11 @@ class World:
                 pygame.draw.rect(surface, (190, 235, 240), glow_rect, 1)
                 pygame.draw.arc(surface, (220, 245, 248), rect.inflate(-4, -6), 0.0, 3.0, 2)
                 pygame.draw.arc(surface, (160, 215, 230), rect.inflate(-10, -12), 3.1, 6.0, 2)
+                if sylph_encountered:
+                    pygame.draw.circle(surface, (215, 245, 245), rect.center, 7, 1)
+                    pygame.draw.line(surface, (215, 245, 245), rect.midtop, rect.midbottom, 1)
+                    pygame.draw.circle(surface, (180, 230, 235), (rect.centerx - 7, rect.centery - 5), 2)
+                    pygame.draw.circle(surface, (180, 230, 235), (rect.centerx + 8, rect.centery + 4), 2)
             else:
                 pygame.draw.rect(surface, (48, 68, 78), rect)
                 pygame.draw.rect(surface, (120, 190, 210), rect, 2)

@@ -396,6 +396,8 @@ class Game:
             elif key == pygame.K_ESCAPE:
                 self._open_save_menu()
             elif key == pygame.K_z:
+                if self._try_start_sylph_encounter():
+                    return
                 if self._try_analyze_wind_flow():
                     return
                 if self._try_investigate_wind_gorge_anomaly():
@@ -800,6 +802,10 @@ class Game:
         return 0
 
     def get_current_objective_text(self) -> str:
+        if self._get_story_flag("sylph_trial_available", False) and not self._get_story_flag(
+            "sylph_trial_cleared", False
+        ):
+            return "目的：シルフの試練を受ける"
         if self._get_story_flag("wind_center_route_found", False):
             return "目的：風の中心へ向かう"
         if self._get_story_flag("wind_gorge_anomaly_seen", False):
@@ -1089,6 +1095,35 @@ class Game:
         self.dialogue_index = 0
         self.talking_npc = None
         self._mark_story_event_seen("wind_flow_analysis")
+        self.state = STATE_DIALOGUE
+
+    def _try_start_sylph_encounter(self) -> bool:
+        if not self.world or not self.player:
+            return False
+        if self.current_zone_id != "wind_gorge":
+            return False
+        if not self._get_story_flag("wind_center_route_found", False):
+            return False
+
+        for wind_rect in getattr(self.world, "wind_rects", []):
+            if self.player.rect.colliderect(wind_rect.inflate(TILE, TILE)):
+                if self._get_story_flag("sylph_encountered", False):
+                    self._add_message("シルフ：試練を受ける覚悟があるなら、風を追ってみろ。", C_GRAY)
+                else:
+                    self._start_sylph_first_encounter_event()
+                return True
+
+        return False
+
+    def _start_sylph_first_encounter_event(self) -> None:
+        self._set_story_flag("sylph_encountered", True)
+        self._set_story_flag("sylph_trial_available", True)
+        self.current_dialogue_id = "sylph_first_encounter"
+        self.dialogue_lines = get_dialogue_lines("sylph_first_encounter")
+        self.dialogue_speaker = self.get_support_system_display_name()
+        self.dialogue_index = 0
+        self.talking_npc = None
+        self._mark_story_event_seen("sylph_first_encounter")
         self.state = STATE_DIALOGUE
 
     def _try_investigate_shrine_altar(self) -> bool:
@@ -1443,6 +1478,7 @@ class Game:
             shrine_seal_reacted=self._get_story_flag("shrine_seal_reacted", False),
             wind_gorge_anomaly_seen=self._get_story_flag("wind_gorge_anomaly_seen", False),
             wind_center_route_found=self._get_story_flag("wind_center_route_found", False),
+            sylph_encountered=self._get_story_flag("sylph_encountered", False),
         )
         self._draw_shrine_fragment(surface)
         for enemy in self.enemies:
