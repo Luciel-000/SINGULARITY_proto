@@ -632,6 +632,7 @@ class World:
         sylph_trial_started: bool = False,
         sylph_trial_step: int = 0,
         sylph_trial_cleared: bool = False,
+        wind_fragment_2_obtained: bool = False,
     ):
         """
         キャッシュしたサーフェスを貼り付け、
@@ -668,12 +669,18 @@ class World:
 
         for rect in self.wind_rects:
             if wind_gorge_anomaly_seen:
-                pygame.draw.rect(surface, (54, 78, 88), rect)
-                pygame.draw.rect(surface, (170, 225, 235), rect, 2)
+                if wind_fragment_2_obtained:
+                    pygame.draw.rect(surface, (42, 62, 68), rect)
+                    pygame.draw.rect(surface, (125, 195, 200), rect, 1)
+                else:
+                    pygame.draw.rect(surface, (54, 78, 88), rect)
+                    pygame.draw.rect(surface, (170, 225, 235), rect, 2)
                 glow_rect = rect.inflate(-TILE // 4, -TILE // 4)
-                pygame.draw.rect(surface, (190, 235, 240), glow_rect, 1)
-                pygame.draw.arc(surface, (220, 245, 248), rect.inflate(-4, -6), 0.0, 3.0, 2)
-                pygame.draw.arc(surface, (160, 215, 230), rect.inflate(-10, -12), 3.1, 6.0, 2)
+                glow_color = (130, 205, 210) if wind_fragment_2_obtained else (190, 235, 240)
+                pygame.draw.rect(surface, glow_color, glow_rect, 1)
+                arc_width = 1 if wind_fragment_2_obtained else 2
+                pygame.draw.arc(surface, (220, 245, 248), rect.inflate(-4, -6), 0.0, 3.0, arc_width)
+                pygame.draw.arc(surface, (160, 215, 230), rect.inflate(-10, -12), 3.1, 6.0, arc_width)
                 if sylph_encountered:
                     pygame.draw.circle(surface, (215, 245, 245), rect.center, 7, 1)
                     pygame.draw.line(surface, (215, 245, 245), rect.midtop, rect.midbottom, 1)
@@ -710,7 +717,11 @@ class World:
                     prev = self.wind_trial_marker_rects[index - 1]
                     pygame.draw.line(surface, (145, 220, 220), prev.center, rect.center, 2)
 
-        if sylph_trial_cleared and self.wind_rects:
+        if sylph_trial_cleared and self.wind_rects and not wind_fragment_2_obtained:
             center = self.wind_rects[0].center
             pygame.draw.circle(surface, (225, 250, 245), center, TILE // 2, 2)
             pygame.draw.circle(surface, (170, 235, 225), center, TILE // 3, 1)
+
+        if wind_fragment_2_obtained and self.wind_rects:
+            center = self.wind_rects[0].center
+            pygame.draw.circle(surface, (155, 225, 220), center, TILE // 3, 1)

@@ -396,6 +396,8 @@ class Game:
             elif key == pygame.K_ESCAPE:
                 self._open_save_menu()
             elif key == pygame.K_z:
+                if self._try_collect_wind_fragment():
+                    return
                 if self._try_progress_sylph_trial():
                     return
                 if self._try_start_sylph_encounter():
@@ -816,6 +818,8 @@ class Game:
         return 0
 
     def get_current_objective_text(self) -> str:
+        if self._get_story_flag("wind_fragment_2_obtained", False):
+            return "目的：古い祠へ戻る"
         if self._get_story_flag("sylph_trial_cleared", False):
             return "目的：風の欠片へ向かう"
         if self._get_story_flag("sylph_trial_started", False):
@@ -1201,6 +1205,36 @@ class Game:
         self._mark_story_event_seen("sylph_trial_complete")
         self.state = STATE_DIALOGUE
 
+    def _try_collect_wind_fragment(self) -> bool:
+        if not self.world or not self.player:
+            return False
+        if self.current_zone_id != "wind_gorge":
+            return False
+        if not self._get_story_flag("sylph_trial_cleared", False):
+            return False
+
+        for wind_rect in getattr(self.world, "wind_rects", []):
+            if self.player.rect.colliderect(wind_rect.inflate(TILE, TILE)):
+                if self._get_story_flag("wind_fragment_2_obtained", False):
+                    self._add_message("シルフ：欠片はすでに、お前の手の中にある。帰るべき場所があるのだろう。", C_GRAY)
+                else:
+                    self._start_sylph_grants_wind_fragment_event()
+                return True
+
+        return False
+
+    def _start_sylph_grants_wind_fragment_event(self) -> None:
+        self._set_story_flag("wind_fragment_2_seen", True)
+        self._set_story_flag("wind_fragment_2_obtained", True)
+        self._set_story_flag("sylph_fragment_granted", True)
+        self.current_dialogue_id = "sylph_grants_wind_fragment"
+        self.dialogue_lines = get_dialogue_lines("sylph_grants_wind_fragment")
+        self.dialogue_speaker = self.get_support_system_display_name()
+        self.dialogue_index = 0
+        self.talking_npc = None
+        self._mark_story_event_seen("sylph_grants_wind_fragment")
+        self.state = STATE_DIALOGUE
+
     def _try_investigate_shrine_altar(self) -> bool:
         if not self.world or not self.player:
             return False
@@ -1557,6 +1591,7 @@ class Game:
             sylph_trial_started=self._get_story_flag("sylph_trial_started", False),
             sylph_trial_step=self._get_story_int("sylph_trial_step", 0),
             sylph_trial_cleared=self._get_story_flag("sylph_trial_cleared", False),
+            wind_fragment_2_obtained=self._get_story_flag("wind_fragment_2_obtained", False),
         )
         self._draw_shrine_fragment(surface)
         for enemy in self.enemies:
