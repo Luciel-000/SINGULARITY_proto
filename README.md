@@ -624,6 +624,21 @@ LUCIEL_000
 - 次の精霊イベント・新マップ・3つ目の欠片・ボス戦・封印の完全解除はまだ未実装
 - save_data やテスト用スクリプトは commit 対象外
 
+### Step19
+
+- 風の欠片を祭壇へ奉納した後、謎の老人へ報告する進行を追加
+- shrine_second_seal_reacted=True かつ shrine_second_reaction_reported=False の場合は「目的：老人に祭壇の変化を報告する」を表示
+- elder_after_second_seal_reaction を追加
+- elder_after_second_seal_reaction 完了時に shrine_second_reaction_reported=True / water_hint_received=True を設定
+- water_hint_received=True の場合は「目的：水音のする場所を探す」を表示
+- elder_after_water_hint を追加
+- 老人は、流れる水・記憶を運ぶ水・水音についてヒントだけを示す
+- ウンディーネ、天使・悪魔・神、ソロモンの正体はまだ明かさない
+- SAVE / LOAD 後も shrine_second_reaction_reported / water_hint_received が復元されることを確認
+- core/*.py に「大賢者」表記が残っていないことを確認
+- 水エリア・ウンディーネ登場・3つ目の封印の欠片・ボス戦はまだ未実装
+- save_data やテスト用スクリプトは commit 対象外
+
 ### 最新コミット
 
 - Step1: b6357e2
@@ -643,3 +658,4 @@ LUCIEL_000
 - Step16: d912823
 - Step17: 96abfa2
 - Step18: e1a6aed
+- Step19: 9e093da
