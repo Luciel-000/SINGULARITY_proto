@@ -108,7 +108,7 @@ class Player:
         self.unlocked_jobs: list[str] = [self.current_job_id]
         self.seen_events: set[str] = set()
         self.completed_events: set[str] = set()
-        self.story_flags: dict[str, bool] = {}
+        self.story_flags: dict[str, bool | int | str] = {}
         self.support_system_name: str = DEFAULT_SUPPORT_SYSTEM_NAME
 
     # ──────────────────────────────────────────────────────
@@ -417,11 +417,16 @@ class Player:
 
         self.seen_events = clean_event_set(story.get("seen_events"))
         self.completed_events = clean_event_set(story.get("completed_events"))
-        self.story_flags = {
-            key: bool(value)
-            for key, value in flags.items()
-            if isinstance(key, str) and key
-        }
+        self.story_flags = {}
+        for key, value in flags.items():
+            if not isinstance(key, str) or not key:
+                continue
+            if isinstance(value, bool):
+                self.story_flags[key] = value
+            elif isinstance(value, int):
+                self.story_flags[key] = value
+            elif isinstance(value, str):
+                self.story_flags[key] = value
 
     def update(self, walls: list[pygame.Rect]):
         """毎フレーム呼ぶ。キー入力を読んで移動し壁との当たり判定を行う。"""

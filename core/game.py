@@ -396,6 +396,8 @@ class Game:
             elif key == pygame.K_ESCAPE:
                 self._open_save_menu()
             elif key == pygame.K_z:
+                if self._try_progress_sylph_trial():
+                    return
                 if self._try_start_sylph_encounter():
                     return
                 if self._try_analyze_wind_flow():
@@ -787,9 +789,21 @@ class Game:
         if self.player and hasattr(self.player, "set_story_flag"):
             self.player.set_story_flag(flag_name, value)
 
+    def _set_story_value(self, flag_name: str, value):
+        if self.player and isinstance(flag_name, str) and flag_name:
+            self.player.story_flags[flag_name] = value
+
     def _get_story_flag(self, flag_name: str, default: bool = False) -> bool:
         if self.player and hasattr(self.player, "get_story_flag"):
             return self.player.get_story_flag(flag_name, default)
+        return default
+
+    def _get_story_int(self, flag_name: str, default: int = 0) -> int:
+        if not self.player:
+            return default
+        value = getattr(self.player, "story_flags", {}).get(flag_name, default)
+        if isinstance(value, int) and not isinstance(value, bool):
+            return value
         return default
 
     def _get_battle_win_count(self) -> int:
@@ -802,6 +816,10 @@ class Game:
         return 0
 
     def get_current_objective_text(self) -> str:
+        if self._get_story_flag("sylph_trial_cleared", False):
+            return "目的：風の欠片へ向かう"
+        if self._get_story_flag("sylph_trial_started", False):
+            return "目的：風の標をたどる"
         if self._get_story_flag("sylph_trial_available", False) and not self._get_story_flag(
             "sylph_trial_cleared", False
         ):
@@ -1107,8 +1125,12 @@ class Game:
 
         for wind_rect in getattr(self.world, "wind_rects", []):
             if self.player.rect.colliderect(wind_rect.inflate(TILE, TILE)):
-                if self._get_story_flag("sylph_encountered", False):
-                    self._add_message("シルフ：試練を受ける覚悟があるなら、風を追ってみろ。", C_GRAY)
+                if self._get_story_flag("sylph_trial_cleared", False):
+                    self._add_message("シルフ：風はもう、お前を拒まない。中心へ行け。", C_GRAY)
+                elif self._get_story_flag("sylph_trial_started", False):
+                    self._add_message("シルフ：焦る者は、風に置いていかれる。", C_GRAY)
+                elif self._get_story_flag("sylph_trial_available", False):
+                    self._start_sylph_trial_start_event()
                 else:
                     self._start_sylph_first_encounter_event()
                 return True
@@ -1124,6 +1146,59 @@ class Game:
         self.dialogue_index = 0
         self.talking_npc = None
         self._mark_story_event_seen("sylph_first_encounter")
+        self.state = STATE_DIALOGUE
+
+    def _start_sylph_trial_start_event(self) -> None:
+        self._set_story_flag("sylph_trial_started", True)
+        self._set_story_value("sylph_trial_step", 0)
+        self.current_dialogue_id = "sylph_trial_start"
+        self.dialogue_lines = get_dialogue_lines("sylph_trial_start")
+        self.dialogue_speaker = self.get_support_system_display_name()
+        self.dialogue_index = 0
+        self.talking_npc = None
+        self._mark_story_event_seen("sylph_trial_start")
+        self.state = STATE_DIALOGUE
+
+    def _try_progress_sylph_trial(self) -> bool:
+        if not self.world or not self.player:
+            return False
+        if self.current_zone_id != "wind_gorge":
+            return False
+        if not self._get_story_flag("sylph_trial_started", False):
+            return False
+        if self._get_story_flag("sylph_trial_cleared", False):
+            return False
+
+        marker_rects = getattr(self.world, "wind_trial_marker_rects", [])
+        for index, marker_rect in enumerate(marker_rects):
+            if self.player.rect.colliderect(marker_rect.inflate(TILE, TILE)):
+                expected_index = self._get_story_int("sylph_trial_step", 0)
+                if index == expected_index:
+                    self._advance_sylph_trial_step(expected_index)
+                else:
+                    self._add_message("風はここではない方向へ流れている。", C_GRAY)
+                return True
+
+        return False
+
+    def _advance_sylph_trial_step(self, current_step: int) -> None:
+        next_step = current_step + 1
+        self._set_story_value("sylph_trial_step", next_step)
+        if next_step >= 3:
+            self._start_sylph_trial_complete_event()
+            return
+
+        self._add_message(f"風の標が応えた。流れは次の標へ続いている。({next_step}/3)", C_GRAY)
+
+    def _start_sylph_trial_complete_event(self) -> None:
+        self._set_story_flag("sylph_trial_cleared", True)
+        self._set_story_flag("sylph_trial_complete_seen", True)
+        self.current_dialogue_id = "sylph_trial_complete"
+        self.dialogue_lines = get_dialogue_lines("sylph_trial_complete")
+        self.dialogue_speaker = self.get_support_system_display_name()
+        self.dialogue_index = 0
+        self.talking_npc = None
+        self._mark_story_event_seen("sylph_trial_complete")
         self.state = STATE_DIALOGUE
 
     def _try_investigate_shrine_altar(self) -> bool:
@@ -1479,6 +1554,9 @@ class Game:
             wind_gorge_anomaly_seen=self._get_story_flag("wind_gorge_anomaly_seen", False),
             wind_center_route_found=self._get_story_flag("wind_center_route_found", False),
             sylph_encountered=self._get_story_flag("sylph_encountered", False),
+            sylph_trial_started=self._get_story_flag("sylph_trial_started", False),
+            sylph_trial_step=self._get_story_int("sylph_trial_step", 0),
+            sylph_trial_cleared=self._get_story_flag("sylph_trial_cleared", False),
         )
         self._draw_shrine_fragment(surface)
         for enemy in self.enemies:

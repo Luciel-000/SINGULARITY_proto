@@ -54,6 +54,7 @@ TILE_FRAGMENT = 4  # 封印の欠片イベント地点
 TILE_ALTAR = 5     # 祠内部の祭壇地点
 TILE_WIND = 6      # 風鳴きの峡谷入口・異変地点
 TILE_WIND_OBSERVATION = 7  # 風の観測地点
+TILE_WIND_TRIAL_MARKER = 8  # シルフの試練用の風の標
 
 
 class Room:
@@ -130,6 +131,7 @@ class World:
         self.altar_rects: list[pygame.Rect] = []
         self.wind_rects: list[pygame.Rect] = []
         self.wind_observation_rects: list[pygame.Rect] = []
+        self.wind_trial_marker_rects: list[pygame.Rect] = []
 
         # ── ★ 0.7: NPC 配置座標リスト（ピクセル座標）
         # _generate_town() が _npc_tile_positions に記録し、
@@ -147,6 +149,7 @@ class World:
         self._build_altar_rects()
         self._build_wind_rects()
         self._build_wind_observation_rects()
+        self._build_wind_trial_marker_rects()
         self._build_npc_spawns()  # ★ 0.7
 
     # ──────────────────────────────────────────────────────
@@ -368,6 +371,13 @@ class World:
         observation_row = path_row + 5
         self._tiles[observation_row][observation_col] = TILE_WIND_OBSERVATION
 
+        for marker_col, marker_row in (
+            (path_col + path_w + 2, path_row + 5),
+            (path_col, path_row + 8),
+            (path_col + path_w - 1, path_row + 3),
+        ):
+            self._tiles[marker_row][marker_col] = TILE_WIND_TRIAL_MARKER
+
         exit_col = path_col + path_w // 2
         exit_row = path_row + path_h - 1
         self._tiles[exit_row][exit_col] = TILE_EXIT
@@ -429,6 +439,7 @@ class World:
                     TILE_ALTAR,
                     TILE_WIND,
                     TILE_WIND_OBSERVATION,
+                    TILE_WIND_TRIAL_MARKER,
                 ):
                     # 床（出口も床として下地を描く）
                     shade = random.randint(-5, 5)
@@ -529,6 +540,16 @@ class World:
                         pygame.Rect(c * TILE, r * TILE, TILE, TILE)
                     )
 
+    def _build_wind_trial_marker_rects(self):
+        """シルフの試練用の風の標 Rect リストを作る。"""
+        self.wind_trial_marker_rects = []
+        for r, row in enumerate(self._tiles):
+            for c, tile in enumerate(row):
+                if tile == TILE_WIND_TRIAL_MARKER:
+                    self.wind_trial_marker_rects.append(
+                        pygame.Rect(c * TILE, r * TILE, TILE, TILE)
+                    )
+
     # ──────────────────────────────────────────────────────
     #  NPC スポーン位置の構築（★ 0.7 新規）
     # ──────────────────────────────────────────────────────
@@ -608,6 +629,9 @@ class World:
         wind_gorge_anomaly_seen: bool = False,
         wind_center_route_found: bool = False,
         sylph_encountered: bool = False,
+        sylph_trial_started: bool = False,
+        sylph_trial_step: int = 0,
+        sylph_trial_cleared: bool = False,
     ):
         """
         キャッシュしたサーフェスを貼り付け、
@@ -674,3 +698,19 @@ class World:
             mid_x = (start[0] + end[0]) // 2
             mid_y = (start[1] + end[1]) // 2
             pygame.draw.circle(surface, (190, 240, 245), (mid_x, mid_y), 4, 1)
+
+        if sylph_trial_started and not sylph_trial_cleared:
+            for index, rect in enumerate(self.wind_trial_marker_rects):
+                active = index <= sylph_trial_step
+                color = (205, 245, 235) if active else (110, 175, 175)
+                pygame.draw.rect(surface, (38, 62, 66), rect)
+                pygame.draw.rect(surface, color, rect, 2)
+                pygame.draw.circle(surface, color, rect.center, 5, 1)
+                if index > 0 and index <= sylph_trial_step:
+                    prev = self.wind_trial_marker_rects[index - 1]
+                    pygame.draw.line(surface, (145, 220, 220), prev.center, rect.center, 2)
+
+        if sylph_trial_cleared and self.wind_rects:
+            center = self.wind_rects[0].center
+            pygame.draw.circle(surface, (225, 250, 245), center, TILE // 2, 2)
+            pygame.draw.circle(surface, (170, 235, 225), center, TILE // 3, 1)
