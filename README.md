@@ -607,6 +607,23 @@ LUCIEL_000
 - 祠で2つ目の欠片を使う処理・シルフ仲間化・新マップ・ボス戦はまだ未実装
 - save_data やテスト用スクリプトは commit 対象外
 
+### Step18
+
+- 風の欠片を取得後、shrine_inner の祭壇で奉納する進行を追加
+- wind_fragment_2_obtained=True かつ wind_fragment_2_offered=False の時だけ奉納イベントを開始
+- shrine_wind_fragment_offering 会話イベントを追加
+- 奉納時に wind_fragment_2_offered=True / shrine_second_seal_reacted=True / shrine_altar_changed=True を設定
+- 最初の欠片と風の欠片が共鳴し、祭壇の紋様へ風のような光が流れ込む演出を追加
+- 石壁の奥から遠い水音や炎の揺らぎのような、別の封印反応を検出する演出を追加
+- 観測補助機構の設定名をイベント話者名に使用
+- shrine_second_seal_reacted=True かつ shrine_second_reaction_reported=False の場合は「目的：老人に祭壇の変化を報告する」を表示
+- 奉納後は本イベントを再発させず、祭壇の短い反応のみ表示
+- 二つの欠片の光、風の線、淡い粒子など祭壇の描画変化を追加
+- SAVE / LOAD 後も wind_fragment_2_offered / shrine_second_seal_reacted / shrine_altar_changed が復元されることを確認
+- core/*.py に「大賢者」表記が残っていないことを確認
+- 次の精霊イベント・新マップ・3つ目の欠片・ボス戦・封印の完全解除はまだ未実装
+- save_data やテスト用スクリプトは commit 対象外
+
 ### 最新コミット
 
 - Step1: b6357e2
@@ -625,3 +642,4 @@ LUCIEL_000
 - Step15: 712a289
 - Step16: d912823
 - Step17: 96abfa2
+- Step18: e1a6aed
