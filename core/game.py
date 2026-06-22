@@ -820,6 +820,8 @@ class Game:
         return 0
 
     def get_current_objective_text(self) -> str:
+        if self._get_story_flag("water_hint_received", False):
+            return "目的：水音のする場所を探す"
         if self._get_story_flag("shrine_second_seal_reacted", False) and not self._get_story_flag(
             "shrine_second_reaction_reported", False
         ):
@@ -875,6 +877,14 @@ class Game:
         base_dialogue_id = npc.get_current_dialogue_id()
         if npc.dialogue_id != "elder_first" or not self.player:
             return base_dialogue_id
+
+        if self._get_story_flag("water_hint_received", False):
+            return "elder_after_water_hint"
+
+        if self._get_story_flag("shrine_second_seal_reacted", False) and not self._get_story_flag(
+            "shrine_second_reaction_reported", False
+        ):
+            return "elder_after_second_seal_reaction"
 
         if self._get_story_flag("next_fragment_hint_received", False):
             return "elder_after_next_fragment_hint"
@@ -1380,6 +1390,9 @@ class Game:
         if finished_dialogue_id == "elder_after_altar_investigation":
             self._set_story_flag("shrine_altar_reported", True)
             self._set_story_flag("next_fragment_hint_received", True)
+        if finished_dialogue_id == "elder_after_second_seal_reaction":
+            self._set_story_flag("shrine_second_reaction_reported", True)
+            self._set_story_flag("water_hint_received", True)
         if finished_dialogue_id == "sage_boot" and self.player and hasattr(
             self.player, "set_story_flag"
         ):
