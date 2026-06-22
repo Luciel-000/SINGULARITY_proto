@@ -406,6 +406,8 @@ class Game:
                     return
                 if self._try_investigate_wind_gorge_anomaly():
                     return
+                if self._try_offer_wind_fragment_to_altar():
+                    return
                 if self._try_investigate_shrine_altar():
                     return
                 if self._try_offer_shrine_fragment():
@@ -818,6 +820,10 @@ class Game:
         return 0
 
     def get_current_objective_text(self) -> str:
+        if self._get_story_flag("shrine_second_seal_reacted", False) and not self._get_story_flag(
+            "shrine_second_reaction_reported", False
+        ):
+            return "目的：老人に祭壇の変化を報告する"
         if self._get_story_flag("wind_fragment_2_obtained", False):
             return "目的：古い祠へ戻る"
         if self._get_story_flag("sylph_trial_cleared", False):
@@ -1235,6 +1241,36 @@ class Game:
         self._mark_story_event_seen("sylph_grants_wind_fragment")
         self.state = STATE_DIALOGUE
 
+    def _try_offer_wind_fragment_to_altar(self) -> bool:
+        if not self.world or not self.player:
+            return False
+        if self.current_zone_id != "shrine_inner":
+            return False
+        if not self._get_story_flag("wind_fragment_2_obtained", False):
+            return False
+
+        for altar_rect in getattr(self.world, "altar_rects", []):
+            if self.player.rect.colliderect(altar_rect.inflate(TILE, TILE)):
+                if self._get_story_flag("wind_fragment_2_offered", False):
+                    self._add_message("祭壇には、二つの欠片の光が静かに巡っている。", C_GRAY)
+                else:
+                    self._start_shrine_wind_fragment_offering_event()
+                return True
+
+        return False
+
+    def _start_shrine_wind_fragment_offering_event(self) -> None:
+        self._set_story_flag("wind_fragment_2_offered", True)
+        self._set_story_flag("shrine_second_seal_reacted", True)
+        self._set_story_flag("shrine_altar_changed", True)
+        self.current_dialogue_id = "shrine_wind_fragment_offering"
+        self.dialogue_lines = get_dialogue_lines("shrine_wind_fragment_offering")
+        self.dialogue_speaker = self.get_support_system_display_name()
+        self.dialogue_index = 0
+        self.talking_npc = None
+        self._mark_story_event_seen("shrine_wind_fragment_offering")
+        self.state = STATE_DIALOGUE
+
     def _try_investigate_shrine_altar(self) -> bool:
         if not self.world or not self.player:
             return False
@@ -1585,6 +1621,7 @@ class Game:
         self.world.draw(
             surface,
             shrine_seal_reacted=self._get_story_flag("shrine_seal_reacted", False),
+            shrine_second_seal_reacted=self._get_story_flag("shrine_second_seal_reacted", False),
             wind_gorge_anomaly_seen=self._get_story_flag("wind_gorge_anomaly_seen", False),
             wind_center_route_found=self._get_story_flag("wind_center_route_found", False),
             sylph_encountered=self._get_story_flag("sylph_encountered", False),

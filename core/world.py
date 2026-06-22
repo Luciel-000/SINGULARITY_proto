@@ -626,6 +626,7 @@ class World:
         self,
         surface: pygame.Surface,
         shrine_seal_reacted: bool = False,
+        shrine_second_seal_reacted: bool = False,
         wind_gorge_anomaly_seen: bool = False,
         wind_center_route_found: bool = False,
         sylph_encountered: bool = False,
@@ -662,10 +663,21 @@ class World:
                 pygame.draw.line(surface, (205, 200, 230), rect.midtop, rect.center, 2)
 
         for rect in self.altar_rects:
-            pygame.draw.rect(surface, (64, 58, 78), rect)
-            pygame.draw.rect(surface, (150, 145, 175), rect, 2)
+            if shrine_second_seal_reacted:
+                pygame.draw.rect(surface, (48, 58, 76), rect)
+                pygame.draw.rect(surface, (135, 210, 220), rect, 2)
+            else:
+                pygame.draw.rect(surface, (64, 58, 78), rect)
+                pygame.draw.rect(surface, (150, 145, 175), rect, 2)
             glow_rect = rect.inflate(-TILE // 3, -TILE // 3)
             pygame.draw.rect(surface, (110, 165, 185), glow_rect, 1)
+            if shrine_second_seal_reacted:
+                pygame.draw.line(surface, (185, 235, 230), rect.midleft, rect.midright, 1)
+                pygame.draw.line(surface, (155, 220, 230), rect.midtop, rect.midbottom, 1)
+                pygame.draw.circle(surface, (180, 230, 230), rect.center, 5, 1)
+                crack = rect.move(0, -TILE)
+                pygame.draw.line(surface, (90, 155, 165), crack.midleft, crack.center, 1)
+                pygame.draw.line(surface, (90, 155, 165), crack.center, crack.midright, 1)
 
         for rect in self.wind_rects:
             if wind_gorge_anomaly_seen:
