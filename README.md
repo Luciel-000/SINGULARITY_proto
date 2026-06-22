@@ -590,6 +590,23 @@ LUCIEL_000
 - シルフ戦・仲間化・2つ目の封印の欠片取得・新マップはまだ未実装
 - save_data やテスト用スクリプトは commit 対象外
 
+### Step17
+
+- シルフの試練突破後、wind_gorge の風の中心で風の欠片を受け取る進行を追加
+- sylph_trial_cleared=True かつ wind_fragment_2_obtained=False の時だけ取得イベントを開始
+- sylph_grants_wind_fragment 会話イベントを追加
+- 取得時に wind_fragment_2_seen=True / wind_fragment_2_obtained=True / sylph_fragment_granted=True を設定
+- シルフは主人公が風を支配しようとせず、流れを理解しようとした点を認める
+- 風の欠片は力そのものではなく、均衡を保つための封印の一部であることを示唆
+- 観測補助機構の設定名をイベント話者名に使用
+- wind_fragment_2_obtained=True の場合は「目的：古い祠へ戻る」を表示
+- 取得後は同じイベントを再発させず、短いシルフ反応のみ表示
+- 取得後、風の中心の渦と光が落ち着く描画変化を追加
+- SAVE / LOAD 後も wind_fragment_2_obtained / sylph_fragment_granted が復元されることを確認
+- core/*.py に「大賢者」表記が残っていないことを確認
+- 祠で2つ目の欠片を使う処理・シルフ仲間化・新マップ・ボス戦はまだ未実装
+- save_data やテスト用スクリプトは commit 対象外
+
 ### 最新コミット
 
 - Step1: b6357e2
@@ -607,3 +624,4 @@ LUCIEL_000
 - Step13: b8702c9
 - Step15: 712a289
 - Step16: d912823
+- Step17: 96abfa2
