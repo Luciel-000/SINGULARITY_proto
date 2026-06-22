@@ -572,6 +572,24 @@ LUCIEL_000
 - シルフ戦・仲間化・2つ目の封印の欠片取得・新マップはまだ未実装
 - save_data やテスト用スクリプトは commit 対象外
 
+### Step16
+
+- シルフの試練として、wind_gorge 内に風の標を3か所追加
+- sylph_trial_available=True の状態で風の中心から試練を開始できる
+- 試練開始時に sylph_trial_started=True / sylph_trial_step=0 を設定
+- 風の標を正しい順番で調べる探索型試練を追加
+- 正解順は marker_1 → marker_2 → marker_3
+- 正しい順番で sylph_trial_step が進行する
+- 間違った標を調べても進行はリセットされず、詰まない構成
+- 試練完了時に sylph_trial_cleared=True / sylph_trial_complete_seen=True を設定
+- シルフが主人公の進み方を認め、風の中心へ近づける状態になる演出を追加
+- sylph_trial_cleared=True の場合は「目的：風の欠片へ向かう」を表示
+- 試練開始後・完了後は本イベントを再発させず、短い反応のみ表示
+- sylph_trial_step をSAVE / LOADで復元できるように対応
+- core/*.py に「大賢者」表記が残っていないことを確認
+- シルフ戦・仲間化・2つ目の封印の欠片取得・新マップはまだ未実装
+- save_data やテスト用スクリプトは commit 対象外
+
 ### 最新コミット
 
 - Step1: b6357e2
@@ -588,3 +606,4 @@ LUCIEL_000
 - Step12: 40fd929
 - Step13: b8702c9
 - Step15: 712a289
+- Step16: d912823
