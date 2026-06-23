@@ -406,6 +406,14 @@ class Game:
                     return
                 if self._try_investigate_wind_gorge_anomaly():
                     return
+                if self._try_investigate_water_reflection_shadow():
+                    return
+                if self._try_investigate_water_depths_light():
+                    return
+                if self._try_investigate_water_source():
+                    return
+                if self._try_investigate_water_mirror():
+                    return
                 if self._try_offer_wind_fragment_to_altar():
                     return
                 if self._try_investigate_shrine_altar():
@@ -668,6 +676,11 @@ class Game:
             self.player.update(self.world.wall_rects)
             self._update_story_progress_by_position()
             self._update_wind_gorge_transition()
+            self._update_water_cave_transition()
+            self._update_water_cave_depths_transition()
+            self._update_water_cave_source_transition()
+            self._update_water_cave_reflection_transition()
+            self._update_water_cave_mirror_chamber_transition()
 
             # ★ 0.7: NPC を更新（アニメーションタイマー）
             for npc in self.npcs:
@@ -757,6 +770,26 @@ class Game:
             "wind_gorge_entered", False
         ):
             self._start_wind_gorge_arrival_event()
+        if next_zone_id == "water_cave" and not self._get_story_flag(
+            "water_cave_entered", False
+        ):
+            self._start_water_cave_arrival_event()
+        if next_zone_id == "water_cave_depths" and not self._get_story_flag(
+            "water_depths_entered", False
+        ):
+            self._start_water_cave_depths_arrival_event()
+        if next_zone_id == "water_cave_source" and not self._get_story_flag(
+            "water_source_entered", False
+        ):
+            self._start_water_cave_source_arrival_event()
+        if next_zone_id == "water_cave_reflection" and not self._get_story_flag(
+            "water_reflection_corridor_entered", False
+        ):
+            self._start_water_cave_reflection_arrival_event()
+        if next_zone_id == "water_cave_mirror_chamber" and not self._get_story_flag(
+            "water_mirror_chamber_entered", False
+        ):
+            self._start_water_cave_mirror_chamber_arrival_event()
 
     def _handle_exit_transition(self, exit_rect: pygame.Rect) -> None:
         if self.current_zone_id == "town":
@@ -820,6 +853,26 @@ class Game:
         return 0
 
     def get_current_objective_text(self) -> str:
+        if self._get_story_flag("water_mirror_chamber_anomaly_seen", False):
+            return "目的：水鏡の間を調べる"
+        if self._get_story_flag("water_reflection_route_hint_received", False):
+            return "目的：水鏡の回廊の奥へ進む"
+        if self._get_story_flag("water_reflection_corridor_anomaly_seen", False):
+            return "目的：水鏡の回廊を調べる"
+        if self._get_story_flag("water_depths_path_opened", False):
+            return "目的：光が示した先へ進む"
+        if self._get_story_flag("water_next_path_hint_received", False):
+            return "目的：水鏡の洞窟の奥にある光を調べる"
+        if self._get_story_flag("water_route_hint_received", False):
+            return "目的：水源の反応について老人に相談する"
+        if self._get_story_flag("water_source_anomaly_seen", False):
+            return "目的：水源の反応を調べる"
+        if self._get_story_flag("water_depths_anomaly_seen", False):
+            return "目的：水鏡の洞窟の奥を調べる"
+        if self._get_story_flag("water_mirror_investigated", False):
+            return "目的：水鏡に映ったものを追う"
+        if self._get_story_flag("water_anomaly_seen", False):
+            return "目的：水鏡の洞窟を調べる"
         if self._get_story_flag("water_hint_received", False):
             return "目的：水音のする場所を探す"
         if self._get_story_flag("shrine_second_seal_reacted", False) and not self._get_story_flag(
@@ -877,6 +930,12 @@ class Game:
         base_dialogue_id = npc.get_current_dialogue_id()
         if npc.dialogue_id != "elder_first" or not self.player:
             return base_dialogue_id
+
+        if self._get_story_flag("water_next_path_hint_received", False):
+            return "elder_after_water_source_report"
+
+        if self._get_story_flag("water_route_hint_received", False):
+            return "elder_after_water_source_reaction"
 
         if self._get_story_flag("water_hint_received", False):
             return "elder_after_water_hint"
@@ -947,6 +1006,106 @@ class Game:
             else:
                 self._add_message("強い風が吹く方向が気になるが、まだ手がかりが足りない。", C_GRAY)
                 self.player.rect.top = wind_rect.bottom + 2
+            return
+
+    def _update_water_cave_transition(self) -> None:
+        if not self.world or not self.player:
+            return
+        if self.current_zone_id != "field":
+            return
+
+        for water_rect in getattr(self.world, "water_rects", []):
+            if not self.player.rect.colliderect(water_rect):
+                continue
+
+            if self._get_story_flag("water_hint_received", False):
+                self._transition_zone("water_cave")
+            else:
+                self._add_message(
+                    "水音がかすかに聞こえるが、まだ手がかりが足りない。",
+                    C_GRAY,
+                )
+                self.player.rect.top = water_rect.bottom + 2
+            return
+
+    def _update_water_cave_depths_transition(self) -> None:
+        if not self.world or not self.player:
+            return
+        if self.current_zone_id != "water_cave":
+            return
+
+        for depth_rect in getattr(self.world, "water_depth_rects", []):
+            if not self.player.rect.colliderect(depth_rect):
+                continue
+
+            if self._get_story_flag("water_reflection_seen", False):
+                self._transition_zone("water_cave_depths")
+            else:
+                self._add_message(
+                    "奥へ続く水路がある。だが、どこへ向かうべきか分からない。",
+                    C_GRAY,
+                )
+                self.player.rect.top = depth_rect.bottom + 2
+            return
+
+    def _update_water_cave_source_transition(self) -> None:
+        if not self.world or not self.player:
+            return
+        if self.current_zone_id != "water_cave_depths":
+            return
+
+        for source_rect in getattr(self.world, "water_source_rects", []):
+            if not self.player.rect.colliderect(source_rect):
+                continue
+
+            if self._get_story_flag("water_depths_anomaly_seen", False):
+                self._transition_zone("water_cave_source")
+            else:
+                self._add_message(
+                    "淡い光は見える。だが、水流の向かう先まではまだ分からない。",
+                    C_GRAY,
+                )
+                self.player.rect.top = source_rect.bottom + 2
+            return
+
+    def _update_water_cave_reflection_transition(self) -> None:
+        if not self.world or not self.player:
+            return
+        if self.current_zone_id != "water_cave_depths":
+            return
+
+        for reflection_rect in getattr(self.world, "water_reflection_rects", []):
+            if not self.player.rect.colliderect(reflection_rect):
+                continue
+
+            if self._get_story_flag("water_depths_path_opened", False):
+                self._transition_zone("water_cave_reflection")
+            else:
+                self._add_message(
+                    "淡い光が揺れている。だが、まだ進むべき道は見えていない。",
+                    C_GRAY,
+                )
+                self.player.rect.top = reflection_rect.bottom + 2
+            return
+
+    def _update_water_cave_mirror_chamber_transition(self) -> None:
+        if not self.world or not self.player:
+            return
+        if self.current_zone_id != "water_cave_reflection":
+            return
+
+        for chamber_rect in getattr(self.world, "water_chamber_rects", []):
+            if not self.player.rect.colliderect(chamber_rect):
+                continue
+
+            if self._get_story_flag("water_reflection_route_hint_received", False):
+                self._transition_zone("water_cave_mirror_chamber")
+            else:
+                self._add_message(
+                    "回廊の奥に揺らぎがある。だが、まだ足を踏み入れる理由がない。",
+                    C_GRAY,
+                )
+                self.player.rect.top = chamber_rect.bottom + 2
             return
 
     def _update_town_north_progress(self) -> None:
@@ -1075,6 +1234,192 @@ class Game:
         self.dialogue_index = 0
         self.talking_npc = None
         self._mark_story_event_seen("wind_gorge_arrival")
+        self.state = STATE_DIALOGUE
+
+    def _start_water_cave_arrival_event(self) -> None:
+        self._set_story_flag("water_cave_entered", True)
+        self._set_story_flag("water_anomaly_seen", True)
+        self.current_dialogue_id = "water_cave_arrival"
+        self.dialogue_lines = get_dialogue_lines("water_cave_arrival")
+        self.dialogue_speaker = self.get_support_system_display_name()
+        self.dialogue_index = 0
+        self.talking_npc = None
+        self._mark_story_event_seen("water_cave_arrival")
+        self.state = STATE_DIALOGUE
+
+    def _start_water_cave_depths_arrival_event(self) -> None:
+        self._set_story_flag("water_depths_entered", True)
+        self._set_story_flag("water_depths_anomaly_seen", True)
+        self.current_dialogue_id = "water_cave_depths_arrival"
+        self.dialogue_lines = get_dialogue_lines("water_cave_depths_arrival")
+        self.dialogue_speaker = self.get_support_system_display_name()
+        self.dialogue_index = 0
+        self.talking_npc = None
+        self._mark_story_event_seen("water_cave_depths_arrival")
+        self.state = STATE_DIALOGUE
+
+    def _start_water_cave_source_arrival_event(self) -> None:
+        self._set_story_flag("water_source_entered", True)
+        self._set_story_flag("water_source_anomaly_seen", True)
+        self.current_dialogue_id = "water_cave_source_arrival"
+        self.dialogue_lines = get_dialogue_lines("water_cave_source_arrival")
+        self.dialogue_speaker = self.get_support_system_display_name()
+        self.dialogue_index = 0
+        self.talking_npc = None
+        self._mark_story_event_seen("water_cave_source_arrival")
+        self.state = STATE_DIALOGUE
+
+    def _start_water_cave_reflection_arrival_event(self) -> None:
+        self._set_story_flag("water_reflection_corridor_entered", True)
+        self._set_story_flag("water_reflection_corridor_anomaly_seen", True)
+        self.current_dialogue_id = "water_cave_reflection_arrival"
+        self.dialogue_lines = get_dialogue_lines("water_cave_reflection_arrival")
+        self.dialogue_speaker = self.get_support_system_display_name()
+        self.dialogue_index = 0
+        self.talking_npc = None
+        self._mark_story_event_seen("water_cave_reflection_arrival")
+        self.state = STATE_DIALOGUE
+
+    def _start_water_cave_mirror_chamber_arrival_event(self) -> None:
+        self._set_story_flag("water_mirror_chamber_entered", True)
+        self._set_story_flag("water_mirror_chamber_anomaly_seen", True)
+        self.current_dialogue_id = "water_cave_mirror_chamber_arrival"
+        self.dialogue_lines = get_dialogue_lines("water_cave_mirror_chamber_arrival")
+        self.dialogue_speaker = self.get_support_system_display_name()
+        self.dialogue_index = 0
+        self.talking_npc = None
+        self._mark_story_event_seen("water_cave_mirror_chamber_arrival")
+        self.state = STATE_DIALOGUE
+
+    def _try_investigate_water_reflection_shadow(self) -> bool:
+        if not self.world or not self.player:
+            return False
+        if self.current_zone_id != "water_cave_reflection":
+            return False
+        if not self._get_story_flag("water_reflection_corridor_entered", False):
+            return False
+
+        for shadow_rect in getattr(self.world, "water_shadow_rects", []):
+            if self.player.rect.colliderect(shadow_rect.inflate(TILE, TILE)):
+                if self._get_story_flag("water_reflection_shadow_investigated", False):
+                    self._add_message(
+                        "水面の揺らぎは消えた。だが、誰かの気配だけが回廊の奥へ続いている。",
+                        C_GRAY,
+                    )
+                else:
+                    self._start_water_reflection_shadow_event()
+                return True
+
+        return False
+
+    def _start_water_reflection_shadow_event(self) -> None:
+        self._set_story_flag("water_reflection_shadow_investigated", True)
+        self._set_story_flag("water_reflection_memory_seen", True)
+        self._set_story_flag("water_reflection_route_hint_received", True)
+        self.current_dialogue_id = "water_reflection_shadow_investigation"
+        self.dialogue_lines = get_dialogue_lines("water_reflection_shadow_investigation")
+        self.dialogue_speaker = self.get_support_system_display_name()
+        self.dialogue_index = 0
+        self.talking_npc = None
+        self._mark_story_event_seen("water_reflection_shadow_investigation")
+        self.state = STATE_DIALOGUE
+
+    def _try_investigate_water_depths_light(self) -> bool:
+        if not self.world or not self.player:
+            return False
+        if self.current_zone_id != "water_cave_depths":
+            return False
+        if not self._get_story_flag("water_next_path_hint_received", False):
+            return False
+
+        for light_rect in getattr(self.world, "water_light_rects", []):
+            if self.player.rect.colliderect(light_rect.inflate(TILE, TILE)):
+                if self._get_story_flag("water_depths_light_investigated", False):
+                    self._add_message(
+                        "淡い光は、洞窟のさらに奥へ向かうように静かに揺れている。",
+                        C_GRAY,
+                    )
+                else:
+                    self._start_water_depths_light_event()
+                return True
+
+        return False
+
+    def _start_water_depths_light_event(self) -> None:
+        self._set_story_flag("water_depths_light_investigated", True)
+        self._set_story_flag("water_depths_light_reacted", True)
+        self._set_story_flag("water_depths_path_opened", True)
+        self.current_dialogue_id = "water_depths_light_investigation"
+        self.dialogue_lines = get_dialogue_lines("water_depths_light_investigation")
+        self.dialogue_speaker = self.get_support_system_display_name()
+        self.dialogue_index = 0
+        self.talking_npc = None
+        self._mark_story_event_seen("water_depths_light_investigation")
+        self.state = STATE_DIALOGUE
+
+    def _try_investigate_water_source(self) -> bool:
+        if not self.world or not self.player:
+            return False
+        if self.current_zone_id != "water_cave_source":
+            return False
+        if not self._get_story_flag("water_source_entered", False):
+            return False
+
+        for source_rect in getattr(self.world, "water_source_rects", []):
+            if self.player.rect.colliderect(source_rect.inflate(TILE, TILE)):
+                if self._get_story_flag("water_source_investigated", False):
+                    self._add_message(
+                        "淡い波紋は消えない。水源の反応は、どこか別の場所へ続いているようだ。",
+                        C_GRAY,
+                    )
+                else:
+                    self._start_water_source_investigation_event()
+                return True
+
+        return False
+
+    def _start_water_source_investigation_event(self) -> None:
+        self._set_story_flag("water_source_investigated", True)
+        self._set_story_flag("water_source_resonance_seen", True)
+        self._set_story_flag("water_route_hint_received", True)
+        self.current_dialogue_id = "water_source_investigation"
+        self.dialogue_lines = get_dialogue_lines("water_source_investigation")
+        self.dialogue_speaker = self.get_support_system_display_name()
+        self.dialogue_index = 0
+        self.talking_npc = None
+        self._mark_story_event_seen("water_source_investigation")
+        self.state = STATE_DIALOGUE
+
+    def _try_investigate_water_mirror(self) -> bool:
+        if not self.world or not self.player:
+            return False
+        if self.current_zone_id != "water_cave":
+            return False
+        if not self._get_story_flag("water_cave_entered", False):
+            return False
+
+        for mirror_rect in getattr(self.world, "water_mirror_rects", []):
+            if self.player.rect.colliderect(mirror_rect.inflate(TILE, TILE)):
+                if self._get_story_flag("water_mirror_investigated", False):
+                    self._add_message(
+                        "水面は静かだ。だが、奥へ向かう流れだけが不自然に揺れている。",
+                        C_GRAY,
+                    )
+                else:
+                    self._start_water_mirror_investigation_event()
+                return True
+
+        return False
+
+    def _start_water_mirror_investigation_event(self) -> None:
+        self._set_story_flag("water_mirror_investigated", True)
+        self._set_story_flag("water_reflection_seen", True)
+        self.current_dialogue_id = "water_mirror_investigation"
+        self.dialogue_lines = get_dialogue_lines("water_mirror_investigation")
+        self.dialogue_speaker = self.get_support_system_display_name()
+        self.dialogue_index = 0
+        self.talking_npc = None
+        self._mark_story_event_seen("water_mirror_investigation")
         self.state = STATE_DIALOGUE
 
     def _try_investigate_wind_gorge_anomaly(self) -> bool:
@@ -1320,7 +1665,10 @@ class Game:
         d_id = self._resolve_npc_dialogue_id(npc)
 
         self.current_dialogue_id = d_id
-        self.dialogue_lines = get_dialogue_lines(d_id)
+        self.dialogue_lines = [
+            line.replace("{support_system_name}", self.get_support_system_display_name())
+            for line in get_dialogue_lines(d_id)
+        ]
         self.dialogue_speaker = get_dialogue_speaker(d_id)
         self.dialogue_index = 0
         self.talking_npc = npc
@@ -1393,6 +1741,9 @@ class Game:
         if finished_dialogue_id == "elder_after_second_seal_reaction":
             self._set_story_flag("shrine_second_reaction_reported", True)
             self._set_story_flag("water_hint_received", True)
+        if finished_dialogue_id == "elder_after_water_source_reaction":
+            self._set_story_flag("water_source_reported", True)
+            self._set_story_flag("water_next_path_hint_received", True)
         if finished_dialogue_id == "sage_boot" and self.player and hasattr(
             self.player, "set_story_flag"
         ):

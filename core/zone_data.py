@@ -151,6 +151,61 @@ ZONE_DATA: dict[str, dict] = {
         "wall_color" : ( 22,  24,  30),
     },
 
+    "water_cave": {
+        "name"       : "水鏡の洞窟",
+        "has_enemies": False,
+        "map_type"   : "water_cave",
+        "exits"      : [
+            {"to": "field", "hint": "草原へ戻る"},
+        ],
+        "floor_color": ( 24,  40,  52),
+        "wall_color" : ( 10,  22,  32),
+    },
+
+    "water_cave_depths": {
+        "name"       : "水鏡の洞窟・奥",
+        "has_enemies": False,
+        "map_type"   : "water_cave_depths",
+        "exits"      : [
+            {"to": "water_cave", "hint": "水鏡の洞窟へ戻る"},
+        ],
+        "floor_color": ( 18,  34,  48),
+        "wall_color" : (  8,  18,  30),
+    },
+
+    "water_cave_source": {
+        "name"       : "水鏡の洞窟・水源",
+        "has_enemies": False,
+        "map_type"   : "water_cave_source",
+        "exits"      : [
+            {"to": "water_cave_depths", "hint": "水鏡の洞窟・奥へ戻る"},
+        ],
+        "floor_color": ( 15,  31,  46),
+        "wall_color" : (  6,  15,  26),
+    },
+
+    "water_cave_reflection": {
+        "name"       : "水鏡の回廊",
+        "has_enemies": False,
+        "map_type"   : "water_cave_reflection",
+        "exits"      : [
+            {"to": "water_cave_depths", "hint": "水鏡の洞窟・奥へ戻る"},
+        ],
+        "floor_color": ( 20,  36,  58),
+        "wall_color" : (  8,  18,  34),
+    },
+
+    "water_cave_mirror_chamber": {
+        "name"       : "水鏡の間",
+        "has_enemies": False,
+        "map_type"   : "water_cave_mirror_chamber",
+        "exits"      : [
+            {"to": "water_cave_reflection", "hint": "水鏡の回廊へ戻る"},
+        ],
+        "floor_color": ( 18,  34,  56),
+        "wall_color" : (  7,  16,  32),
+    },
+
     # ──────────────────────────────────────────────────
     #  以下は将来追加予定（コメントで設計を残しておく）
     # ──────────────────────────────────────────────────

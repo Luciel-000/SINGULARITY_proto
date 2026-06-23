@@ -55,6 +55,14 @@ TILE_ALTAR = 5     # 祠内部の祭壇地点
 TILE_WIND = 6      # 風鳴きの峡谷入口・異変地点
 TILE_WIND_OBSERVATION = 7  # 風の観測地点
 TILE_WIND_TRIAL_MARKER = 8  # シルフの試練用の風の標
+TILE_WATER = 9      # 水鏡の洞窟入口・水の異変地点
+TILE_WATER_MIRROR = 10  # 水鏡の調査地点
+TILE_WATER_DEPTHS = 11  # 水鏡の洞窟奥へ続く水路
+TILE_WATER_SOURCE = 12  # 水鏡の洞窟・水源へ続く収束点
+TILE_WATER_LIGHT = 13  # 水鏡の洞窟・奥の淡い光
+TILE_WATER_REFLECTION = 14  # 水鏡の回廊へ続く入口
+TILE_WATER_SHADOW = 15  # 水鏡の回廊に残る淡い影
+TILE_WATER_CHAMBER = 16  # 水鏡の間へ続く揺らぎ・中央水面
 
 
 class Room:
@@ -132,6 +140,14 @@ class World:
         self.wind_rects: list[pygame.Rect] = []
         self.wind_observation_rects: list[pygame.Rect] = []
         self.wind_trial_marker_rects: list[pygame.Rect] = []
+        self.water_rects: list[pygame.Rect] = []
+        self.water_mirror_rects: list[pygame.Rect] = []
+        self.water_depth_rects: list[pygame.Rect] = []
+        self.water_source_rects: list[pygame.Rect] = []
+        self.water_light_rects: list[pygame.Rect] = []
+        self.water_reflection_rects: list[pygame.Rect] = []
+        self.water_shadow_rects: list[pygame.Rect] = []
+        self.water_chamber_rects: list[pygame.Rect] = []
 
         # ── ★ 0.7: NPC 配置座標リスト（ピクセル座標）
         # _generate_town() が _npc_tile_positions に記録し、
@@ -150,6 +166,14 @@ class World:
         self._build_wind_rects()
         self._build_wind_observation_rects()
         self._build_wind_trial_marker_rects()
+        self._build_water_rects()
+        self._build_water_mirror_rects()
+        self._build_water_depth_rects()
+        self._build_water_source_rects()
+        self._build_water_light_rects()
+        self._build_water_reflection_rects()
+        self._build_water_shadow_rects()
+        self._build_water_chamber_rects()
         self._build_npc_spawns()  # ★ 0.7
 
     # ──────────────────────────────────────────────────────
@@ -169,6 +193,16 @@ class World:
             self._generate_shrine_inner()
         elif self.map_type == "wind_gorge":
             self._generate_wind_gorge()
+        elif self.map_type == "water_cave":
+            self._generate_water_cave()
+        elif self.map_type == "water_cave_depths":
+            self._generate_water_cave_depths()
+        elif self.map_type == "water_cave_source":
+            self._generate_water_cave_source()
+        elif self.map_type == "water_cave_reflection":
+            self._generate_water_cave_reflection()
+        elif self.map_type == "water_cave_mirror_chamber":
+            self._generate_water_cave_mirror_chamber()
         else:
             self._generate_town()
 
@@ -235,6 +269,16 @@ class World:
             wind_y = max(target_room.row + 1, fy - 1)
             if self._tiles[wind_y][wind_x] == TILE_FLOOR:
                 self._tiles[wind_y][wind_x] = TILE_WIND
+
+            water_candidates = (
+                (min(target_room.col + target_room.w - 2, fx + 2), fy),
+                (fx, min(target_room.row + target_room.h - 2, fy + 2)),
+                (min(target_room.col + target_room.w - 2, fx + 1), min(target_room.row + target_room.h - 2, fy + 1)),
+            )
+            for water_x, water_y in water_candidates:
+                if self._tiles[water_y][water_x] == TILE_FLOOR:
+                    self._tiles[water_y][water_x] = TILE_WATER
+                    break
 
     # ──────────────────────────────────────────────────────
     #  町生成（★ 0.6 新規、town 用）
@@ -386,6 +430,166 @@ class World:
     # ──────────────────────────────────────────────────────
     #  部屋・通路の掘削ヘルパー（変更なし）
     # ──────────────────────────────────────────────────────
+    def _generate_water_cave(self):
+        """水鏡の洞窟の小規模な固定マップを生成する。"""
+        self._tiles = [[TILE_WALL] * MAP_COLS for _ in range(MAP_ROWS)]
+
+        room_col = MAP_COLS // 2 - 6
+        room_row = 2
+        room_w = 13
+        room_h = 10
+
+        for row in range(room_row, room_row + room_h):
+            for col in range(room_col, room_col + room_w):
+                self._tiles[row][col] = TILE_FLOOR
+
+        for col, row in (
+            (room_col + 2, room_row + 2),
+            (room_col + room_w - 3, room_row + 2),
+            (room_col + 2, room_row + room_h - 3),
+            (room_col + room_w - 3, room_row + room_h - 3),
+        ):
+            self._tiles[row][col] = TILE_WALL
+
+        water_col = room_col + room_w // 2
+        water_row = room_row + 3
+        self._tiles[room_row + 1][water_col] = TILE_WATER_DEPTHS
+        self._tiles[water_row][water_col - 1] = TILE_WATER
+        self._tiles[water_row][water_col] = TILE_WATER_MIRROR
+        self._tiles[water_row][water_col + 1] = TILE_WATER
+
+        exit_col = room_col + room_w // 2
+        exit_row = room_row + room_h - 1
+        self._tiles[exit_row][exit_col] = TILE_EXIT
+        self.player_spawn = (exit_col * TILE + 4, (exit_row - 1) * TILE + 4)
+
+    def _generate_water_cave_depths(self):
+        """水鏡の洞窟・奥の小規模な固定マップを生成する。"""
+        self._tiles = [[TILE_WALL] * MAP_COLS for _ in range(MAP_ROWS)]
+
+        room_col = MAP_COLS // 2 - 5
+        room_row = 2
+        room_w = 11
+        room_h = 10
+
+        for row in range(room_row, room_row + room_h):
+            for col in range(room_col, room_col + room_w):
+                self._tiles[row][col] = TILE_FLOOR
+
+        center_col = room_col + room_w // 2
+        for row in range(room_row + 1, room_row + room_h - 2):
+            self._tiles[row][center_col] = TILE_WATER
+
+        for col, row in (
+            (room_col + 2, room_row + 3),
+            (room_col + room_w - 3, room_row + 3),
+            (room_col + 3, room_row + room_h - 4),
+            (room_col + room_w - 4, room_row + room_h - 4),
+        ):
+            self._tiles[row][col] = TILE_WALL
+
+        self._tiles[room_row + 1][center_col] = TILE_WATER_SOURCE
+        self._tiles[room_row + 2][center_col + 3] = TILE_WATER_LIGHT
+        self._tiles[room_row + 2][center_col - 3] = TILE_WATER_REFLECTION
+
+        exit_col = center_col
+        exit_row = room_row + room_h - 1
+        self._tiles[exit_row][exit_col] = TILE_EXIT
+        self.player_spawn = (exit_col * TILE + 4, (exit_row - 1) * TILE + 4)
+
+    def _generate_water_cave_source(self):
+        """水鏡の洞窟・水源の小規模な固定マップを生成する。"""
+        self._tiles = [[TILE_WALL] * MAP_COLS for _ in range(MAP_ROWS)]
+
+        room_col = MAP_COLS // 2 - 5
+        room_row = 2
+        room_w = 11
+        room_h = 10
+
+        for row in range(room_row, room_row + room_h):
+            for col in range(room_col, room_col + room_w):
+                self._tiles[row][col] = TILE_FLOOR
+
+        center_col = room_col + room_w // 2
+        source_row = room_row + 3
+        for row in range(room_row + 1, room_row + room_h - 2):
+            self._tiles[row][center_col] = TILE_WATER
+        self._tiles[source_row][center_col] = TILE_WATER_SOURCE
+        self._tiles[source_row][center_col - 1] = TILE_WATER
+        self._tiles[source_row][center_col + 1] = TILE_WATER
+
+        for col, row in (
+            (room_col + 2, room_row + 2),
+            (room_col + room_w - 3, room_row + 2),
+            (room_col + 2, room_row + room_h - 3),
+            (room_col + room_w - 3, room_row + room_h - 3),
+        ):
+            self._tiles[row][col] = TILE_WALL
+
+        exit_col = center_col
+        exit_row = room_row + room_h - 1
+        self._tiles[exit_row][exit_col] = TILE_EXIT
+        self.player_spawn = (exit_col * TILE + 4, (exit_row - 1) * TILE + 4)
+
+    def _generate_water_cave_reflection(self):
+        """水鏡の回廊の小規模な固定マップを生成する。"""
+        self._tiles = [[TILE_WALL] * MAP_COLS for _ in range(MAP_ROWS)]
+
+        hall_col = MAP_COLS // 2 - 7
+        hall_row = 3
+        hall_w = 15
+        hall_h = 8
+
+        for row in range(hall_row, hall_row + hall_h):
+            width_adjust = 1 if row % 2 == 0 else 0
+            for col in range(hall_col + width_adjust, hall_col + hall_w - width_adjust):
+                self._tiles[row][col] = TILE_FLOOR
+
+        center_col = hall_col + hall_w // 2
+        for col in range(hall_col + 2, hall_col + hall_w - 2, 3):
+            self._tiles[hall_row + 2][col] = TILE_WATER
+            self._tiles[hall_row + hall_h - 3][col] = TILE_WATER_REFLECTION
+
+        self._tiles[hall_row + 1][center_col] = TILE_WATER_REFLECTION
+        self._tiles[hall_row + 2][center_col] = TILE_WATER_SHADOW
+        self._tiles[hall_row + 1][center_col + 4] = TILE_WATER_CHAMBER
+
+        exit_col = center_col
+        exit_row = hall_row + hall_h - 1
+        self._tiles[exit_row][exit_col] = TILE_EXIT
+        self.player_spawn = (exit_col * TILE + 4, (exit_row - 1) * TILE + 4)
+
+    def _generate_water_cave_mirror_chamber(self):
+        """水鏡の間の小規模な固定マップを生成する。"""
+        self._tiles = [[TILE_WALL] * MAP_COLS for _ in range(MAP_ROWS)]
+
+        room_col = MAP_COLS // 2 - 5
+        room_row = 2
+        room_w = 11
+        room_h = 10
+
+        for row in range(room_row, room_row + room_h):
+            for col in range(room_col, room_col + room_w):
+                self._tiles[row][col] = TILE_FLOOR
+
+        center_col = room_col + room_w // 2
+        center_row = room_row + room_h // 2
+
+        for row in range(center_row - 1, center_row + 2):
+            for col in range(center_col - 2, center_col + 3):
+                self._tiles[row][col] = TILE_WATER_CHAMBER
+
+        for col in range(center_col - 4, center_col + 5, 2):
+            self._tiles[room_row + 2][col] = TILE_WATER_REFLECTION
+            self._tiles[room_row + room_h - 4][col] = TILE_WATER_REFLECTION
+
+        self._tiles[center_row][center_col] = TILE_WATER_SHADOW
+
+        exit_col = center_col
+        exit_row = room_row + room_h - 1
+        self._tiles[exit_row][exit_col] = TILE_EXIT
+        self.player_spawn = (exit_col * TILE + 4, (exit_row - 1) * TILE + 4)
+
     def _carve_room(self, room: Room):
         for r in range(room.row, room.row + room.h):
             for c in range(room.col, room.col + room.w):
@@ -440,6 +644,14 @@ class World:
                     TILE_WIND,
                     TILE_WIND_OBSERVATION,
                     TILE_WIND_TRIAL_MARKER,
+                    TILE_WATER,
+                    TILE_WATER_MIRROR,
+                    TILE_WATER_DEPTHS,
+                    TILE_WATER_SOURCE,
+                    TILE_WATER_LIGHT,
+                    TILE_WATER_REFLECTION,
+                    TILE_WATER_SHADOW,
+                    TILE_WATER_CHAMBER,
                 ):
                     # 床（出口も床として下地を描く）
                     shade = random.randint(-5, 5)
@@ -553,6 +765,86 @@ class World:
     # ──────────────────────────────────────────────────────
     #  NPC スポーン位置の構築（★ 0.7 新規）
     # ──────────────────────────────────────────────────────
+    def _build_water_rects(self):
+        """水鏡の洞窟入口・水の異変地点の Rect リストを作る。"""
+        self.water_rects = []
+        for r, row in enumerate(self._tiles):
+            for c, tile in enumerate(row):
+                if tile == TILE_WATER:
+                    self.water_rects.append(
+                        pygame.Rect(c * TILE, r * TILE, TILE, TILE)
+                    )
+
+    def _build_water_mirror_rects(self):
+        """水鏡の調査地点の Rect リストを作る。"""
+        self.water_mirror_rects = []
+        for r, row in enumerate(self._tiles):
+            for c, tile in enumerate(row):
+                if tile == TILE_WATER_MIRROR:
+                    self.water_mirror_rects.append(
+                        pygame.Rect(c * TILE, r * TILE, TILE, TILE)
+                    )
+
+    def _build_water_depth_rects(self):
+        """水鏡の洞窟奥へ続く水路の Rect リストを作る。"""
+        self.water_depth_rects = []
+        for r, row in enumerate(self._tiles):
+            for c, tile in enumerate(row):
+                if tile == TILE_WATER_DEPTHS:
+                    self.water_depth_rects.append(
+                        pygame.Rect(c * TILE, r * TILE, TILE, TILE)
+                    )
+
+    def _build_water_source_rects(self):
+        """水流が一点へ集まる水源反応地点の Rect リストを作る。"""
+        self.water_source_rects = []
+        for r, row in enumerate(self._tiles):
+            for c, tile in enumerate(row):
+                if tile == TILE_WATER_SOURCE:
+                    self.water_source_rects.append(
+                        pygame.Rect(c * TILE, r * TILE, TILE, TILE)
+                    )
+
+    def _build_water_light_rects(self):
+        """水鏡の洞窟・奥にある淡い光の Rect リストを作る。"""
+        self.water_light_rects = []
+        for r, row in enumerate(self._tiles):
+            for c, tile in enumerate(row):
+                if tile == TILE_WATER_LIGHT:
+                    self.water_light_rects.append(
+                        pygame.Rect(c * TILE, r * TILE, TILE, TILE)
+                    )
+
+    def _build_water_reflection_rects(self):
+        """水鏡の回廊へ続く入口・反射地点の Rect リストを作る。"""
+        self.water_reflection_rects = []
+        for r, row in enumerate(self._tiles):
+            for c, tile in enumerate(row):
+                if tile == TILE_WATER_REFLECTION:
+                    self.water_reflection_rects.append(
+                        pygame.Rect(c * TILE, r * TILE, TILE, TILE)
+                    )
+
+    def _build_water_shadow_rects(self):
+        """水鏡の回廊に残る淡い影の Rect リストを作る。"""
+        self.water_shadow_rects = []
+        for r, row in enumerate(self._tiles):
+            for c, tile in enumerate(row):
+                if tile == TILE_WATER_SHADOW:
+                    self.water_shadow_rects.append(
+                        pygame.Rect(c * TILE, r * TILE, TILE, TILE)
+                    )
+
+    def _build_water_chamber_rects(self):
+        """水鏡の間へ続く揺らぎ・中央水面の Rect リストを作る。"""
+        self.water_chamber_rects = []
+        for r, row in enumerate(self._tiles):
+            for c, tile in enumerate(row):
+                if tile == TILE_WATER_CHAMBER:
+                    self.water_chamber_rects.append(
+                        pygame.Rect(c * TILE, r * TILE, TILE, TILE)
+                    )
+
     def _build_npc_spawns(self):
         """
         _npc_tile_positions（タイル座標）を
@@ -709,6 +1001,60 @@ class World:
             pygame.draw.rect(surface, (130, 185, 195), rect, 2)
             pygame.draw.line(surface, (185, 220, 225), rect.midleft, rect.midright, 1)
             pygame.draw.line(surface, (145, 205, 215), rect.midtop, rect.midbottom, 1)
+
+        for rect in self.water_rects:
+            pygame.draw.rect(surface, (28, 62, 82), rect)
+            pygame.draw.rect(surface, (120, 205, 230), rect, 2)
+            pygame.draw.line(surface, (175, 230, 240), rect.midleft, rect.midright, 1)
+            pygame.draw.arc(surface, (85, 170, 205), rect.inflate(-8, -10), 0.0, 3.0, 1)
+
+        for rect in self.water_mirror_rects:
+            pygame.draw.rect(surface, (22, 70, 96), rect)
+            pygame.draw.rect(surface, (170, 230, 245), rect, 2)
+            pygame.draw.line(surface, (220, 250, 255), rect.midleft, rect.midright, 1)
+            pygame.draw.arc(surface, (120, 200, 230), rect.inflate(-6, -8), 0.1, 3.0, 2)
+            pygame.draw.circle(surface, (190, 235, 245), rect.center, 4, 1)
+
+        for rect in self.water_depth_rects:
+            pygame.draw.rect(surface, (18, 52, 74), rect)
+            pygame.draw.rect(surface, (95, 185, 220), rect, 2)
+            pygame.draw.line(surface, (150, 220, 235), rect.midtop, rect.midbottom, 1)
+            pygame.draw.circle(surface, (190, 235, 245), rect.center, 5, 1)
+
+        for rect in self.water_source_rects:
+            pygame.draw.rect(surface, (16, 58, 84), rect)
+            pygame.draw.rect(surface, (130, 220, 245), rect, 2)
+            pygame.draw.circle(surface, (205, 245, 250), rect.center, TILE // 3, 1)
+            pygame.draw.circle(surface, (100, 180, 215), rect.center, TILE // 5, 1)
+            pygame.draw.line(surface, (170, 230, 240), rect.midleft, rect.center, 1)
+            pygame.draw.line(surface, (170, 230, 240), rect.midright, rect.center, 1)
+
+        for rect in self.water_light_rects:
+            pygame.draw.rect(surface, (18, 48, 72), rect)
+            pygame.draw.rect(surface, (150, 225, 245), rect, 1)
+            pygame.draw.circle(surface, (210, 245, 250), rect.center, TILE // 3, 1)
+            pygame.draw.circle(surface, (160, 220, 240), rect.center, TILE // 5, 1)
+            pygame.draw.line(surface, (185, 235, 245), rect.center, rect.midleft, 1)
+
+        for rect in self.water_reflection_rects:
+            pygame.draw.rect(surface, (20, 54, 78), rect)
+            pygame.draw.rect(surface, (120, 205, 235), rect, 1)
+            pygame.draw.line(surface, (185, 235, 245), rect.midleft, rect.midright, 1)
+            pygame.draw.line(surface, (95, 170, 205), (rect.left + 4, rect.centery + 4), (rect.right - 4, rect.centery + 4), 1)
+
+        for rect in self.water_shadow_rects:
+            pygame.draw.rect(surface, (16, 48, 72), rect)
+            pygame.draw.rect(surface, (105, 185, 220), rect, 1)
+            pygame.draw.circle(surface, (175, 225, 238), (rect.centerx, rect.centery - 5), 4, 1)
+            pygame.draw.line(surface, (175, 225, 238), (rect.centerx, rect.centery - 1), (rect.centerx, rect.centery + 9), 1)
+            pygame.draw.line(surface, (120, 195, 220), rect.midleft, rect.midright, 1)
+
+        for rect in self.water_chamber_rects:
+            pygame.draw.rect(surface, (18, 44, 70), rect)
+            pygame.draw.rect(surface, (145, 220, 238), rect, 1)
+            pygame.draw.circle(surface, (190, 240, 248), rect.center, 5, 1)
+            pygame.draw.line(surface, (95, 175, 215), rect.midleft, rect.midright, 1)
+            pygame.draw.line(surface, (170, 225, 238), (rect.left + 4, rect.top + 5), (rect.right - 4, rect.top + 5), 1)
 
         if wind_center_route_found and self.wind_rects and self.wind_observation_rects:
             start = self.wind_observation_rects[0].center
