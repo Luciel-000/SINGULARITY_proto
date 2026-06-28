@@ -206,6 +206,72 @@ ZONE_DATA: dict[str, dict] = {
         "wall_color" : (  7,  16,  32),
     },
 
+    "ember_path": {
+        "name"       : "熾火の道",
+        "has_enemies": False,
+        "map_type"   : "ember_path",
+        "exits"      : [
+            {"to": "field", "hint": "草原へ戻る"},
+        ],
+        "floor_color": ( 68,  38,  28),
+        "wall_color" : ( 34,  20,  18),
+    },
+
+    "ember_depths": {
+        "name"       : "熾火の深部",
+        "has_enemies": False,
+        "map_type"   : "ember_depths",
+        "exits"      : [
+            {"to": "ember_path", "hint": "熾火の道へ戻る"},
+        ],
+        "floor_color": ( 76,  34,  26),
+        "wall_color" : ( 24,  16,  16),
+    },
+
+    "stonefield_path": {
+        "name"       : "岩盤の道",
+        "has_enemies": False,
+        "map_type"   : "stonefield_path",
+        "exits"      : [
+            {"to": "field", "hint": "草原へ戻る"},
+        ],
+        "floor_color": ( 82,  76,  58),
+        "wall_color" : ( 38,  34,  28),
+    },
+
+    "stonefield_depths": {
+        "name"       : "岩盤の深部",
+        "has_enemies": False,
+        "map_type"   : "stonefield_depths",
+        "exits"      : [
+            {"to": "stonefield_path", "hint": "岩盤の道へ戻る"},
+        ],
+        "floor_color": ( 58,  55,  48),
+        "wall_color" : ( 24,  23,  22),
+    },
+
+    "pale_path": {
+        "name"       : "白影の道",
+        "has_enemies": False,
+        "map_type"   : "pale_path",
+        "exits"      : [
+            {"to": "field", "hint": "草原へ戻る"},
+        ],
+        "floor_color": ( 86,  88,  84),
+        "wall_color" : ( 38,  38,  42),
+    },
+
+    "pale_depths": {
+        "name"       : "白影の奥",
+        "has_enemies": False,
+        "map_type"   : "pale_depths",
+        "exits"      : [
+            {"to": "pale_path", "hint": "白影の道へ戻る"},
+        ],
+        "floor_color": ( 78,  78,  76),
+        "wall_color" : ( 32,  32,  36),
+    },
+
     # ──────────────────────────────────────────────────
     #  以下は将来追加予定（コメントで設計を残しておく）
     # ──────────────────────────────────────────────────

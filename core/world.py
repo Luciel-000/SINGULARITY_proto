@@ -63,6 +63,9 @@ TILE_WATER_LIGHT = 13  # 水鏡の洞窟・奥の淡い光
 TILE_WATER_REFLECTION = 14  # 水鏡の回廊へ続く入口
 TILE_WATER_SHADOW = 15  # 水鏡の回廊に残る淡い影
 TILE_WATER_CHAMBER = 16  # 水鏡の間へ続く揺らぎ・中央水面
+TILE_EMBER = 17  # 熾火の道入口・熱の反応地点
+TILE_STONEFIELD = 18  # 岩盤の道入口・大地の反応地点
+TILE_PALE = 19  # 白影の道入口・未分類反応地点
 
 
 class Room:
@@ -148,6 +151,9 @@ class World:
         self.water_reflection_rects: list[pygame.Rect] = []
         self.water_shadow_rects: list[pygame.Rect] = []
         self.water_chamber_rects: list[pygame.Rect] = []
+        self.ember_rects: list[pygame.Rect] = []
+        self.stonefield_rects: list[pygame.Rect] = []
+        self.pale_rects: list[pygame.Rect] = []
 
         # ── ★ 0.7: NPC 配置座標リスト（ピクセル座標）
         # _generate_town() が _npc_tile_positions に記録し、
@@ -174,6 +180,9 @@ class World:
         self._build_water_reflection_rects()
         self._build_water_shadow_rects()
         self._build_water_chamber_rects()
+        self._build_ember_rects()
+        self._build_stonefield_rects()
+        self._build_pale_rects()
         self._build_npc_spawns()  # ★ 0.7
 
     # ──────────────────────────────────────────────────────
@@ -203,6 +212,18 @@ class World:
             self._generate_water_cave_reflection()
         elif self.map_type == "water_cave_mirror_chamber":
             self._generate_water_cave_mirror_chamber()
+        elif self.map_type == "ember_path":
+            self._generate_ember_path()
+        elif self.map_type == "ember_depths":
+            self._generate_ember_depths()
+        elif self.map_type == "stonefield_path":
+            self._generate_stonefield_path()
+        elif self.map_type == "stonefield_depths":
+            self._generate_stonefield_depths()
+        elif self.map_type == "pale_path":
+            self._generate_pale_path()
+        elif self.map_type == "pale_depths":
+            self._generate_pale_depths()
         else:
             self._generate_town()
 
@@ -280,9 +301,69 @@ class World:
                     self._tiles[water_y][water_x] = TILE_WATER
                     break
 
+            ember_candidates = (
+                (max(target_room.col + 1, fx - 2), min(target_room.row + target_room.h - 2, fy + 1)),
+                (min(target_room.col + target_room.w - 2, fx + 2), max(target_room.row + 1, fy - 2)),
+                (max(target_room.col + 1, fx - 1), max(target_room.row + 1, fy - 1)),
+            )
+            for ember_x, ember_y in ember_candidates:
+                if self._tiles[ember_y][ember_x] == TILE_FLOOR:
+                    self._tiles[ember_y][ember_x] = TILE_EMBER
+                    break
+            else:
+                for ember_y in range(target_room.row + 1, target_room.row + target_room.h - 1):
+                    placed = False
+                    for ember_x in range(target_room.col + 1, target_room.col + target_room.w - 1):
+                        if self._tiles[ember_y][ember_x] == TILE_FLOOR:
+                            self._tiles[ember_y][ember_x] = TILE_EMBER
+                            placed = True
+                            break
+                    if placed:
+                        break
+
+            stone_candidates = (
+                (min(target_room.col + target_room.w - 2, fx + 3), min(target_room.row + target_room.h - 2, fy + 2)),
+                (max(target_room.col + 1, fx - 3), max(target_room.row + 1, fy - 2)),
+                (min(target_room.col + target_room.w - 2, fx + 1), max(target_room.row + 1, fy - 3)),
+            )
+            for stone_x, stone_y in stone_candidates:
+                if self._tiles[stone_y][stone_x] == TILE_FLOOR:
+                    self._tiles[stone_y][stone_x] = TILE_STONEFIELD
+                    break
+            else:
+                for stone_y in range(target_room.row + 1, target_room.row + target_room.h - 1):
+                    placed = False
+                    for stone_x in range(target_room.col + 1, target_room.col + target_room.w - 1):
+                        if self._tiles[stone_y][stone_x] == TILE_FLOOR:
+                            self._tiles[stone_y][stone_x] = TILE_STONEFIELD
+                            placed = True
+                            break
+                    if placed:
+                        break
+
     # ──────────────────────────────────────────────────────
     #  町生成（★ 0.6 新規、town 用）
     # ──────────────────────────────────────────────────────
+            pale_candidates = (
+                (max(target_room.col + 1, fx - 4), min(target_room.row + target_room.h - 2, fy + 3)),
+                (min(target_room.col + target_room.w - 2, fx + 4), max(target_room.row + 1, fy - 3)),
+                (fx, max(target_room.row + 1, fy - 4)),
+            )
+            for pale_x, pale_y in pale_candidates:
+                if self._tiles[pale_y][pale_x] == TILE_FLOOR:
+                    self._tiles[pale_y][pale_x] = TILE_PALE
+                    break
+            else:
+                for pale_y in range(target_room.row + 1, target_room.row + target_room.h - 1):
+                    placed = False
+                    for pale_x in range(target_room.col + 1, target_room.col + target_room.w - 1):
+                        if self._tiles[pale_y][pale_x] == TILE_FLOOR:
+                            self._tiles[pale_y][pale_x] = TILE_PALE
+                            placed = True
+                            break
+                    if placed:
+                        break
+
     def _generate_town(self):
         """
         固定レイアウトの町マップを生成する。
@@ -590,6 +671,208 @@ class World:
         self._tiles[exit_row][exit_col] = TILE_EXIT
         self.player_spawn = (exit_col * TILE + 4, (exit_row - 1) * TILE + 4)
 
+    def _generate_ember_path(self):
+        """熾火の道の小規模な固定マップを生成する。"""
+        self._tiles = [[TILE_WALL] * MAP_COLS for _ in range(MAP_ROWS)]
+
+        path_col = MAP_COLS // 2 - 4
+        path_row = 2
+        path_w = 9
+        path_h = 11
+
+        for row in range(path_row, path_row + path_h):
+            width_adjust = 1 if row in (path_row, path_row + path_h - 1) else 0
+            for col in range(path_col + width_adjust, path_col + path_w - width_adjust):
+                self._tiles[row][col] = TILE_FLOOR
+
+        # 熱を帯びた岩。壁として置き、赤茶色の道に起伏を作る。
+        for col, row in (
+            (path_col + 1, path_row + 3),
+            (path_col + path_w - 2, path_row + 4),
+            (path_col + 2, path_row + 7),
+            (path_col + path_w - 3, path_row + 8),
+        ):
+            self._tiles[row][col] = TILE_WALL
+
+        ember_col = path_col + path_w // 2
+        ember_row = path_row + 2
+        self._tiles[ember_row][ember_col] = TILE_EMBER
+
+        for col in range(path_col + 2, path_col + path_w - 2, 2):
+            if self._tiles[path_row + 5][col] == TILE_FLOOR:
+                self._tiles[path_row + 5][col] = TILE_EMBER
+
+        exit_col = path_col + path_w // 2
+        self._tiles[path_row][exit_col] = TILE_EXIT
+
+        exit_row = path_row + path_h - 1
+        self._tiles[exit_row][exit_col] = TILE_EXIT
+        self.player_spawn = (exit_col * TILE + 4, (exit_row - 1) * TILE + 4)
+
+    def _generate_ember_depths(self):
+        """熾火の深部の小規模な固定マップを生成する。"""
+        self._tiles = [[TILE_WALL] * MAP_COLS for _ in range(MAP_ROWS)]
+
+        room_col = MAP_COLS // 2 - 5
+        room_row = 2
+        room_w = 11
+        room_h = 12
+
+        for row in range(room_row, room_row + room_h):
+            edge_adjust = 1 if row in (room_row, room_row + room_h - 1) else 0
+            for col in range(room_col + edge_adjust, room_col + room_w - edge_adjust):
+                self._tiles[row][col] = TILE_FLOOR
+
+        # 黒い岩と赤い亀裂で、熱が内側へ集まる深部らしさを出す。
+        for col, row in (
+            (room_col + 1, room_row + 3),
+            (room_col + room_w - 2, room_row + 3),
+            (room_col + 2, room_row + 7),
+            (room_col + room_w - 3, room_row + 8),
+        ):
+            self._tiles[row][col] = TILE_WALL
+
+        center_col = room_col + room_w // 2
+        for row in range(room_row + 3, room_row + room_h - 3):
+            self._tiles[row][center_col] = TILE_EMBER
+        for col in range(center_col - 3, center_col + 4, 2):
+            self._tiles[room_row + 5][col] = TILE_EMBER
+            self._tiles[room_row + 8][col] = TILE_EMBER
+
+        exit_row = room_row + room_h - 1
+        self._tiles[exit_row][center_col] = TILE_EXIT
+        self.player_spawn = (center_col * TILE + 4, (exit_row - 1) * TILE + 4)
+
+    def _generate_stonefield_path(self):
+        """岩盤の道の固定マップを生成する。"""
+        self._tiles = [[TILE_WALL] * MAP_COLS for _ in range(MAP_ROWS)]
+
+        path_col = 5
+        path_row = 2
+        path_w = 15
+        path_h = MAP_ROWS - 4
+        path_room = Room(path_col, path_row, path_w, path_h)
+        self._carve_room(path_room)
+        self.rooms.append(path_room)
+
+        center_col = path_col + path_w // 2
+        for row in range(path_row + 1, path_row + path_h - 1):
+            if row % 3 != 0:
+                self._tiles[row][center_col - 3] = TILE_WALL
+            if row % 4 != 0:
+                self._tiles[row][center_col + 4] = TILE_WALL
+
+        for col in range(path_col + 2, path_col + path_w - 2, 3):
+            self._tiles[path_row + 3][col] = TILE_STONEFIELD
+        for col in range(path_col + 3, path_col + path_w - 3, 4):
+            self._tiles[path_row + 7][col] = TILE_STONEFIELD
+
+        for row, col in ((5, 9), (6, 14), (9, 11), (10, 16)):
+            self._tiles[row][col] = TILE_STONEFIELD
+
+        self._tiles[path_row][center_col] = TILE_EXIT
+
+        exit_row = path_row + path_h - 1
+        self._tiles[exit_row][center_col] = TILE_EXIT
+        self.player_spawn = (center_col * TILE + 4, (exit_row - 1) * TILE + 4)
+
+    def _generate_stonefield_depths(self):
+        """岩盤の深部の固定マップを生成する。"""
+        self._tiles = [[TILE_WALL] * MAP_COLS for _ in range(MAP_ROWS)]
+
+        room_col = 4
+        room_row = 2
+        room_w = 17
+        room_h = MAP_ROWS - 3
+        room = Room(room_col, room_row, room_w, room_h)
+        self._carve_room(room)
+        self.rooms.append(room)
+
+        center_col = room_col + room_w // 2
+        for row in range(room_row + 2, room_row + room_h - 2):
+            if row % 2 == 0:
+                self._tiles[row][center_col] = TILE_STONEFIELD
+            if row % 3 != 0:
+                self._tiles[row][room_col + 2] = TILE_WALL
+            if row % 4 != 0:
+                self._tiles[row][room_col + room_w - 3] = TILE_WALL
+
+        for col in range(room_col + 3, room_col + room_w - 3, 3):
+            self._tiles[room_row + 4][col] = TILE_STONEFIELD
+            self._tiles[room_row + 8][col] = TILE_STONEFIELD
+
+        for row, col in ((5, 8), (6, 16), (9, 10), (11, 14)):
+            self._tiles[row][col] = TILE_STONEFIELD
+
+        exit_row = room_row + room_h - 1
+        self._tiles[exit_row][center_col] = TILE_EXIT
+        self.player_spawn = (center_col * TILE + 4, (exit_row - 1) * TILE + 4)
+
+    def _generate_pale_path(self):
+        """白影の道の固定マップを生成する。"""
+        self._tiles = [[TILE_WALL] * MAP_COLS for _ in range(MAP_ROWS)]
+
+        path_col = 4
+        path_row = 2
+        path_w = 17
+        path_h = MAP_ROWS - 4
+        path_room = Room(path_col, path_row, path_w, path_h)
+        self._carve_room(path_room)
+        self.rooms.append(path_room)
+
+        center_col = path_col + path_w // 2
+        for row in range(path_row + 1, path_row + path_h - 1):
+            if row % 3 == 1:
+                self._tiles[row][center_col - 4] = TILE_WALL
+            if row % 4 == 2:
+                self._tiles[row][center_col + 4] = TILE_WALL
+
+        for col in range(path_col + 2, path_col + path_w - 2, 4):
+            self._tiles[path_row + 3][col] = TILE_PALE
+        for col in range(path_col + 3, path_col + path_w - 3, 5):
+            self._tiles[path_row + 7][col] = TILE_PALE
+
+        for row, col in ((5, 8), (6, 15), (9, 11), (10, 17)):
+            self._tiles[row][col] = TILE_PALE
+
+        self._tiles[path_row][center_col] = TILE_EXIT
+
+        exit_row = path_row + path_h - 1
+        self._tiles[exit_row][center_col] = TILE_EXIT
+        self.player_spawn = (center_col * TILE + 4, (exit_row - 1) * TILE + 4)
+
+    def _generate_pale_depths(self):
+        """白影の奥の固定マップを生成する。"""
+        self._tiles = [[TILE_WALL] * MAP_COLS for _ in range(MAP_ROWS)]
+
+        room_col = 4
+        room_row = 2
+        room_w = 17
+        room_h = MAP_ROWS - 3
+        room = Room(room_col, room_row, room_w, room_h)
+        self._carve_room(room)
+        self.rooms.append(room)
+
+        center_col = room_col + room_w // 2
+        for row in range(room_row + 2, room_row + room_h - 2):
+            if row % 3 == 0:
+                self._tiles[row][center_col] = TILE_PALE
+            if row % 4 != 0:
+                self._tiles[row][room_col + 3] = TILE_WALL
+            if row % 5 != 0:
+                self._tiles[row][room_col + room_w - 4] = TILE_WALL
+
+        for col in range(room_col + 2, room_col + room_w - 2, 4):
+            self._tiles[room_row + 4][col] = TILE_PALE
+            self._tiles[room_row + 8][col] = TILE_PALE
+
+        for row, col in ((5, 7), (6, 16), (9, 10), (11, 15)):
+            self._tiles[row][col] = TILE_PALE
+
+        exit_row = room_row + room_h - 1
+        self._tiles[exit_row][center_col] = TILE_EXIT
+        self.player_spawn = (center_col * TILE + 4, (exit_row - 1) * TILE + 4)
+
     def _carve_room(self, room: Room):
         for r in range(room.row, room.row + room.h):
             for c in range(room.col, room.col + room.w):
@@ -652,6 +935,9 @@ class World:
                     TILE_WATER_REFLECTION,
                     TILE_WATER_SHADOW,
                     TILE_WATER_CHAMBER,
+                    TILE_EMBER,
+                    TILE_STONEFIELD,
+                    TILE_PALE,
                 ):
                     # 床（出口も床として下地を描く）
                     shade = random.randint(-5, 5)
@@ -842,6 +1128,36 @@ class World:
             for c, tile in enumerate(row):
                 if tile == TILE_WATER_CHAMBER:
                     self.water_chamber_rects.append(
+                        pygame.Rect(c * TILE, r * TILE, TILE, TILE)
+                    )
+
+    def _build_ember_rects(self):
+        """熾火の道入口・熱の反応地点の Rect リストを作る。"""
+        self.ember_rects = []
+        for r, row in enumerate(self._tiles):
+            for c, tile in enumerate(row):
+                if tile == TILE_EMBER:
+                    self.ember_rects.append(
+                        pygame.Rect(c * TILE, r * TILE, TILE, TILE)
+                    )
+
+    def _build_stonefield_rects(self):
+        """岩盤の道入口・大地反応地点の Rect リストを作る。"""
+        self.stonefield_rects = []
+        for r, row in enumerate(self._tiles):
+            for c, tile in enumerate(row):
+                if tile == TILE_STONEFIELD:
+                    self.stonefield_rects.append(
+                        pygame.Rect(c * TILE, r * TILE, TILE, TILE)
+                    )
+
+    def _build_pale_rects(self):
+        """白影の道入口・未分類反応地点の Rect リストを作る。"""
+        self.pale_rects = []
+        for r, row in enumerate(self._tiles):
+            for c, tile in enumerate(row):
+                if tile == TILE_PALE:
+                    self.pale_rects.append(
                         pygame.Rect(c * TILE, r * TILE, TILE, TILE)
                     )
 
@@ -1055,6 +1371,22 @@ class World:
             pygame.draw.circle(surface, (190, 240, 248), rect.center, 5, 1)
             pygame.draw.line(surface, (95, 175, 215), rect.midleft, rect.midright, 1)
             pygame.draw.line(surface, (170, 225, 238), (rect.left + 4, rect.top + 5), (rect.right - 4, rect.top + 5), 1)
+
+        for rect in self.ember_rects:
+            pygame.draw.rect(surface, (86, 42, 28), rect)
+            pygame.draw.rect(surface, (210, 112, 58), rect, 2)
+            pygame.draw.circle(surface, (245, 160, 72), rect.center, 5, 1)
+            pygame.draw.line(surface, (190, 80, 46), rect.midleft, rect.midright, 1)
+            pygame.draw.circle(surface, (245, 195, 100), (rect.centerx - 6, rect.centery - 4), 2)
+            pygame.draw.circle(surface, (230, 120, 58), (rect.centerx + 7, rect.centery + 5), 2)
+
+        for rect in self.stonefield_rects:
+            pygame.draw.rect(surface, (78, 72, 56), rect)
+            pygame.draw.rect(surface, (145, 132, 96), rect, 2)
+            pygame.draw.line(surface, (56, 50, 40), (rect.left + 4, rect.centery), (rect.right - 5, rect.centery + 3), 1)
+            pygame.draw.line(surface, (112, 106, 82), rect.midtop, rect.center, 1)
+            pygame.draw.circle(surface, (86, 122, 72), (rect.centerx - 6, rect.centery + 5), 2)
+            pygame.draw.circle(surface, (96, 132, 80), (rect.centerx + 7, rect.centery - 4), 2)
 
         if wind_center_route_found and self.wind_rects and self.wind_observation_rects:
             start = self.wind_observation_rects[0].center
