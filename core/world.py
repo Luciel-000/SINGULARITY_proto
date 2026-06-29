@@ -228,6 +228,16 @@ class World:
             self._generate_boundary_path()
         elif self.map_type == "boundary_depths":
             self._generate_boundary_depths()
+        elif self.map_type == "distant_path":
+            self._generate_distant_path()
+        elif self.map_type == "distant_depths":
+            self._generate_distant_depths()
+        elif self.map_type == "old_road":
+            self._generate_old_road()
+        elif self.map_type == "old_road_depths":
+            self._generate_old_road_depths()
+        elif self.map_type == "sealed_path":
+            self._generate_sealed_path()
         else:
             self._generate_town()
 
@@ -433,6 +443,13 @@ class World:
         south_exit_col = MAP_COLS // 2
         south_exit_row = MAP_ROWS - 3
         self._tiles[south_exit_row][south_exit_col] = TILE_EXIT
+
+        # 北の道のさらに先へ続く細い分岐。条件判定は game.py 側で行う。
+        distant_exit_row = road_row + 3
+        distant_exit_col = road_col + road_w + 4
+        for col in range(road_col + road_w, distant_exit_col + 1):
+            self._tiles[distant_exit_row][col] = TILE_FLOOR
+        self._tiles[distant_exit_row][distant_exit_col] = TILE_EXIT
 
         # 北側は古い祠へ続く方向を床で示すだけに留める。
         for row in range(1, road_row):
@@ -962,6 +979,224 @@ class World:
         exit_row = room_row + room_h - 1
         self._tiles[exit_row][center_col] = TILE_EXIT
         self.player_spawn = (center_col * TILE + 4, (exit_row - 1) * TILE + 4)
+
+    def _generate_distant_path(self):
+        """彼方への道の固定マップを生成する。"""
+        self._tiles = [[TILE_WALL] * MAP_COLS for _ in range(MAP_ROWS)]
+
+        path_row = MAP_ROWS // 2
+        start_col = 3
+        end_col = MAP_COLS - 4
+
+        for col in range(start_col, end_col + 1):
+            self._tiles[path_row][col] = TILE_FLOOR
+            if col % 4 != 0:
+                self._tiles[path_row - 1][col] = TILE_FLOOR
+            if col % 5 != 0:
+                self._tiles[path_row + 1][col] = TILE_FLOOR
+
+        # 途切れがちな石畳と、四属性・色のない揺らぎの控えめな痕跡。
+        for col, row, tile in (
+            (start_col + 3, path_row - 1, TILE_WIND),
+            (start_col + 6, path_row + 1, TILE_WATER),
+            (start_col + 10, path_row - 1, TILE_EMBER),
+            (start_col + 13, path_row + 1, TILE_STONEFIELD),
+            (start_col + 15, path_row - 1, TILE_PALE),
+            (start_col + 16, path_row, TILE_PALE),
+        ):
+            self._tiles[row][col] = tile
+
+        for col, row in (
+            (start_col + 5, path_row - 2),
+            (start_col + 9, path_row + 2),
+            (start_col + 14, path_row - 2),
+        ):
+            self._tiles[row][col] = TILE_FLOOR
+
+        self.rooms.append(Room(start_col, path_row - 2, end_col - start_col + 1, 5))
+
+        self._tiles[path_row][start_col] = TILE_EXIT
+        self._tiles[path_row][end_col] = TILE_EXIT
+        self._tiles[path_row - 2][end_col - 2] = TILE_EXIT
+        self.player_spawn = ((start_col + 1) * TILE + 4, path_row * TILE + 4)
+
+    def _generate_distant_depths(self):
+        """彼方の深部の固定マップを生成する。"""
+        self._tiles = [[TILE_WALL] * MAP_COLS for _ in range(MAP_ROWS)]
+
+        room_col = 5
+        room_row = 3
+        room_w = 15
+        room_h = 9
+        center_col = room_col + room_w // 2
+        center_row = room_row + room_h // 2
+
+        for row in range(room_row, room_row + room_h):
+            for col in range(room_col, room_col + room_w):
+                dx = col - center_col
+                dy = row - center_row
+                if dx * dx * 5 + dy * dy * 8 <= 150:
+                    self._tiles[row][col] = TILE_FLOOR
+
+        self.rooms.append(Room(room_col, room_row, room_w, room_h))
+
+        # 崩れた石壁や柱跡のような欠けを残す。
+        for col, row in (
+            (room_col + 2, room_row + 2),
+            (room_col + room_w - 3, room_row + 2),
+            (room_col + 3, room_row + room_h - 3),
+            (room_col + room_w - 4, room_row + room_h - 3),
+        ):
+            self._tiles[row][col] = TILE_WALL
+
+        for row, col, tile in (
+            (center_row - 3, center_col, TILE_WIND),
+            (center_row, center_col + 4, TILE_WATER),
+            (center_row + 3, center_col, TILE_EMBER),
+            (center_row, center_col - 4, TILE_STONEFIELD),
+            (center_row, center_col, TILE_PALE),
+            (center_row - 1, center_col + 1, TILE_PALE),
+            (center_row + 1, center_col - 1, TILE_PALE),
+        ):
+            if 0 <= row < MAP_ROWS and 0 <= col < MAP_COLS:
+                self._tiles[row][col] = tile
+
+        exit_col = center_col
+        exit_row = room_row + room_h - 1
+        self._tiles[exit_row][exit_col] = TILE_EXIT
+        self.player_spawn = (exit_col * TILE + 4, (exit_row - 1) * TILE + 4)
+
+    def _generate_old_road(self):
+        """忘れられた街道の固定マップを生成する。"""
+        self._tiles = [[TILE_WALL] * MAP_COLS for _ in range(MAP_ROWS)]
+
+        path_row = MAP_ROWS // 2
+        start_col = 3
+        end_col = MAP_COLS - 4
+
+        for col in range(start_col, end_col + 1):
+            self._tiles[path_row][col] = TILE_FLOOR
+            if col % 3 != 0:
+                self._tiles[path_row - 1][col] = TILE_FLOOR
+            if col % 4 != 1:
+                self._tiles[path_row + 1][col] = TILE_FLOOR
+
+        # 崩れた道標、倒れた柱、小さな石壁跡を既存タイルで表す。
+        for col, row in (
+            (start_col + 4, path_row - 2),
+            (start_col + 8, path_row + 2),
+            (start_col + 12, path_row - 2),
+            (start_col + 15, path_row + 2),
+        ):
+            if 0 <= row < MAP_ROWS and 0 <= col < MAP_COLS:
+                self._tiles[row][col] = TILE_FLOOR
+
+        for col, row, tile in (
+            (start_col + 3, path_row - 1, TILE_WIND),
+            (start_col + 6, path_row + 1, TILE_WATER),
+            (start_col + 9, path_row - 1, TILE_EMBER),
+            (start_col + 12, path_row + 1, TILE_STONEFIELD),
+            (start_col + 14, path_row, TILE_PALE),
+            (start_col + 16, path_row - 1, TILE_PALE),
+        ):
+            if 0 <= row < MAP_ROWS and 0 <= col < MAP_COLS:
+                self._tiles[row][col] = tile
+
+        self.rooms.append(Room(start_col, path_row - 2, end_col - start_col + 1, 5))
+
+        self._tiles[path_row][start_col] = TILE_EXIT
+        self._tiles[path_row][end_col] = TILE_EXIT
+        self._tiles[path_row - 2][end_col - 3] = TILE_EXIT
+        self.player_spawn = ((start_col + 1) * TILE + 4, path_row * TILE + 4)
+
+    def _generate_old_road_depths(self):
+        """街道の深部の固定マップを生成する。"""
+        self._tiles = [[TILE_WALL] * MAP_COLS for _ in range(MAP_ROWS)]
+
+        room_col = 5
+        room_row = 3
+        room_w = 15
+        room_h = 9
+        center_col = room_col + room_w // 2
+        center_row = room_row + room_h // 2
+
+        for row in range(room_row, room_row + room_h):
+            for col in range(room_col, room_col + room_w):
+                dx = col - center_col
+                dy = row - center_row
+                if dx * dx * 5 + dy * dy * 8 <= 150:
+                    self._tiles[row][col] = TILE_FLOOR
+
+        self.rooms.append(Room(room_col, room_row, room_w, room_h))
+
+        # 半壊した石壁と崩れた柱の跡。
+        for col, row in (
+            (room_col + 2, room_row + 2),
+            (room_col + room_w - 3, room_row + 2),
+            (room_col + 3, room_row + room_h - 3),
+            (room_col + room_w - 4, room_row + room_h - 3),
+        ):
+            if 0 <= row < MAP_ROWS and 0 <= col < MAP_COLS:
+                self._tiles[row][col] = TILE_WALL
+
+        for row, col, tile in (
+            (center_row - 3, center_col, TILE_WIND),
+            (center_row, center_col + 4, TILE_WATER),
+            (center_row + 3, center_col, TILE_EMBER),
+            (center_row, center_col - 4, TILE_STONEFIELD),
+            (center_row, center_col, TILE_PALE),
+            (center_row - 1, center_col + 1, TILE_PALE),
+            (center_row + 1, center_col - 1, TILE_PALE),
+        ):
+            if 0 <= row < MAP_ROWS and 0 <= col < MAP_COLS:
+                self._tiles[row][col] = tile
+
+        exit_col = center_col
+        exit_row = room_row + room_h - 1
+        self._tiles[exit_row][exit_col] = TILE_EXIT
+        self.player_spawn = (exit_col * TILE + 4, (exit_row - 1) * TILE + 4)
+
+    def _generate_sealed_path(self):
+        """閉ざされた小径の固定マップを生成する。"""
+        self._tiles = [[TILE_WALL] * MAP_COLS for _ in range(MAP_ROWS)]
+
+        path_row = MAP_ROWS // 2
+        start_col = 4
+        end_col = MAP_COLS - 5
+
+        for col in range(start_col, end_col + 1):
+            self._tiles[path_row][col] = TILE_FLOOR
+            if col % 4 != 0:
+                self._tiles[path_row - 1][col] = TILE_FLOOR
+            if col % 5 != 2:
+                self._tiles[path_row + 1][col] = TILE_FLOOR
+
+        # 崩れた石壁と低い柱跡が続く、細い石道の名残。
+        for col, row in (
+            (start_col + 3, path_row - 2),
+            (start_col + 7, path_row + 2),
+            (start_col + 11, path_row - 2),
+            (start_col + 14, path_row + 2),
+        ):
+            if 0 <= row < MAP_ROWS and 0 <= col < MAP_COLS:
+                self._tiles[row][col] = TILE_FLOOR
+
+        for col, row, tile in (
+            (start_col + 2, path_row - 1, TILE_WIND),
+            (start_col + 5, path_row + 1, TILE_WATER),
+            (start_col + 8, path_row - 1, TILE_EMBER),
+            (start_col + 11, path_row + 1, TILE_STONEFIELD),
+            (start_col + 13, path_row, TILE_PALE),
+            (start_col + 15, path_row - 1, TILE_PALE),
+        ):
+            if 0 <= row < MAP_ROWS and 0 <= col < MAP_COLS:
+                self._tiles[row][col] = tile
+
+        self.rooms.append(Room(start_col, path_row - 2, end_col - start_col + 1, 5))
+
+        self._tiles[path_row][start_col] = TILE_EXIT
+        self._tiles[path_row][end_col] = TILE_EXIT
+        self.player_spawn = ((start_col + 1) * TILE + 4, path_row * TILE + 4)
 
     def _carve_room(self, room: Room):
         for r in range(room.row, room.row + room.h):

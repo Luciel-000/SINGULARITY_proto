@@ -458,6 +458,16 @@ class Game:
                     return
                 if self._try_investigate_boundary_resonance():
                     return
+                if self._try_investigate_distant_center():
+                    return
+                if self._try_investigate_old_road_center():
+                    return
+                if self._try_investigate_sealed_path_trace():
+                    return
+                if self._try_investigate_old_road_trace():
+                    return
+                if self._try_investigate_distant_path_trace():
+                    return
                 if self._try_investigate_distant_resonance_trace():
                     return
                 if self._try_collect_wind_fragment():
@@ -945,6 +955,26 @@ class Game:
             "boundary_depths_entered", False
         ):
             self._start_boundary_depths_arrival_event()
+        if next_zone_id == "distant_path" and not self._get_story_flag(
+            "distant_path_entered", False
+        ):
+            self._start_distant_path_arrival_event()
+        if next_zone_id == "distant_depths" and not self._get_story_flag(
+            "distant_depths_entered", False
+        ):
+            self._start_distant_depths_arrival_event()
+        if next_zone_id == "old_road" and not self._get_story_flag(
+            "old_road_entered", False
+        ):
+            self._start_old_road_arrival_event()
+        if next_zone_id == "old_road_depths" and not self._get_story_flag(
+            "old_road_depths_entered", False
+        ):
+            self._start_old_road_depths_arrival_event()
+        if next_zone_id == "sealed_path" and not self._get_story_flag(
+            "sealed_path_entered", False
+        ):
+            self._start_sealed_path_arrival_event()
 
     def _handle_exit_transition(self, exit_rect: pygame.Rect) -> None:
         if self.current_zone_id == "town":
@@ -972,6 +1002,21 @@ class Game:
                 return
 
             self._transition_zone("north_road")
+            return
+
+        if self.current_zone_id == "north_road":
+            if self._is_north_road_distant_exit(exit_rect):
+                if self._get_story_flag("next_region_route_hint_received", False):
+                    self._transition_zone("distant_path")
+                else:
+                    self._add_message(
+                        "北の道の先は、まだ静かに閉ざされている。遠くから届く反応の手がかりが足りないようだ。",
+                        C_GRAY,
+                    )
+                    self.player.rect.right = exit_rect.left - 2
+                return
+
+            self._transition_zone("town")
             return
 
         if self.current_zone_id == "ember_path":
@@ -1034,6 +1079,66 @@ class Game:
             self._transition_zone("shrine_inner")
             return
 
+        if self.current_zone_id == "distant_path":
+            if self._is_distant_path_old_road_exit(exit_rect):
+                if self._get_story_flag("distant_route_return_hint_received", False):
+                    self._transition_zone("old_road")
+                else:
+                    self._add_message(
+                        "途切れた街道の先は、まだ霞の向こうに沈んでいる。遠方の反応へ続く経路が、十分に開いていないようだ。",
+                        C_GRAY,
+                    )
+                    self.player.rect.top = exit_rect.bottom + 2
+                return
+
+            if self._is_distant_path_deeper_exit(exit_rect):
+                if self._get_story_flag("distant_depths_hint_received", False):
+                    self._transition_zone("distant_depths")
+                else:
+                    self._add_message(
+                        "道のさらに奥は、まだ霞の向こうに閉ざされている。遠方から届く反応が、十分に定まっていないようだ。",
+                        C_GRAY,
+                    )
+                    self.player.rect.right = exit_rect.left - 2
+                return
+
+            self._transition_zone("north_road")
+            return
+
+        if self.current_zone_id == "old_road":
+            if self._is_old_road_sealed_path_exit(exit_rect):
+                if self._get_story_flag("old_road_return_hint_received", False):
+                    self._transition_zone("sealed_path")
+                else:
+                    self._add_message(
+                        "石道の先は、まだ静かに閉ざされている。遠方から届く反応が、この経路を開くには足りないようだ。",
+                        C_GRAY,
+                    )
+                    self.player.rect.top = exit_rect.bottom + 2
+                return
+
+            if self._is_old_road_deeper_exit(exit_rect):
+                if self._get_story_flag("old_road_depths_hint_received", False):
+                    self._transition_zone("old_road_depths")
+                else:
+                    self._add_message(
+                        "街道の奥は、まだ霞の向こうに閉ざされている。遠方の反応へ進むための手がかりが足りないようだ。",
+                        C_GRAY,
+                    )
+                    self.player.rect.right = exit_rect.left - 2
+                return
+
+            self._transition_zone("distant_path")
+            return
+
+        if self.current_zone_id == "old_road_depths":
+            self._transition_zone("old_road")
+            return
+
+        if self.current_zone_id == "sealed_path":
+            self._transition_zone("old_road")
+            return
+
         exits = get_zone_exits(self.current_zone_id)
         if exits:
             self._transition_zone(exits[0]["to"])
@@ -1043,6 +1148,9 @@ class Game:
 
     def _is_shrine_inner_boundary_exit(self, exit_rect: pygame.Rect) -> bool:
         return exit_rect.centery <= TILE * 3
+
+    def _is_north_road_distant_exit(self, exit_rect: pygame.Rect) -> bool:
+        return exit_rect.centerx >= TILE * 16
 
     def _is_ember_path_deeper_exit(self, exit_rect: pygame.Rect) -> bool:
         return exit_rect.centery <= TILE * 4
@@ -1055,6 +1163,18 @@ class Game:
 
     def _is_boundary_path_deeper_exit(self, exit_rect: pygame.Rect) -> bool:
         return exit_rect.centery <= TILE * 4
+
+    def _is_distant_path_deeper_exit(self, exit_rect: pygame.Rect) -> bool:
+        return exit_rect.centerx >= TILE * 18
+
+    def _is_distant_path_old_road_exit(self, exit_rect: pygame.Rect) -> bool:
+        return exit_rect.centery <= TILE * 6
+
+    def _is_old_road_deeper_exit(self, exit_rect: pygame.Rect) -> bool:
+        return exit_rect.centerx >= TILE * 18
+
+    def _is_old_road_sealed_path_exit(self, exit_rect: pygame.Rect) -> bool:
+        return exit_rect.centery <= TILE * 6
 
     # ──────────────────────────────────────────────────────
     #  ★ 0.7 Step5-B: 会話処理
@@ -1098,6 +1218,30 @@ class Game:
         return 0
 
     def get_current_objective_text(self) -> str:
+        if self._get_story_flag("sealed_path_depths_hint_received", False):
+            return "目的：閉ざされた小径のさらに奥にある反応を目指す"
+        if self._get_story_flag("sealed_path_resonance_seen", False):
+            return "目的：閉ざされた小径に残る反応を調べる"
+        if self._get_story_flag("old_road_return_hint_received", False):
+            return "目的：忘れられた街道に戻り、閉ざされた経路を探す"
+        if self._get_story_flag("old_road_response_hint_received", False):
+            return "目的：街道の深部で見た反応を老人へ報告する"
+        if self._get_story_flag("old_road_depths_resonance_seen", False):
+            return "目的：街道の深部にある中心の反応を調べる"
+        if self._get_story_flag("old_road_depths_hint_received", False):
+            return "目的：忘れられた街道のさらに奥にある反応を目指す"
+        if self._get_story_flag("old_road_resonance_seen", False):
+            return "目的：忘れられた街道に残る反応を調べる"
+        if self._get_story_flag("distant_route_return_hint_received", False):
+            return "目的：彼方への道に戻り、古い街道の先に現れた経路を探す"
+        if self._get_story_flag("distant_response_hint_received", False):
+            return "目的：彼方の深部で見た反応を老人へ報告する"
+        if self._get_story_flag("distant_depths_resonance_seen", False):
+            return "目的：彼方の深部にある中心の反応を調べる"
+        if self._get_story_flag("distant_depths_hint_received", False):
+            return "目的：彼方への道のさらに奥にある反応を目指す"
+        if self._get_story_flag("distant_path_resonance_seen", False):
+            return "目的：彼方への道に残る遠方の反応を調べる"
         if self._get_story_flag("next_region_route_hint_received", False):
             return "目的：北の道の先に続く新たな経路を探す"
         if self._get_story_flag("next_region_path_hint_received", False):
@@ -1353,6 +1497,18 @@ class Game:
         base_dialogue_id = npc.get_current_dialogue_id()
         if npc.dialogue_id != "elder_first" or not self.player:
             return base_dialogue_id
+
+        if self._get_story_flag("old_road_center_reported_to_elder", False):
+            return "elder_after_old_road_center_hint"
+
+        if self._get_story_flag("old_road_response_hint_received", False):
+            return "elder_after_old_road_center_report"
+
+        if self._get_story_flag("distant_center_reported_to_elder", False):
+            return "elder_after_distant_center_hint"
+
+        if self._get_story_flag("distant_response_hint_received", False):
+            return "elder_after_distant_center_report"
 
         if self._get_story_flag("boundary_silent_balance_reported_to_elder", False):
             return "elder_after_boundary_silent_balance_hint"
@@ -1968,6 +2124,258 @@ class Game:
         self.dialogue_index = 0
         self.talking_npc = None
         self._mark_story_event_seen("boundary_depths_arrival")
+        self.state = STATE_DIALOGUE
+
+    def _start_distant_path_arrival_event(self) -> None:
+        self._set_story_flag("distant_path_entered", True)
+        self._set_story_flag("distant_path_resonance_seen", True)
+        self.current_dialogue_id = "distant_path_arrival"
+        self.dialogue_lines = [
+            line.replace("{support_system_name}", self.get_support_system_display_name())
+            for line in get_dialogue_lines("distant_path_arrival")
+        ]
+        self.dialogue_speaker = self.get_support_system_display_name()
+        self.dialogue_index = 0
+        self.talking_npc = None
+        self._mark_story_event_seen("distant_path_arrival")
+        self.state = STATE_DIALOGUE
+
+    def _start_distant_depths_arrival_event(self) -> None:
+        self._set_story_flag("distant_depths_entered", True)
+        self._set_story_flag("distant_depths_resonance_seen", True)
+        self.current_dialogue_id = "distant_depths_arrival"
+        self.dialogue_lines = [
+            line.replace("{support_system_name}", self.get_support_system_display_name())
+            for line in get_dialogue_lines("distant_depths_arrival")
+        ]
+        self.dialogue_speaker = self.get_support_system_display_name()
+        self.dialogue_index = 0
+        self.talking_npc = None
+        self._mark_story_event_seen("distant_depths_arrival")
+        self.state = STATE_DIALOGUE
+
+    def _start_old_road_arrival_event(self) -> None:
+        self._set_story_flag("old_road_entered", True)
+        self._set_story_flag("old_road_resonance_seen", True)
+        self.current_dialogue_id = "old_road_arrival"
+        self.dialogue_lines = [
+            line.replace("{support_system_name}", self.get_support_system_display_name())
+            for line in get_dialogue_lines("old_road_arrival")
+        ]
+        self.dialogue_speaker = self.get_support_system_display_name()
+        self.dialogue_index = 0
+        self.talking_npc = None
+        self._mark_story_event_seen("old_road_arrival")
+        self.state = STATE_DIALOGUE
+
+    def _start_old_road_depths_arrival_event(self) -> None:
+        self._set_story_flag("old_road_depths_entered", True)
+        self._set_story_flag("old_road_depths_resonance_seen", True)
+        self.current_dialogue_id = "old_road_depths_arrival"
+        self.dialogue_lines = [
+            line.replace("{support_system_name}", self.get_support_system_display_name())
+            for line in get_dialogue_lines("old_road_depths_arrival")
+        ]
+        self.dialogue_speaker = self.get_support_system_display_name()
+        self.dialogue_index = 0
+        self.talking_npc = None
+        self._mark_story_event_seen("old_road_depths_arrival")
+        self.state = STATE_DIALOGUE
+
+    def _start_sealed_path_arrival_event(self) -> None:
+        self._set_story_flag("sealed_path_entered", True)
+        self._set_story_flag("sealed_path_resonance_seen", True)
+        self.current_dialogue_id = "sealed_path_arrival"
+        self.dialogue_lines = [
+            line.replace("{support_system_name}", self.get_support_system_display_name())
+            for line in get_dialogue_lines("sealed_path_arrival")
+        ]
+        self.dialogue_speaker = self.get_support_system_display_name()
+        self.dialogue_index = 0
+        self.talking_npc = None
+        self._mark_story_event_seen("sealed_path_arrival")
+        self.state = STATE_DIALOGUE
+
+    def _try_investigate_sealed_path_trace(self) -> bool:
+        if not self.world or not self.player:
+            return False
+        if self.current_zone_id != "sealed_path":
+            return False
+        if not self._get_story_flag("sealed_path_resonance_seen", False):
+            return False
+
+        path_row = MAP_ROWS // 2
+        trace_rect = pygame.Rect(17 * TILE, path_row * TILE, TILE, TILE)
+        if not self.player.rect.colliderect(trace_rect.inflate(TILE, TILE)):
+            return False
+
+        if self._get_story_flag("sealed_path_trace_investigated", False):
+            self._add_message(
+                "細い反応は、閉ざされた小径のさらに奥へ続いている。草に覆われた石道が、静かに先を示しているようだ。",
+                C_GRAY,
+            )
+        else:
+            self._start_sealed_path_trace_event()
+        return True
+
+    def _start_sealed_path_trace_event(self) -> None:
+        self._set_story_flag("sealed_path_trace_investigated", True)
+        self._set_story_flag("sealed_path_far_resonance_seen", True)
+        self._set_story_flag("sealed_path_depths_hint_received", True)
+        self.current_dialogue_id = "sealed_path_trace"
+        self.dialogue_lines = [
+            line.replace("{support_system_name}", self.get_support_system_display_name())
+            for line in get_dialogue_lines("sealed_path_trace")
+        ]
+        self.dialogue_speaker = self.get_support_system_display_name()
+        self.dialogue_index = 0
+        self.talking_npc = None
+        self._mark_story_event_seen("sealed_path_trace")
+        self.state = STATE_DIALOGUE
+
+    def _try_investigate_old_road_center(self) -> bool:
+        if not self.world or not self.player:
+            return False
+        if self.current_zone_id != "old_road_depths":
+            return False
+        if not self._get_story_flag("old_road_depths_resonance_seen", False):
+            return False
+
+        center_rect = pygame.Rect(12 * TILE, 7 * TILE, TILE, TILE)
+        if not self.player.rect.colliderect(center_rect.inflate(TILE, TILE)):
+            return False
+
+        if self._get_story_flag("old_road_center_investigated", False):
+            self._add_message(
+                "中心の反応は、忘れられた街道のさらに先へ続いている。霞の向こうから、わずかな応答が返ってくる。",
+                C_GRAY,
+            )
+        else:
+            self._start_old_road_center_event()
+        return True
+
+    def _start_old_road_center_event(self) -> None:
+        self._set_story_flag("old_road_center_investigated", True)
+        self._set_story_flag("old_road_center_resonance_seen", True)
+        self._set_story_flag("old_road_response_hint_received", True)
+        self.current_dialogue_id = "old_road_center_investigation"
+        self.dialogue_lines = [
+            line.replace("{support_system_name}", self.get_support_system_display_name())
+            for line in get_dialogue_lines("old_road_center_investigation")
+        ]
+        self.dialogue_speaker = self.get_support_system_display_name()
+        self.dialogue_index = 0
+        self.talking_npc = None
+        self._mark_story_event_seen("old_road_center_investigation")
+        self.state = STATE_DIALOGUE
+
+    def _try_investigate_old_road_trace(self) -> bool:
+        if not self.world or not self.player:
+            return False
+        if self.current_zone_id != "old_road":
+            return False
+        if not self._get_story_flag("old_road_resonance_seen", False):
+            return False
+
+        path_row = MAP_ROWS // 2
+        trace_rect = pygame.Rect(17 * TILE, path_row * TILE, TILE, TILE)
+        if not self.player.rect.colliderect(trace_rect.inflate(TILE, TILE)):
+            return False
+
+        if self._get_story_flag("old_road_trace_investigated", False):
+            self._add_message(
+                "細い反応は、崩れた石畳のさらに奥へ続いている。忘れられた道が、静かに先を示しているようだ。",
+                C_GRAY,
+            )
+        else:
+            self._start_old_road_trace_event()
+        return True
+
+    def _start_old_road_trace_event(self) -> None:
+        self._set_story_flag("old_road_trace_investigated", True)
+        self._set_story_flag("old_road_far_resonance_seen", True)
+        self._set_story_flag("old_road_depths_hint_received", True)
+        self.current_dialogue_id = "old_road_trace"
+        self.dialogue_lines = [
+            line.replace("{support_system_name}", self.get_support_system_display_name())
+            for line in get_dialogue_lines("old_road_trace")
+        ]
+        self.dialogue_speaker = self.get_support_system_display_name()
+        self.dialogue_index = 0
+        self.talking_npc = None
+        self._mark_story_event_seen("old_road_trace")
+        self.state = STATE_DIALOGUE
+
+    def _try_investigate_distant_center(self) -> bool:
+        if not self.world or not self.player:
+            return False
+        if self.current_zone_id != "distant_depths":
+            return False
+        if not self._get_story_flag("distant_depths_resonance_seen", False):
+            return False
+
+        center_rect = pygame.Rect(12 * TILE, 7 * TILE, TILE, TILE)
+        if not self.player.rect.colliderect(center_rect.inflate(TILE, TILE)):
+            return False
+
+        if self._get_story_flag("distant_center_investigated", False):
+            self._add_message(
+                "中心の反応は、まだ届かない場所へ細く続いている。遠くから、わずかな応答が返ってくる。",
+                C_GRAY,
+            )
+        else:
+            self._start_distant_center_event()
+        return True
+
+    def _start_distant_center_event(self) -> None:
+        self._set_story_flag("distant_center_investigated", True)
+        self._set_story_flag("distant_center_resonance_seen", True)
+        self._set_story_flag("distant_response_hint_received", True)
+        self.current_dialogue_id = "distant_center_investigation"
+        self.dialogue_lines = [
+            line.replace("{support_system_name}", self.get_support_system_display_name())
+            for line in get_dialogue_lines("distant_center_investigation")
+        ]
+        self.dialogue_speaker = self.get_support_system_display_name()
+        self.dialogue_index = 0
+        self.talking_npc = None
+        self._mark_story_event_seen("distant_center_investigation")
+        self.state = STATE_DIALOGUE
+
+    def _try_investigate_distant_path_trace(self) -> bool:
+        if not self.world or not self.player:
+            return False
+        if self.current_zone_id != "distant_path":
+            return False
+        if not self._get_story_flag("distant_path_resonance_seen", False):
+            return False
+
+        trace_rect = pygame.Rect(18 * TILE, 6 * TILE, TILE, TILE)
+        if not self.player.rect.colliderect(trace_rect.inflate(TILE, TILE)):
+            return False
+
+        if self._get_story_flag("distant_path_trace_investigated", False):
+            self._add_message(
+                "細い反応は、途切れた街道のさらに奥へ続いている。まだ見えない場所が、わずかに応えている。",
+                C_GRAY,
+            )
+        else:
+            self._start_distant_path_trace_event()
+        return True
+
+    def _start_distant_path_trace_event(self) -> None:
+        self._set_story_flag("distant_path_trace_investigated", True)
+        self._set_story_flag("distant_path_far_response_seen", True)
+        self._set_story_flag("distant_depths_hint_received", True)
+        self.current_dialogue_id = "distant_path_trace"
+        self.dialogue_lines = [
+            line.replace("{support_system_name}", self.get_support_system_display_name())
+            for line in get_dialogue_lines("distant_path_trace")
+        ]
+        self.dialogue_speaker = self.get_support_system_display_name()
+        self.dialogue_index = 0
+        self.talking_npc = None
+        self._mark_story_event_seen("distant_path_trace")
         self.state = STATE_DIALOGUE
 
     def _try_investigate_boundary_resonance(self) -> bool:
@@ -5342,6 +5750,14 @@ class Game:
             self._set_story_flag("boundary_silent_balance_reported_to_elder", True)
             self._set_story_flag("shrine_boundary_resonance_hint_received", True)
             self._set_story_flag("next_region_anomaly_hint_received", True)
+        if finished_dialogue_id == "elder_after_distant_center_report":
+            self._set_story_flag("distant_center_reported_to_elder", True)
+            self._set_story_flag("distant_old_road_hint_received", True)
+            self._set_story_flag("distant_route_return_hint_received", True)
+        if finished_dialogue_id == "elder_after_old_road_center_report":
+            self._set_story_flag("old_road_center_reported_to_elder", True)
+            self._set_story_flag("old_road_sealed_path_hint_received", True)
+            self._set_story_flag("old_road_return_hint_received", True)
         if finished_dialogue_id == "sage_boot" and self.player and hasattr(
             self.player, "set_story_flag"
         ):

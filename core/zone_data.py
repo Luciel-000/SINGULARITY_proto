@@ -124,6 +124,7 @@ ZONE_DATA: dict[str, dict] = {
         "map_type"   : "north_road",
         "exits"      : [
             {"to": "town", "hint": "村へ戻る"},
+            {"to": "distant_path", "hint": "彼方への道へ"},
         ],
         "floor_color": ( 34,  36,  48),
         "wall_color" : ( 18,  20,  30),
@@ -293,6 +294,65 @@ ZONE_DATA: dict[str, dict] = {
         ],
         "floor_color": ( 66,  68,  68),
         "wall_color" : ( 24,  25,  28),
+    },
+
+    "distant_path": {
+        "name"       : "彼方への道",
+        "has_enemies": False,
+        "map_type"   : "distant_path",
+        "exits"      : [
+            {"to": "north_road", "hint": "北の道へ戻る"},
+            {"to": "distant_depths", "hint": "彼方の深部へ"},
+            {"to": "old_road", "hint": "忘れられた街道へ"},
+        ],
+        "floor_color": ( 50,  54,  50),
+        "wall_color" : ( 24,  26,  28),
+    },
+
+    "distant_depths": {
+        "name"       : "彼方の深部",
+        "has_enemies": False,
+        "map_type"   : "distant_depths",
+        "exits"      : [
+            {"to": "distant_path", "hint": "彼方への道へ戻る"},
+        ],
+        "floor_color": ( 54,  56,  52),
+        "wall_color" : ( 25,  26,  28),
+    },
+
+    "old_road": {
+        "name"       : "忘れられた街道",
+        "has_enemies": False,
+        "map_type"   : "old_road",
+        "exits"      : [
+            {"to": "distant_path", "hint": "彼方への道へ戻る"},
+            {"to": "old_road_depths", "hint": "街道の深部へ"},
+            {"to": "sealed_path", "hint": "閉ざされた小径へ"},
+        ],
+        "floor_color": ( 56,  58,  52),
+        "wall_color" : ( 25,  27,  27),
+    },
+
+    "old_road_depths": {
+        "name"       : "街道の深部",
+        "has_enemies": False,
+        "map_type"   : "old_road_depths",
+        "exits"      : [
+            {"to": "old_road", "hint": "忘れられた街道へ戻る"},
+        ],
+        "floor_color": ( 58,  59,  53),
+        "wall_color" : ( 25,  26,  27),
+    },
+
+    "sealed_path": {
+        "name"       : "閉ざされた小径",
+        "has_enemies": False,
+        "map_type"   : "sealed_path",
+        "exits"      : [
+            {"to": "old_road", "hint": "忘れられた街道へ戻る"},
+        ],
+        "floor_color": ( 52,  56,  52),
+        "wall_color" : ( 24,  27,  27),
     },
 
     # ──────────────────────────────────────────────────
