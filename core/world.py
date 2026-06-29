@@ -224,6 +224,10 @@ class World:
             self._generate_pale_path()
         elif self.map_type == "pale_depths":
             self._generate_pale_depths()
+        elif self.map_type == "boundary_path":
+            self._generate_boundary_path()
+        elif self.map_type == "boundary_depths":
+            self._generate_boundary_depths()
         else:
             self._generate_town()
 
@@ -464,6 +468,7 @@ class World:
         altar_col = room_col + room_w // 2
         altar_row = room_row + 1
         self._tiles[altar_row][altar_col] = TILE_ALTAR
+        self._tiles[room_row][altar_col] = TILE_EXIT
 
         exit_col = room_col + room_w // 2
         exit_row = room_row + room_h - 1
@@ -868,6 +873,91 @@ class World:
 
         for row, col in ((5, 7), (6, 16), (9, 10), (11, 15)):
             self._tiles[row][col] = TILE_PALE
+
+        exit_row = room_row + room_h - 1
+        self._tiles[exit_row][center_col] = TILE_EXIT
+        self.player_spawn = (center_col * TILE + 4, (exit_row - 1) * TILE + 4)
+
+    def _generate_boundary_path(self):
+        """境界の回廊の固定マップを生成する。"""
+        self._tiles = [[TILE_WALL] * MAP_COLS for _ in range(MAP_ROWS)]
+
+        path_col = MAP_COLS // 2 - 3
+        path_row = 1
+        path_w = 7
+        path_h = MAP_ROWS - 2
+        path_room = Room(path_col, path_row, path_w, path_h)
+        self._carve_room(path_room)
+        self.rooms.append(path_room)
+
+        center_col = path_col + path_w // 2
+        for row in range(path_row + 1, path_row + path_h - 1):
+            if row % 2 == 0:
+                self._tiles[row][center_col] = TILE_PALE
+            if row % 4 == 1:
+                self._tiles[row][path_col + 1] = TILE_WATER
+            if row % 4 == 2:
+                self._tiles[row][path_col + path_w - 2] = TILE_EMBER
+            if row % 4 == 3:
+                self._tiles[row][path_col + 2] = TILE_WIND
+            if row % 4 == 0:
+                self._tiles[row][path_col + path_w - 3] = TILE_STONEFIELD
+
+        for col, row in (
+            (path_col + 1, path_row + 3),
+            (path_col + path_w - 2, path_row + 5),
+            (path_col + 2, path_row + 8),
+            (path_col + path_w - 3, path_row + 10),
+        ):
+            self._tiles[row][col] = TILE_WALL
+
+        self._tiles[path_row + 2][center_col] = TILE_WIND
+        self._tiles[path_row + 4][center_col] = TILE_WATER
+        self._tiles[path_row + 6][center_col] = TILE_EMBER
+        self._tiles[path_row + 8][center_col] = TILE_STONEFIELD
+        self._tiles[path_row + 10][center_col] = TILE_PALE
+
+        self._tiles[path_row][center_col] = TILE_EXIT
+        exit_row = path_row + path_h - 1
+        self._tiles[exit_row][center_col] = TILE_EXIT
+        self.player_spawn = (center_col * TILE + 4, (exit_row - 1) * TILE + 4)
+
+    def _generate_boundary_depths(self):
+        """境界の深部の固定マップを生成する。"""
+        self._tiles = [[TILE_WALL] * MAP_COLS for _ in range(MAP_ROWS)]
+
+        room_col = 5
+        room_row = 2
+        room_w = 15
+        room_h = 12
+        center_col = room_col + room_w // 2
+        center_row = room_row + room_h // 2
+
+        for row in range(room_row, room_row + room_h):
+            for col in range(room_col, room_col + room_w):
+                dx = col - center_col
+                dy = row - center_row
+                if dx * dx * 4 + dy * dy * 6 <= 170:
+                    self._tiles[row][col] = TILE_FLOOR
+
+        self.rooms.append(Room(room_col, room_row, room_w, room_h))
+
+        for row in range(room_row + 2, room_row + room_h - 2):
+            self._tiles[row][center_col] = TILE_PALE
+        for col in range(room_col + 3, room_col + room_w - 3):
+            if col % 2 == 0:
+                self._tiles[center_row][col] = TILE_PALE
+
+        for row, col, tile in (
+            (center_row - 4, center_col, TILE_WIND),
+            (center_row, center_col + 5, TILE_WATER),
+            (center_row + 4, center_col, TILE_EMBER),
+            (center_row, center_col - 5, TILE_STONEFIELD),
+            (center_row - 2, center_col - 3, TILE_PALE),
+            (center_row + 2, center_col + 3, TILE_PALE),
+        ):
+            if 0 <= row < MAP_ROWS and 0 <= col < MAP_COLS:
+                self._tiles[row][col] = tile
 
         exit_row = room_row + room_h - 1
         self._tiles[exit_row][center_col] = TILE_EXIT

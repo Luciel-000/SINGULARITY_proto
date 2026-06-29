@@ -135,6 +135,7 @@ ZONE_DATA: dict[str, dict] = {
         "map_type"   : "shrine_inner",
         "exits"      : [
             {"to": "north_road", "hint": "北の道へ戻る"},
+            {"to": "boundary_path", "hint": "境界の回廊へ"},
         ],
         "floor_color": ( 32,  31,  42),
         "wall_color" : ( 16,  15,  24),
@@ -270,6 +271,28 @@ ZONE_DATA: dict[str, dict] = {
         ],
         "floor_color": ( 78,  78,  76),
         "wall_color" : ( 32,  32,  36),
+    },
+
+    "boundary_path": {
+        "name"       : "境界の回廊",
+        "has_enemies": False,
+        "map_type"   : "boundary_path",
+        "exits"      : [
+            {"to": "shrine_inner", "hint": "古い祠へ戻る"},
+        ],
+        "floor_color": ( 70,  72,  70),
+        "wall_color" : ( 26,  27,  30),
+    },
+
+    "boundary_depths": {
+        "name"       : "境界の深部",
+        "has_enemies": False,
+        "map_type"   : "boundary_depths",
+        "exits"      : [
+            {"to": "boundary_path", "hint": "境界の回廊へ戻る"},
+        ],
+        "floor_color": ( 66,  68,  68),
+        "wall_color" : ( 24,  25,  28),
     },
 
     # ──────────────────────────────────────────────────

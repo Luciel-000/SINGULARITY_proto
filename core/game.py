@@ -452,6 +452,14 @@ class Game:
                     return
                 if self._try_investigate_pale_light():
                     return
+                if self._try_investigate_boundary_dual_trace():
+                    return
+                if self._try_investigate_boundary_center():
+                    return
+                if self._try_investigate_boundary_resonance():
+                    return
+                if self._try_investigate_distant_resonance_trace():
+                    return
                 if self._try_collect_wind_fragment():
                     return
                 if self._try_progress_sylph_trial():
@@ -487,6 +495,8 @@ class Game:
                 if self._try_investigate_water_source():
                     return
                 if self._try_investigate_water_mirror():
+                    return
+                if self._try_investigate_shrine_new_anomaly():
                     return
                 if self._try_investigate_shrine_unknown_resonance():
                     return
@@ -927,6 +937,14 @@ class Game:
             "pale_depths_entered", False
         ):
             self._start_pale_depths_arrival_event()
+        if next_zone_id == "boundary_path" and not self._get_story_flag(
+            "boundary_path_entered", False
+        ):
+            self._start_boundary_path_arrival_event()
+        if next_zone_id == "boundary_depths" and not self._get_story_flag(
+            "boundary_depths_entered", False
+        ):
+            self._start_boundary_depths_arrival_event()
 
     def _handle_exit_transition(self, exit_rect: pygame.Rect) -> None:
         if self.current_zone_id == "town":
@@ -939,6 +957,21 @@ class Game:
                 return
 
             self._transition_zone("field")
+            return
+
+        if self.current_zone_id == "shrine_inner":
+            if self._is_shrine_inner_boundary_exit(exit_rect):
+                if self._get_story_flag("shrine_unknown_resonance_stabilized", False):
+                    self._transition_zone("boundary_path")
+                else:
+                    self._add_message(
+                        "祭壇の中心は静かに揺れている。まだ、この先へ進むための均衡が整っていないようだ。",
+                        C_GRAY,
+                    )
+                    self.player.rect.top = exit_rect.bottom + 2
+                return
+
+            self._transition_zone("north_road")
             return
 
         if self.current_zone_id == "ember_path":
@@ -986,12 +1019,30 @@ class Game:
             self._transition_zone("field")
             return
 
+        if self.current_zone_id == "boundary_path":
+            if self._is_boundary_path_deeper_exit(exit_rect):
+                if self._get_story_flag("boundary_center_hint_received", False):
+                    self._transition_zone("boundary_depths")
+                else:
+                    self._add_message(
+                        "回廊の奥は、まだ静かに閉ざされている。中心へ進むための反応が、十分に整っていないようだ。",
+                        C_GRAY,
+                    )
+                    self.player.rect.top = exit_rect.bottom + 2
+                return
+
+            self._transition_zone("shrine_inner")
+            return
+
         exits = get_zone_exits(self.current_zone_id)
         if exits:
             self._transition_zone(exits[0]["to"])
 
     def _is_town_north_exit(self, exit_rect: pygame.Rect) -> bool:
         return exit_rect.centery <= TILE * 4
+
+    def _is_shrine_inner_boundary_exit(self, exit_rect: pygame.Rect) -> bool:
+        return exit_rect.centery <= TILE * 3
 
     def _is_ember_path_deeper_exit(self, exit_rect: pygame.Rect) -> bool:
         return exit_rect.centery <= TILE * 4
@@ -1000,6 +1051,9 @@ class Game:
         return exit_rect.centery <= TILE * 4
 
     def _is_pale_path_deeper_exit(self, exit_rect: pygame.Rect) -> bool:
+        return exit_rect.centery <= TILE * 4
+
+    def _is_boundary_path_deeper_exit(self, exit_rect: pygame.Rect) -> bool:
         return exit_rect.centery <= TILE * 4
 
     # ──────────────────────────────────────────────────────
@@ -1044,6 +1098,32 @@ class Game:
         return 0
 
     def get_current_objective_text(self) -> str:
+        if self._get_story_flag("next_region_route_hint_received", False):
+            return "目的：北の道の先に続く新たな経路を探す"
+        if self._get_story_flag("next_region_path_hint_received", False):
+            return "目的：遠くから届く反応の手がかりを探す"
+        if self._get_story_flag("next_region_anomaly_hint_received", False):
+            return "目的：古い祠に現れた新たな反応を調べる"
+        if self._get_story_flag("boundary_elder_final_report_hint_received", False):
+            return "目的：境界の深部で生まれた静かな均衡を老人へ報告する"
+        if self._get_story_flag("boundary_integration_ready", False):
+            return "目的：境界の深部で静まった反応を見守る"
+        if self._get_story_flag("boundary_center_final_return_hint_received", False):
+            return "目的：境界の深部に戻り、二つの反応が中心へ戻る様子を見届ける"
+        if self._get_story_flag("boundary_dual_traces_complete", False):
+            return "目的：境界の深部にある二つの反応について老人へ報告する"
+        if self._get_story_flag("boundary_dual_trace_hint_received", False):
+            return "目的：境界の深部に現れた二つの反応を調べる"
+        if self._get_story_flag("boundary_center_return_hint_received", False):
+            return "目的：境界の深部に戻り、色のない揺らぎの変化を見届ける"
+        if self._get_story_flag("boundary_center_report_hint_received", False):
+            return "目的：境界の深部で起きた均衡の変化を老人へ報告する"
+        if self._get_story_flag("boundary_depths_entered", False):
+            return "目的：境界の深部にある色のない揺らぎを調べる"
+        if self._get_story_flag("boundary_center_hint_received", False):
+            return "目的：境界の回廊の奥にある反応の中心へ進む"
+        if self._get_story_flag("boundary_path_entered", False):
+            return "目的：境界の回廊にある名のない反応を調べる"
         if self._get_story_flag("shrine_unknown_resonance_investigated", False):
             return "目的：古い祠に生まれた静かな均衡を見守る"
         if self._get_story_flag("shrine_center_return_hint_received", False):
@@ -1273,6 +1353,24 @@ class Game:
         base_dialogue_id = npc.get_current_dialogue_id()
         if npc.dialogue_id != "elder_first" or not self.player:
             return base_dialogue_id
+
+        if self._get_story_flag("boundary_silent_balance_reported_to_elder", False):
+            return "elder_after_boundary_silent_balance_hint"
+
+        if self._get_story_flag("boundary_elder_final_report_hint_received", False):
+            return "elder_after_boundary_silent_balance_report"
+
+        if self._get_story_flag("boundary_dual_traces_reported_to_elder", False):
+            return "elder_after_boundary_dual_traces_hint"
+
+        if self._get_story_flag("boundary_dual_traces_complete", False):
+            return "elder_after_boundary_dual_traces_report"
+
+        if self._get_story_flag("boundary_center_reported_to_elder", False):
+            return "elder_after_boundary_center_hint"
+
+        if self._get_story_flag("boundary_center_report_hint_received", False):
+            return "elder_after_boundary_center_report"
 
         if self._get_story_flag("pale_choice_reported_to_elder", False):
             return "elder_after_pale_choice_hint"
@@ -1566,6 +1664,42 @@ class Game:
             self._update_shrine_anomaly_progress()
             return
 
+    def _try_investigate_distant_resonance_trace(self) -> bool:
+        if not self.world or not self.player:
+            return False
+        if self.current_zone_id != "north_road":
+            return False
+        if not self._get_story_flag("next_region_path_hint_received", False):
+            return False
+
+        trace_rect = pygame.Rect(17 * TILE, 7 * TILE, TILE, TILE)
+        if not self.player.rect.colliderect(trace_rect.inflate(TILE, TILE)):
+            return False
+
+        if self._get_story_flag("distant_resonance_trace_found", False):
+            self._add_message(
+                "細い反応の痕跡は、北の道のさらに先へ続いている。まだ見えない場所が、静かに応えているようだ。",
+                C_GRAY,
+            )
+        else:
+            self._start_distant_resonance_trace_event()
+        return True
+
+    def _start_distant_resonance_trace_event(self) -> None:
+        self._set_story_flag("distant_resonance_trace_found", True)
+        self._set_story_flag("distant_resonance_direction_seen", True)
+        self._set_story_flag("next_region_route_hint_received", True)
+        self.current_dialogue_id = "distant_resonance_trace"
+        self.dialogue_lines = [
+            line.replace("{support_system_name}", self.get_support_system_display_name())
+            for line in get_dialogue_lines("distant_resonance_trace")
+        ]
+        self.dialogue_speaker = self.get_support_system_display_name()
+        self.dialogue_index = 0
+        self.talking_npc = None
+        self._mark_story_event_seen("distant_resonance_trace")
+        self.state = STATE_DIALOGUE
+
     def _update_shrine_anomaly_progress(self) -> None:
         if not self.world or not self.player:
             return
@@ -1806,6 +1940,236 @@ class Game:
         self.dialogue_index = 0
         self.talking_npc = None
         self._mark_story_event_seen("pale_depths_arrival")
+        self.state = STATE_DIALOGUE
+
+    def _start_boundary_path_arrival_event(self) -> None:
+        self._set_story_flag("boundary_path_entered", True)
+        self._set_story_flag("boundary_path_resonance_seen", True)
+        self.current_dialogue_id = "boundary_path_arrival"
+        self.dialogue_lines = [
+            line.replace("{support_system_name}", self.get_support_system_display_name())
+            for line in get_dialogue_lines("boundary_path_arrival")
+        ]
+        self.dialogue_speaker = self.get_support_system_display_name()
+        self.dialogue_index = 0
+        self.talking_npc = None
+        self._mark_story_event_seen("boundary_path_arrival")
+        self.state = STATE_DIALOGUE
+
+    def _start_boundary_depths_arrival_event(self) -> None:
+        self._set_story_flag("boundary_depths_entered", True)
+        self._set_story_flag("boundary_depths_center_seen", True)
+        self.current_dialogue_id = "boundary_depths_arrival"
+        self.dialogue_lines = [
+            line.replace("{support_system_name}", self.get_support_system_display_name())
+            for line in get_dialogue_lines("boundary_depths_arrival")
+        ]
+        self.dialogue_speaker = self.get_support_system_display_name()
+        self.dialogue_index = 0
+        self.talking_npc = None
+        self._mark_story_event_seen("boundary_depths_arrival")
+        self.state = STATE_DIALOGUE
+
+    def _try_investigate_boundary_resonance(self) -> bool:
+        if not self.world or not self.player:
+            return False
+        if self.current_zone_id != "boundary_path":
+            return False
+        if not self._get_story_flag("boundary_path_resonance_seen", False):
+            return False
+
+        resonance_rect = pygame.Rect(12 * TILE, 7 * TILE, TILE, TILE)
+        if not self.player.rect.colliderect(resonance_rect.inflate(TILE, TILE)):
+            return False
+
+        if self._get_story_flag("boundary_resonance_investigated", False):
+            self._add_message(
+                "四つの反応と色のない揺らぎは、回廊の奥へ続いている。その先に、まだ見えない中心があるようだ。",
+                C_GRAY,
+            )
+        else:
+            self._start_boundary_resonance_event()
+        return True
+
+    def _try_investigate_boundary_center(self) -> bool:
+        if not self.world or not self.player:
+            return False
+        if self.current_zone_id != "boundary_depths":
+            return False
+        if not self._get_story_flag("boundary_depths_center_seen", False):
+            return False
+
+        center_rect = pygame.Rect(12 * TILE, 8 * TILE, TILE, TILE)
+        if not self.player.rect.colliderect(center_rect.inflate(TILE, TILE)):
+            return False
+
+        if self._get_story_flag("boundary_integration_ready", False):
+            if self._get_story_flag("boundary_silent_balance_observed", False):
+                self._add_message(
+                    "異なる反応は、互いを消そうとしていない。色のない揺らぎの中心で、静かな均衡を保っている。",
+                    C_GRAY,
+                )
+            else:
+                self._start_boundary_silent_balance_event()
+            return True
+
+        if self._get_story_flag("boundary_center_final_return_hint_received", False):
+            if self._get_story_flag("boundary_integration_event_seen", False):
+                self._add_message(
+                    "二つの余韻は、互いを消さずに中心へ戻っている。色のない揺らぎは、まだ静かに何かを待っている。",
+                    C_GRAY,
+                )
+            else:
+                self._start_boundary_integration_event()
+            return True
+
+        if self._get_story_flag("boundary_center_return_hint_received", False):
+            if self._get_story_flag("boundary_center_change_seen", False):
+                self._add_message(
+                    "色のない揺らぎから生まれた二つの余韻は、まだ同じ中心を離れずに残っている。",
+                    C_GRAY,
+                )
+            else:
+                self._start_boundary_center_change_event()
+            return True
+
+        if self._get_story_flag("boundary_center_investigated", False):
+            self._add_message(
+                "四つの反応は、色のない揺らぎを閉じ込めてはいない。崩れないように、静かに支え続けている。",
+                C_GRAY,
+            )
+        else:
+            self._start_boundary_center_investigation_event()
+        return True
+
+    def _start_boundary_center_investigation_event(self) -> None:
+        self._set_story_flag("boundary_center_investigated", True)
+        self._set_story_flag("boundary_center_balance_seen", True)
+        self._set_story_flag("boundary_center_report_hint_received", True)
+        self.current_dialogue_id = "boundary_center_investigation"
+        self.dialogue_lines = [
+            line.replace("{support_system_name}", self.get_support_system_display_name())
+            for line in get_dialogue_lines("boundary_center_investigation")
+        ]
+        self.dialogue_speaker = self.get_support_system_display_name()
+        self.dialogue_index = 0
+        self.talking_npc = None
+        self._mark_story_event_seen("boundary_center_investigation")
+        self.state = STATE_DIALOGUE
+
+    def _start_boundary_center_change_event(self) -> None:
+        self._set_story_flag("boundary_center_change_seen", True)
+        self._set_story_flag("boundary_dual_resonance_revealed", True)
+        self._set_story_flag("boundary_dual_trace_hint_received", True)
+        self.current_dialogue_id = "boundary_center_change"
+        self.dialogue_lines = [
+            line.replace("{support_system_name}", self.get_support_system_display_name())
+            for line in get_dialogue_lines("boundary_center_change")
+        ]
+        self.dialogue_speaker = self.get_support_system_display_name()
+        self.dialogue_index = 0
+        self.talking_npc = None
+        self._mark_story_event_seen("boundary_center_change")
+        self.state = STATE_DIALOGUE
+
+    def _start_boundary_integration_event(self) -> None:
+        self._set_story_flag("boundary_integration_event_seen", True)
+        self._set_story_flag("boundary_dual_traces_returned", True)
+        self._set_story_flag("boundary_integration_ready", True)
+        self.current_dialogue_id = "boundary_integration_event"
+        self.dialogue_lines = [
+            line.replace("{support_system_name}", self.get_support_system_display_name())
+            for line in get_dialogue_lines("boundary_integration_event")
+        ]
+        self.dialogue_speaker = self.get_support_system_display_name()
+        self.dialogue_index = 0
+        self.talking_npc = None
+        self._mark_story_event_seen("boundary_integration_event")
+        self.state = STATE_DIALOGUE
+
+    def _start_boundary_silent_balance_event(self) -> None:
+        self._set_story_flag("boundary_silent_balance_observed", True)
+        self._set_story_flag("boundary_center_stabilized", True)
+        self._set_story_flag("boundary_elder_final_report_hint_received", True)
+        self.current_dialogue_id = "boundary_silent_balance_observation"
+        self.dialogue_lines = [
+            line.replace("{support_system_name}", self.get_support_system_display_name())
+            for line in get_dialogue_lines("boundary_silent_balance_observation")
+        ]
+        self.dialogue_speaker = self.get_support_system_display_name()
+        self.dialogue_index = 0
+        self.talking_npc = None
+        self._mark_story_event_seen("boundary_silent_balance_observation")
+        self.state = STATE_DIALOGUE
+
+    def _try_investigate_boundary_dual_trace(self) -> bool:
+        if not self.world or not self.player:
+            return False
+        if self.current_zone_id != "boundary_depths":
+            return False
+        if not self._get_story_flag("boundary_dual_trace_hint_received", False):
+            return False
+
+        targets = (
+            (
+                "forward",
+                pygame.Rect(8 * TILE, 8 * TILE, TILE, TILE),
+                "boundary_forward_trace_investigated",
+                "細い余韻は、急かすことなく前方へ伸びている。",
+            ),
+            (
+                "stillness",
+                pygame.Rect(16 * TILE, 8 * TILE, TILE, TILE),
+                "boundary_stillness_trace_investigated",
+                "静かな余韻は、消えずに中心の近くへ残っている。",
+            ),
+        )
+        for trace_id, trace_rect, flag_name, repeat_message in targets:
+            if not self.player.rect.colliderect(trace_rect.inflate(TILE, TILE)):
+                continue
+            if self._get_story_flag(flag_name, False):
+                self._add_message(repeat_message, C_GRAY)
+            else:
+                self._start_boundary_dual_trace_event(trace_id, flag_name)
+            return True
+        return False
+
+    def _start_boundary_dual_trace_event(self, trace_id: str, flag_name: str) -> None:
+        self._set_story_flag(flag_name, True)
+        if (
+            self._get_story_flag("boundary_forward_trace_investigated", False)
+            and self._get_story_flag("boundary_stillness_trace_investigated", False)
+        ):
+            self._set_story_flag("boundary_dual_traces_complete", True)
+
+        dialogue_id = f"boundary_dual_trace_{trace_id}"
+        self.current_dialogue_id = dialogue_id
+        lines = list(get_dialogue_lines(dialogue_id))
+        if self._get_story_flag("boundary_dual_traces_complete", False):
+            lines.extend(get_dialogue_lines("boundary_dual_traces_complete"))
+        self.dialogue_lines = [
+            line.replace("{support_system_name}", self.get_support_system_display_name())
+            for line in lines
+        ]
+        self.dialogue_speaker = self.get_support_system_display_name()
+        self.dialogue_index = 0
+        self.talking_npc = None
+        self._mark_story_event_seen(dialogue_id)
+        self.state = STATE_DIALOGUE
+
+    def _start_boundary_resonance_event(self) -> None:
+        self._set_story_flag("boundary_resonance_investigated", True)
+        self._set_story_flag("boundary_resonance_converged", True)
+        self._set_story_flag("boundary_center_hint_received", True)
+        self.current_dialogue_id = "boundary_resonance_investigation"
+        self.dialogue_lines = [
+            line.replace("{support_system_name}", self.get_support_system_display_name())
+            for line in get_dialogue_lines("boundary_resonance_investigation")
+        ]
+        self.dialogue_speaker = self.get_support_system_display_name()
+        self.dialogue_index = 0
+        self.talking_npc = None
+        self._mark_story_event_seen("boundary_resonance_investigation")
         self.state = STATE_DIALOGUE
 
     def _try_investigate_pale_light_center(self) -> bool:
@@ -4640,6 +5004,42 @@ class Game:
 
         return False
 
+    def _try_investigate_shrine_new_anomaly(self) -> bool:
+        if not self.world or not self.player:
+            return False
+        if self.current_zone_id != "shrine_inner":
+            return False
+        if not self._get_story_flag("shrine_boundary_resonance_hint_received", False):
+            return False
+
+        for altar_rect in getattr(self.world, "altar_rects", []):
+            if self.player.rect.colliderect(altar_rect.inflate(TILE, TILE)):
+                if self._get_story_flag("shrine_new_anomaly_investigated", False):
+                    self._add_message(
+                        "祭壇の中心から伸びる細い反応は、遠いどこかへ静かに続いている。",
+                        C_GRAY,
+                    )
+                else:
+                    self._start_shrine_new_anomaly_event()
+                return True
+
+        return False
+
+    def _start_shrine_new_anomaly_event(self) -> None:
+        self._set_story_flag("shrine_new_anomaly_investigated", True)
+        self._set_story_flag("shrine_distant_resonance_seen", True)
+        self._set_story_flag("next_region_path_hint_received", True)
+        self.current_dialogue_id = "shrine_new_anomaly"
+        self.dialogue_lines = [
+            line.replace("{support_system_name}", self.get_support_system_display_name())
+            for line in get_dialogue_lines("shrine_new_anomaly")
+        ]
+        self.dialogue_speaker = self.get_support_system_display_name()
+        self.dialogue_index = 0
+        self.talking_npc = None
+        self._mark_story_event_seen("shrine_new_anomaly")
+        self.state = STATE_DIALOGUE
+
     def _start_shrine_unknown_resonance_event(self) -> None:
         self._set_story_flag("shrine_unknown_resonance_investigated", True)
         self._set_story_flag("shrine_center_light_shadow_seen", True)
@@ -4930,6 +5330,18 @@ class Game:
             self._set_story_flag("pale_choice_reported_to_elder", True)
             self._set_story_flag("shrine_unknown_resonance_hint_received", True)
             self._set_story_flag("shrine_center_return_hint_received", True)
+        if finished_dialogue_id == "elder_after_boundary_center_report":
+            self._set_story_flag("boundary_center_reported_to_elder", True)
+            self._set_story_flag("boundary_next_change_hint_received", True)
+            self._set_story_flag("boundary_center_return_hint_received", True)
+        if finished_dialogue_id == "elder_after_boundary_dual_traces_report":
+            self._set_story_flag("boundary_dual_traces_reported_to_elder", True)
+            self._set_story_flag("boundary_integration_hint_received", True)
+            self._set_story_flag("boundary_center_final_return_hint_received", True)
+        if finished_dialogue_id == "elder_after_boundary_silent_balance_report":
+            self._set_story_flag("boundary_silent_balance_reported_to_elder", True)
+            self._set_story_flag("shrine_boundary_resonance_hint_received", True)
+            self._set_story_flag("next_region_anomaly_hint_received", True)
         if finished_dialogue_id == "sage_boot" and self.player and hasattr(
             self.player, "set_story_flag"
         ):
