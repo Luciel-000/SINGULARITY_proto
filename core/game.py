@@ -460,7 +460,23 @@ class Game:
                     return
                 if self._try_investigate_distant_center():
                     return
+                if self._try_investigate_far_echo_trace():
+                    return
+                if self._try_investigate_far_boundary_center():
+                    return
+                if self._try_investigate_far_boundary_trace():
+                    return
+                if self._try_investigate_forgotten_boundary_center():
+                    return
+                if self._try_investigate_forgotten_boundary_trace():
+                    return
+                if self._try_investigate_lost_place_center():
+                    return
+                if self._try_investigate_lost_place_trace():
+                    return
                 if self._try_investigate_old_road_center():
+                    return
+                if self._try_investigate_sealed_path_center():
                     return
                 if self._try_investigate_sealed_path_trace():
                     return
@@ -975,6 +991,38 @@ class Game:
             "sealed_path_entered", False
         ):
             self._start_sealed_path_arrival_event()
+        if next_zone_id == "sealed_path_depths" and not self._get_story_flag(
+            "sealed_path_depths_entered", False
+        ):
+            self._start_sealed_path_depths_arrival_event()
+        if next_zone_id == "lost_place" and not self._get_story_flag(
+            "lost_place_entered", False
+        ):
+            self._start_lost_place_arrival_event()
+        if next_zone_id == "lost_place_depths" and not self._get_story_flag(
+            "lost_place_depths_entered", False
+        ):
+            self._start_lost_place_depths_arrival_event()
+        if next_zone_id == "forgotten_boundary" and not self._get_story_flag(
+            "forgotten_boundary_entered", False
+        ):
+            self._start_forgotten_boundary_arrival_event()
+        if next_zone_id == "forgotten_boundary_depths" and not self._get_story_flag(
+            "forgotten_boundary_depths_entered", False
+        ):
+            self._start_forgotten_boundary_depths_arrival_event()
+        if next_zone_id == "far_boundary" and not self._get_story_flag(
+            "far_boundary_entered", False
+        ):
+            self._start_far_boundary_arrival_event()
+        if next_zone_id == "far_boundary_depths" and not self._get_story_flag(
+            "far_boundary_depths_entered", False
+        ):
+            self._start_far_boundary_depths_arrival_event()
+        if next_zone_id == "far_echo" and not self._get_story_flag(
+            "far_echo_entered", False
+        ):
+            self._start_far_echo_arrival_event()
 
     def _handle_exit_transition(self, exit_rect: pygame.Rect) -> None:
         if self.current_zone_id == "town":
@@ -1136,7 +1184,127 @@ class Game:
             return
 
         if self.current_zone_id == "sealed_path":
+            if self._is_sealed_path_lost_place_exit(exit_rect):
+                if self._get_story_flag("sealed_path_return_hint_received", False):
+                    self._transition_zone("lost_place")
+                else:
+                    self._add_message(
+                        "崩れた石壁の先は、まだ静かに閉ざされている。失われた場所へ続く反応が、十分に定まっていないようだ。",
+                        C_GRAY,
+                    )
+                    self.player.rect.bottom = exit_rect.top - 2
+                return
+
+            if self._is_sealed_path_deeper_exit(exit_rect):
+                if self._get_story_flag("sealed_path_depths_hint_received", False):
+                    self._transition_zone("sealed_path_depths")
+                else:
+                    self._add_message(
+                        "小径の奥は、まだ静かに閉ざされている。遠方の反応へ進むための手がかりが足りないようだ。",
+                        C_GRAY,
+                    )
+                    self.player.rect.right = exit_rect.left - 2
+                return
+
             self._transition_zone("old_road")
+            return
+
+        if self.current_zone_id == "sealed_path_depths":
+            self._transition_zone("sealed_path")
+            return
+
+        if self.current_zone_id == "lost_place":
+            if self._is_lost_place_forgotten_boundary_exit(exit_rect):
+                if self._get_story_flag("lost_place_return_hint_received", False):
+                    self._transition_zone("forgotten_boundary")
+                else:
+                    self._add_message(
+                        "崩れた境目の先は、まだ静かに閉ざされている。忘れられた境域へ続く反応が、十分に定まっていないようだ。",
+                        C_GRAY,
+                    )
+                    self.player.rect.right = exit_rect.left - 2
+                return
+
+            if self._is_lost_place_deeper_exit(exit_rect):
+                if self._get_story_flag("lost_place_depths_hint_received", False):
+                    self._transition_zone("lost_place_depths")
+                else:
+                    self._add_message(
+                        "遺構の奥へ続く回廊は、まだ静かに閉ざされている。中心へ進むための反応が、十分に定まっていないようだ。",
+                        C_GRAY,
+                    )
+                    self.player.rect.top = exit_rect.bottom + 2
+                return
+
+            self._transition_zone("sealed_path")
+            return
+
+        if self.current_zone_id == "lost_place_depths":
+            self._transition_zone("lost_place")
+            return
+
+        if self.current_zone_id == "forgotten_boundary":
+            if self._is_forgotten_boundary_far_exit(exit_rect):
+                if self._get_story_flag("forgotten_boundary_return_hint_received", False):
+                    self._transition_zone("far_boundary")
+                else:
+                    self._add_message(
+                        "霞の先へ続く境目は、まだ静かに閉ざされている。彼方から届く反応が、道として定まっていないようだ。",
+                        C_GRAY,
+                    )
+                    self.player.rect.right = exit_rect.left - 2
+                return
+
+            if self._is_forgotten_boundary_deeper_exit(exit_rect):
+                if self._get_story_flag("forgotten_boundary_depths_hint_received", False):
+                    self._transition_zone("forgotten_boundary_depths")
+                else:
+                    self._add_message(
+                        "境域の奥へ続く道は、まだ静かに閉ざされている。中心へ進むための反応が、十分に定まっていないようだ。",
+                        C_GRAY,
+                    )
+                    self.player.rect.top = exit_rect.bottom + 2
+                return
+
+            self._transition_zone("lost_place")
+            return
+
+        if self.current_zone_id == "forgotten_boundary_depths":
+            self._transition_zone("forgotten_boundary")
+            return
+
+        if self.current_zone_id == "far_boundary":
+            if self._is_far_boundary_far_echo_exit(exit_rect):
+                if self._get_story_flag("far_boundary_return_hint_received", False):
+                    self._transition_zone("far_echo")
+                else:
+                    self._add_message(
+                        "霞の先に残る経路は、まだ静かに閉ざされている。彼方から届く反応が、道として十分に定まっていないようだ。",
+                        C_GRAY,
+                    )
+                    self.player.rect.top = exit_rect.bottom + 2
+                return
+
+            if self._is_far_boundary_deeper_exit(exit_rect):
+                if self._get_story_flag("far_boundary_depths_hint_received", False):
+                    self._transition_zone("far_boundary_depths")
+                else:
+                    self._add_message(
+                        "霞の奥へ続く道は、まだ静かに閉ざされている。中心へ進むための反応が、十分に定まっていないようだ。",
+                        C_GRAY,
+                    )
+                    self.player.rect.right = exit_rect.left - 2
+                return
+
+            self._transition_zone("forgotten_boundary")
+            return
+
+        if self.current_zone_id == "far_boundary_depths":
+            self._transition_zone("far_boundary")
+            return
+
+        if self.current_zone_id == "far_echo":
+            self._transition_zone("far_boundary")
             return
 
         exits = get_zone_exits(self.current_zone_id)
@@ -1175,6 +1343,30 @@ class Game:
 
     def _is_old_road_sealed_path_exit(self, exit_rect: pygame.Rect) -> bool:
         return exit_rect.centery <= TILE * 6
+
+    def _is_sealed_path_deeper_exit(self, exit_rect: pygame.Rect) -> bool:
+        return exit_rect.centerx >= TILE * 17
+
+    def _is_sealed_path_lost_place_exit(self, exit_rect: pygame.Rect) -> bool:
+        return exit_rect.centery <= TILE * 6
+
+    def _is_lost_place_deeper_exit(self, exit_rect: pygame.Rect) -> bool:
+        return exit_rect.centery <= TILE * 5
+
+    def _is_lost_place_forgotten_boundary_exit(self, exit_rect: pygame.Rect) -> bool:
+        return exit_rect.centerx >= TILE * 18
+
+    def _is_forgotten_boundary_deeper_exit(self, exit_rect: pygame.Rect) -> bool:
+        return exit_rect.centery <= TILE * 5
+
+    def _is_forgotten_boundary_far_exit(self, exit_rect: pygame.Rect) -> bool:
+        return exit_rect.centerx >= TILE * 18
+
+    def _is_far_boundary_deeper_exit(self, exit_rect: pygame.Rect) -> bool:
+        return exit_rect.centerx >= TILE * 20
+
+    def _is_far_boundary_far_echo_exit(self, exit_rect: pygame.Rect) -> bool:
+        return exit_rect.centery <= TILE * 7
 
     # ──────────────────────────────────────────────────────
     #  ★ 0.7 Step5-B: 会話処理
@@ -1218,6 +1410,46 @@ class Game:
         return 0
 
     def get_current_objective_text(self) -> str:
+        if self._get_story_flag("far_echo_depths_hint_received", False):
+            return "目的：彼方の残響のさらに奥にある反応を目指す"
+        if self._get_story_flag("far_echo_resonance_seen", False):
+            return "目的：彼方の残響に残る反応を調べる"
+        if self._get_story_flag("far_boundary_return_hint_received", False):
+            return "目的：彼方へ続く境目に戻り、彼方の残響へ続く経路を探す"
+        if self._get_story_flag("far_boundary_response_hint_received", False):
+            return "目的：彼方へ続く境目の奥で見た反応を老人へ報告する"
+        if self._get_story_flag("far_boundary_depths_resonance_seen", False):
+            return "目的：彼方へ続く境目の奥にある中心の反応を調べる"
+        if self._get_story_flag("far_boundary_depths_hint_received", False):
+            return "目的：彼方へ続く境目のさらに奥にある反応を目指す"
+        if self._get_story_flag("far_boundary_resonance_seen", False):
+            return "目的：彼方へ続く境目に残る反応を調べる"
+        if self._get_story_flag("forgotten_boundary_return_hint_received", False):
+            return "目的：忘れられた境域に戻り、彼方へ続く境目を探す"
+        if self._get_story_flag("forgotten_boundary_response_hint_received", False):
+            return "目的：忘れられた境域の奥で見た反応を老人へ報告する"
+        if self._get_story_flag("forgotten_boundary_depths_resonance_seen", False):
+            return "目的：忘れられた境域の奥にある中心の反応を調べる"
+        if self._get_story_flag("forgotten_boundary_depths_hint_received", False):
+            return "目的：忘れられた境域のさらに奥にある反応を目指す"
+        if self._get_story_flag("forgotten_boundary_resonance_seen", False):
+            return "目的：忘れられた境域に残る反応を調べる"
+        if self._get_story_flag("lost_place_return_hint_received", False):
+            return "目的：失われた場所に戻り、忘れられた境域へ続く経路を探す"
+        if self._get_story_flag("lost_place_response_hint_received", False):
+            return "目的：失われた場所の奥で見た反応を老人へ報告する"
+        if self._get_story_flag("lost_place_depths_resonance_seen", False):
+            return "目的：失われた場所の奥にある中心の反応を調べる"
+        if self._get_story_flag("lost_place_depths_hint_received", False):
+            return "目的：失われた場所のさらに奥にある反応を目指す"
+        if self._get_story_flag("lost_place_resonance_seen", False):
+            return "目的：失われた場所に残る反応を調べる"
+        if self._get_story_flag("sealed_path_return_hint_received", False):
+            return "目的：閉ざされた小径に戻り、失われた場所へ続く経路を探す"
+        if self._get_story_flag("sealed_path_response_hint_received", False):
+            return "目的：閉ざされた奥で見た反応を老人へ報告する"
+        if self._get_story_flag("sealed_path_depths_resonance_seen", False):
+            return "目的：閉ざされた奥にある中心の反応を調べる"
         if self._get_story_flag("sealed_path_depths_hint_received", False):
             return "目的：閉ざされた小径のさらに奥にある反応を目指す"
         if self._get_story_flag("sealed_path_resonance_seen", False):
@@ -1497,6 +1729,30 @@ class Game:
         base_dialogue_id = npc.get_current_dialogue_id()
         if npc.dialogue_id != "elder_first" or not self.player:
             return base_dialogue_id
+
+        if self._get_story_flag("far_boundary_center_reported_to_elder", False):
+            return "elder_after_far_boundary_center_hint"
+
+        if self._get_story_flag("far_boundary_response_hint_received", False):
+            return "elder_after_far_boundary_center_report"
+
+        if self._get_story_flag("forgotten_boundary_center_reported_to_elder", False):
+            return "elder_after_forgotten_boundary_center_hint"
+
+        if self._get_story_flag("forgotten_boundary_response_hint_received", False):
+            return "elder_after_forgotten_boundary_center_report"
+
+        if self._get_story_flag("lost_place_center_reported_to_elder", False):
+            return "elder_after_lost_place_center_hint"
+
+        if self._get_story_flag("lost_place_response_hint_received", False):
+            return "elder_after_lost_place_center_report"
+
+        if self._get_story_flag("sealed_path_center_reported_to_elder", False):
+            return "elder_after_sealed_path_center_hint"
+
+        if self._get_story_flag("sealed_path_response_hint_received", False):
+            return "elder_after_sealed_path_center_report"
 
         if self._get_story_flag("old_road_center_reported_to_elder", False):
             return "elder_after_old_road_center_hint"
@@ -2194,6 +2450,406 @@ class Game:
         self.dialogue_index = 0
         self.talking_npc = None
         self._mark_story_event_seen("sealed_path_arrival")
+        self.state = STATE_DIALOGUE
+
+    def _start_sealed_path_depths_arrival_event(self) -> None:
+        self._set_story_flag("sealed_path_depths_entered", True)
+        self._set_story_flag("sealed_path_depths_resonance_seen", True)
+        self.current_dialogue_id = "sealed_path_depths_arrival"
+        self.dialogue_lines = [
+            line.replace("{support_system_name}", self.get_support_system_display_name())
+            for line in get_dialogue_lines("sealed_path_depths_arrival")
+        ]
+        self.dialogue_speaker = self.get_support_system_display_name()
+        self.dialogue_index = 0
+        self.talking_npc = None
+        self._mark_story_event_seen("sealed_path_depths_arrival")
+        self.state = STATE_DIALOGUE
+
+    def _start_lost_place_arrival_event(self) -> None:
+        self._set_story_flag("lost_place_entered", True)
+        self._set_story_flag("lost_place_resonance_seen", True)
+        self.current_dialogue_id = "lost_place_arrival"
+        self.dialogue_lines = [
+            line.replace("{support_system_name}", self.get_support_system_display_name())
+            for line in get_dialogue_lines("lost_place_arrival")
+        ]
+        self.dialogue_speaker = self.get_support_system_display_name()
+        self.dialogue_index = 0
+        self.talking_npc = None
+        self._mark_story_event_seen("lost_place_arrival")
+        self.state = STATE_DIALOGUE
+
+    def _start_lost_place_depths_arrival_event(self) -> None:
+        self._set_story_flag("lost_place_depths_entered", True)
+        self._set_story_flag("lost_place_depths_resonance_seen", True)
+        self.current_dialogue_id = "lost_place_depths_arrival"
+        self.dialogue_lines = [
+            line.replace("{support_system_name}", self.get_support_system_display_name())
+            for line in get_dialogue_lines("lost_place_depths_arrival")
+        ]
+        self.dialogue_speaker = self.get_support_system_display_name()
+        self.dialogue_index = 0
+        self.talking_npc = None
+        self._mark_story_event_seen("lost_place_depths_arrival")
+        self.state = STATE_DIALOGUE
+
+    def _start_forgotten_boundary_arrival_event(self) -> None:
+        self._set_story_flag("forgotten_boundary_entered", True)
+        self._set_story_flag("forgotten_boundary_resonance_seen", True)
+        self.current_dialogue_id = "forgotten_boundary_arrival"
+        self.dialogue_lines = [
+            line.replace("{support_system_name}", self.get_support_system_display_name())
+            for line in get_dialogue_lines("forgotten_boundary_arrival")
+        ]
+        self.dialogue_speaker = self.get_support_system_display_name()
+        self.dialogue_index = 0
+        self.talking_npc = None
+        self._mark_story_event_seen("forgotten_boundary_arrival")
+        self.state = STATE_DIALOGUE
+
+    def _try_investigate_forgotten_boundary_trace(self) -> bool:
+        if not self.world or not self.player:
+            return False
+        if self.current_zone_id != "forgotten_boundary":
+            return False
+        if not self._get_story_flag("forgotten_boundary_resonance_seen", False):
+            return False
+
+        trace_rect = pygame.Rect(8 * TILE, 8 * TILE, TILE, TILE)
+        if not self.player.rect.colliderect(trace_rect.inflate(TILE, TILE)):
+            return False
+
+        if self._get_story_flag("forgotten_boundary_trace_investigated", False):
+            self._add_message(
+                "細い反応は、忘れられた境域のさらに奥へ続いている。途切れていた境目が、静かに先を示しているようだ。",
+                C_GRAY,
+            )
+        else:
+            self._start_forgotten_boundary_trace_event()
+        return True
+
+    def _start_forgotten_boundary_trace_event(self) -> None:
+        self._set_story_flag("forgotten_boundary_trace_investigated", True)
+        self._set_story_flag("forgotten_boundary_center_direction_seen", True)
+        self._set_story_flag("forgotten_boundary_depths_hint_received", True)
+        self.current_dialogue_id = "forgotten_boundary_trace"
+        self.dialogue_lines = [
+            line.replace("{support_system_name}", self.get_support_system_display_name())
+            for line in get_dialogue_lines("forgotten_boundary_trace")
+        ]
+        self.dialogue_speaker = self.get_support_system_display_name()
+        self.dialogue_index = 0
+        self.talking_npc = None
+        self._mark_story_event_seen("forgotten_boundary_trace")
+        self.state = STATE_DIALOGUE
+
+    def _start_forgotten_boundary_depths_arrival_event(self) -> None:
+        self._set_story_flag("forgotten_boundary_depths_entered", True)
+        self._set_story_flag("forgotten_boundary_depths_resonance_seen", True)
+        self.current_dialogue_id = "forgotten_boundary_depths_arrival"
+        self.dialogue_lines = [
+            line.replace("{support_system_name}", self.get_support_system_display_name())
+            for line in get_dialogue_lines("forgotten_boundary_depths_arrival")
+        ]
+        self.dialogue_speaker = self.get_support_system_display_name()
+        self.dialogue_index = 0
+        self.talking_npc = None
+        self._mark_story_event_seen("forgotten_boundary_depths_arrival")
+        self.state = STATE_DIALOGUE
+
+    def _try_investigate_forgotten_boundary_center(self) -> bool:
+        if not self.world or not self.player:
+            return False
+        if self.current_zone_id != "forgotten_boundary_depths":
+            return False
+        if not self._get_story_flag("forgotten_boundary_depths_resonance_seen", False):
+            return False
+
+        center_rect = pygame.Rect(12 * TILE, 8 * TILE, TILE, TILE)
+        if not self.player.rect.colliderect(center_rect.inflate(TILE, TILE)):
+            return False
+
+        if self._get_story_flag("forgotten_boundary_center_investigated", False):
+            self._add_message(
+                "中心の反応は、忘れられた境域のさらに先へ続いている。霞の向こうから、わずかな応答が返ってくる。",
+                C_GRAY,
+            )
+        else:
+            self._start_forgotten_boundary_center_event()
+        return True
+
+    def _start_forgotten_boundary_center_event(self) -> None:
+        self._set_story_flag("forgotten_boundary_center_investigated", True)
+        self._set_story_flag("forgotten_boundary_center_resonance_seen", True)
+        self._set_story_flag("forgotten_boundary_response_hint_received", True)
+        self.current_dialogue_id = "forgotten_boundary_center_investigation"
+        self.dialogue_lines = [
+            line.replace("{support_system_name}", self.get_support_system_display_name())
+            for line in get_dialogue_lines("forgotten_boundary_center_investigation")
+        ]
+        self.dialogue_speaker = self.get_support_system_display_name()
+        self.dialogue_index = 0
+        self.talking_npc = None
+        self._mark_story_event_seen("forgotten_boundary_center_investigation")
+        self.state = STATE_DIALOGUE
+
+    def _start_far_boundary_arrival_event(self) -> None:
+        self._set_story_flag("far_boundary_entered", True)
+        self._set_story_flag("far_boundary_resonance_seen", True)
+        self.current_dialogue_id = "far_boundary_arrival"
+        self.dialogue_lines = [
+            line.replace("{support_system_name}", self.get_support_system_display_name())
+            for line in get_dialogue_lines("far_boundary_arrival")
+        ]
+        self.dialogue_speaker = self.get_support_system_display_name()
+        self.dialogue_index = 0
+        self.talking_npc = None
+        self._mark_story_event_seen("far_boundary_arrival")
+        self.state = STATE_DIALOGUE
+
+    def _try_investigate_far_boundary_trace(self) -> bool:
+        if not self.world or not self.player:
+            return False
+        if self.current_zone_id != "far_boundary":
+            return False
+        if not self._get_story_flag("far_boundary_resonance_seen", False):
+            return False
+
+        trace_rect = pygame.Rect(13 * TILE, 8 * TILE, TILE, TILE)
+        if not self.player.rect.colliderect(trace_rect.inflate(TILE, TILE)):
+            return False
+
+        if self._get_story_flag("far_boundary_trace_investigated", False):
+            self._add_message(
+                "細い反応は、霞の向こうへ続いている。途切れていた境目が、静かに先を示しているようだ。",
+                C_GRAY,
+            )
+        else:
+            self._start_far_boundary_trace_event()
+        return True
+
+    def _start_far_boundary_trace_event(self) -> None:
+        self._set_story_flag("far_boundary_trace_investigated", True)
+        self._set_story_flag("far_boundary_far_response_seen", True)
+        self._set_story_flag("far_boundary_depths_hint_received", True)
+        self.current_dialogue_id = "far_boundary_trace"
+        self.dialogue_lines = [
+            line.replace("{support_system_name}", self.get_support_system_display_name())
+            for line in get_dialogue_lines("far_boundary_trace")
+        ]
+        self.dialogue_speaker = self.get_support_system_display_name()
+        self.dialogue_index = 0
+        self.talking_npc = None
+        self._mark_story_event_seen("far_boundary_trace")
+        self.state = STATE_DIALOGUE
+
+    def _start_far_boundary_depths_arrival_event(self) -> None:
+        self._set_story_flag("far_boundary_depths_entered", True)
+        self._set_story_flag("far_boundary_depths_resonance_seen", True)
+        self.current_dialogue_id = "far_boundary_depths_arrival"
+        self.dialogue_lines = [
+            line.replace("{support_system_name}", self.get_support_system_display_name())
+            for line in get_dialogue_lines("far_boundary_depths_arrival")
+        ]
+        self.dialogue_speaker = self.get_support_system_display_name()
+        self.dialogue_index = 0
+        self.talking_npc = None
+        self._mark_story_event_seen("far_boundary_depths_arrival")
+        self.state = STATE_DIALOGUE
+
+    def _try_investigate_far_boundary_center(self) -> bool:
+        if not self.world or not self.player:
+            return False
+        if self.current_zone_id != "far_boundary_depths":
+            return False
+        if not self._get_story_flag("far_boundary_depths_resonance_seen", False):
+            return False
+
+        center_rect = pygame.Rect(12 * TILE, 8 * TILE, TILE, TILE)
+        if not self.player.rect.colliderect(center_rect.inflate(TILE, TILE)):
+            return False
+
+        if self._get_story_flag("far_boundary_center_investigated", False):
+            self._add_message(
+                "中心の反応は、霞のさらに先へ続いている。見えない場所から、わずかな応答が返ってくる。",
+                C_GRAY,
+            )
+        else:
+            self._start_far_boundary_center_event()
+        return True
+
+    def _start_far_boundary_center_event(self) -> None:
+        self._set_story_flag("far_boundary_center_investigated", True)
+        self._set_story_flag("far_boundary_center_resonance_seen", True)
+        self._set_story_flag("far_boundary_response_hint_received", True)
+        self.current_dialogue_id = "far_boundary_center_investigation"
+        self.dialogue_lines = [
+            line.replace("{support_system_name}", self.get_support_system_display_name())
+            for line in get_dialogue_lines("far_boundary_center_investigation")
+        ]
+        self.dialogue_speaker = self.get_support_system_display_name()
+        self.dialogue_index = 0
+        self.talking_npc = None
+        self._mark_story_event_seen("far_boundary_center_investigation")
+        self.state = STATE_DIALOGUE
+
+    def _start_far_echo_arrival_event(self) -> None:
+        self._set_story_flag("far_echo_entered", True)
+        self._set_story_flag("far_echo_resonance_seen", True)
+        self.current_dialogue_id = "far_echo_arrival"
+        self.dialogue_lines = [
+            line.replace("{support_system_name}", self.get_support_system_display_name())
+            for line in get_dialogue_lines("far_echo_arrival")
+        ]
+        self.dialogue_speaker = self.get_support_system_display_name()
+        self.dialogue_index = 0
+        self.talking_npc = None
+        self._mark_story_event_seen("far_echo_arrival")
+        self.state = STATE_DIALOGUE
+
+    def _try_investigate_far_echo_trace(self) -> bool:
+        if not self.world or not self.player:
+            return False
+        if self.current_zone_id != "far_echo":
+            return False
+        if not self._get_story_flag("far_echo_resonance_seen", False):
+            return False
+
+        trace_rect = pygame.Rect(12 * TILE, 8 * TILE, TILE, TILE)
+        if not self.player.rect.colliderect(trace_rect.inflate(TILE, TILE)):
+            return False
+
+        if self._get_story_flag("far_echo_trace_investigated", False):
+            self._add_message(
+                "細い反応は、彼方の残響のさらに奥へ続いている。途切れていた石畳が、静かに先を示しているようだ。",
+                C_GRAY,
+            )
+        else:
+            self._start_far_echo_trace_event()
+        return True
+
+    def _start_far_echo_trace_event(self) -> None:
+        self._set_story_flag("far_echo_trace_investigated", True)
+        self._set_story_flag("far_echo_center_direction_seen", True)
+        self._set_story_flag("far_echo_depths_hint_received", True)
+        self.current_dialogue_id = "far_echo_trace"
+        self.dialogue_lines = [
+            line.replace("{support_system_name}", self.get_support_system_display_name())
+            for line in get_dialogue_lines("far_echo_trace")
+        ]
+        self.dialogue_speaker = self.get_support_system_display_name()
+        self.dialogue_index = 0
+        self.talking_npc = None
+        self._mark_story_event_seen("far_echo_trace")
+        self.state = STATE_DIALOGUE
+
+    def _try_investigate_lost_place_center(self) -> bool:
+        if not self.world or not self.player:
+            return False
+        if self.current_zone_id != "lost_place_depths":
+            return False
+        if not self._get_story_flag("lost_place_depths_resonance_seen", False):
+            return False
+
+        center_rect = pygame.Rect(12 * TILE, 8 * TILE, TILE, TILE)
+        if not self.player.rect.colliderect(center_rect.inflate(TILE, TILE)):
+            return False
+
+        if self._get_story_flag("lost_place_center_investigated", False):
+            self._add_message(
+                "中心の反応は、失われた遺構のさらに先へ続いている。霞の向こうから、わずかな応答が返ってくる。",
+                C_GRAY,
+            )
+        else:
+            self._start_lost_place_center_event()
+        return True
+
+    def _start_lost_place_center_event(self) -> None:
+        self._set_story_flag("lost_place_center_investigated", True)
+        self._set_story_flag("lost_place_center_resonance_seen", True)
+        self._set_story_flag("lost_place_response_hint_received", True)
+        self.current_dialogue_id = "lost_place_center_investigation"
+        self.dialogue_lines = [
+            line.replace("{support_system_name}", self.get_support_system_display_name())
+            for line in get_dialogue_lines("lost_place_center_investigation")
+        ]
+        self.dialogue_speaker = self.get_support_system_display_name()
+        self.dialogue_index = 0
+        self.talking_npc = None
+        self._mark_story_event_seen("lost_place_center_investigation")
+        self.state = STATE_DIALOGUE
+
+    def _try_investigate_lost_place_trace(self) -> bool:
+        if not self.world or not self.player:
+            return False
+        if self.current_zone_id != "lost_place":
+            return False
+        if not self._get_story_flag("lost_place_resonance_seen", False):
+            return False
+
+        trace_rect = pygame.Rect(7 * TILE, 8 * TILE, TILE, TILE)
+        if not self.player.rect.colliderect(trace_rect.inflate(TILE, TILE)):
+            return False
+
+        if self._get_story_flag("lost_place_trace_investigated", False):
+            self._add_message(
+                "細い反応は、失われた遺構のさらに奥へ続いている。眠っていた道が、静かに先を示しているようだ。",
+                C_GRAY,
+            )
+        else:
+            self._start_lost_place_trace_event()
+        return True
+
+    def _start_lost_place_trace_event(self) -> None:
+        self._set_story_flag("lost_place_trace_investigated", True)
+        self._set_story_flag("lost_place_center_direction_seen", True)
+        self._set_story_flag("lost_place_depths_hint_received", True)
+        self.current_dialogue_id = "lost_place_trace"
+        self.dialogue_lines = [
+            line.replace("{support_system_name}", self.get_support_system_display_name())
+            for line in get_dialogue_lines("lost_place_trace")
+        ]
+        self.dialogue_speaker = self.get_support_system_display_name()
+        self.dialogue_index = 0
+        self.talking_npc = None
+        self._mark_story_event_seen("lost_place_trace")
+        self.state = STATE_DIALOGUE
+
+    def _try_investigate_sealed_path_center(self) -> bool:
+        if not self.world or not self.player:
+            return False
+        if self.current_zone_id != "sealed_path_depths":
+            return False
+        if not self._get_story_flag("sealed_path_depths_resonance_seen", False):
+            return False
+
+        center_rect = pygame.Rect(12 * TILE, 7 * TILE, TILE, TILE)
+        if not self.player.rect.colliderect(center_rect.inflate(TILE, TILE)):
+            return False
+
+        if self._get_story_flag("sealed_path_center_investigated", False):
+            self._add_message(
+                "中心の反応は、閉ざされた奥のさらに先へ続いている。霞の向こうから、わずかな応答が返ってくる。",
+                C_GRAY,
+            )
+        else:
+            self._start_sealed_path_center_event()
+        return True
+
+    def _start_sealed_path_center_event(self) -> None:
+        self._set_story_flag("sealed_path_center_investigated", True)
+        self._set_story_flag("sealed_path_center_resonance_seen", True)
+        self._set_story_flag("sealed_path_response_hint_received", True)
+        self.current_dialogue_id = "sealed_path_center_investigation"
+        self.dialogue_lines = [
+            line.replace("{support_system_name}", self.get_support_system_display_name())
+            for line in get_dialogue_lines("sealed_path_center_investigation")
+        ]
+        self.dialogue_speaker = self.get_support_system_display_name()
+        self.dialogue_index = 0
+        self.talking_npc = None
+        self._mark_story_event_seen("sealed_path_center_investigation")
         self.state = STATE_DIALOGUE
 
     def _try_investigate_sealed_path_trace(self) -> bool:
@@ -5758,6 +6414,22 @@ class Game:
             self._set_story_flag("old_road_center_reported_to_elder", True)
             self._set_story_flag("old_road_sealed_path_hint_received", True)
             self._set_story_flag("old_road_return_hint_received", True)
+        if finished_dialogue_id == "elder_after_sealed_path_center_report":
+            self._set_story_flag("sealed_path_center_reported_to_elder", True)
+            self._set_story_flag("lost_place_hint_received", True)
+            self._set_story_flag("sealed_path_return_hint_received", True)
+        if finished_dialogue_id == "elder_after_lost_place_center_report":
+            self._set_story_flag("lost_place_center_reported_to_elder", True)
+            self._set_story_flag("forgotten_boundary_hint_received", True)
+            self._set_story_flag("lost_place_return_hint_received", True)
+        if finished_dialogue_id == "elder_after_forgotten_boundary_center_report":
+            self._set_story_flag("forgotten_boundary_center_reported_to_elder", True)
+            self._set_story_flag("far_boundary_hint_received", True)
+            self._set_story_flag("forgotten_boundary_return_hint_received", True)
+        if finished_dialogue_id == "elder_after_far_boundary_center_report":
+            self._set_story_flag("far_boundary_center_reported_to_elder", True)
+            self._set_story_flag("far_echo_hint_received", True)
+            self._set_story_flag("far_boundary_return_hint_received", True)
         if finished_dialogue_id == "sage_boot" and self.player and hasattr(
             self.player, "set_story_flag"
         ):

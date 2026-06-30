@@ -238,6 +238,22 @@ class World:
             self._generate_old_road_depths()
         elif self.map_type == "sealed_path":
             self._generate_sealed_path()
+        elif self.map_type == "sealed_path_depths":
+            self._generate_sealed_path_depths()
+        elif self.map_type == "lost_place":
+            self._generate_lost_place()
+        elif self.map_type == "lost_place_depths":
+            self._generate_lost_place_depths()
+        elif self.map_type == "forgotten_boundary":
+            self._generate_forgotten_boundary()
+        elif self.map_type == "forgotten_boundary_depths":
+            self._generate_forgotten_boundary_depths()
+        elif self.map_type == "far_boundary":
+            self._generate_far_boundary()
+        elif self.map_type == "far_boundary_depths":
+            self._generate_far_boundary_depths()
+        elif self.map_type == "far_echo":
+            self._generate_far_echo()
         else:
             self._generate_town()
 
@@ -1196,6 +1212,378 @@ class World:
 
         self._tiles[path_row][start_col] = TILE_EXIT
         self._tiles[path_row][end_col] = TILE_EXIT
+        self._tiles[path_row - 2][start_col + 15] = TILE_EXIT
+        self.player_spawn = ((start_col + 1) * TILE + 4, path_row * TILE + 4)
+
+    def _generate_sealed_path_depths(self):
+        """閉ざされた奥の固定マップを生成する。"""
+        self._tiles = [[TILE_WALL] * MAP_COLS for _ in range(MAP_ROWS)]
+
+        room_col = 5
+        room_row = 3
+        room_w = 15
+        room_h = 9
+        center_col = room_col + room_w // 2
+        center_row = room_row + room_h // 2
+
+        for row in range(room_row, room_row + room_h):
+            for col in range(room_col, room_col + room_w):
+                dx = col - center_col
+                dy = row - center_row
+                if dx * dx * 5 + dy * dy * 8 <= 150:
+                    self._tiles[row][col] = TILE_FLOOR
+
+        self.rooms.append(Room(room_col, room_row, room_w, room_h))
+
+        # 崩れた石壁、低い柱跡、半ば埋もれた石畳を既存タイルで表す。
+        for col, row in (
+            (room_col + 2, room_row + 2),
+            (room_col + room_w - 3, room_row + 2),
+            (room_col + 3, room_row + room_h - 3),
+            (room_col + room_w - 4, room_row + room_h - 3),
+        ):
+            if 0 <= row < MAP_ROWS and 0 <= col < MAP_COLS:
+                self._tiles[row][col] = TILE_WALL
+
+        for row, col, tile in (
+            (center_row - 3, center_col, TILE_WIND),
+            (center_row, center_col + 4, TILE_WATER),
+            (center_row + 3, center_col, TILE_EMBER),
+            (center_row, center_col - 4, TILE_STONEFIELD),
+            (center_row, center_col, TILE_PALE),
+            (center_row - 1, center_col + 1, TILE_PALE),
+            (center_row + 1, center_col - 1, TILE_PALE),
+        ):
+            if 0 <= row < MAP_ROWS and 0 <= col < MAP_COLS:
+                self._tiles[row][col] = tile
+
+        exit_col = center_col
+        exit_row = room_row + room_h - 1
+        self._tiles[exit_row][exit_col] = TILE_EXIT
+        self.player_spawn = (exit_col * TILE + 4, (exit_row - 1) * TILE + 4)
+
+    def _generate_lost_place(self):
+        """失われた場所の固定マップを生成する。"""
+        self._tiles = [[TILE_WALL] * MAP_COLS for _ in range(MAP_ROWS)]
+
+        room_col = 4
+        room_row = 3
+        room_w = 17
+        room_h = 10
+        center_col = room_col + room_w // 2
+        center_row = room_row + room_h // 2
+
+        for row in range(room_row, room_row + room_h):
+            for col in range(room_col, room_col + room_w):
+                dx = col - center_col
+                dy = row - center_row
+                if dx * dx * 4 + dy * dy * 7 <= 170:
+                    self._tiles[row][col] = TILE_FLOOR
+
+        self.rooms.append(Room(room_col, room_row, room_w, room_h))
+
+        for col, row in (
+            (room_col + 2, room_row + 2),
+            (room_col + room_w - 3, room_row + 2),
+            (room_col + 3, room_row + room_h - 3),
+            (room_col + room_w - 4, room_row + room_h - 3),
+            (center_col - 5, center_row),
+            (center_col + 5, center_row + 2),
+        ):
+            if 0 <= row < MAP_ROWS and 0 <= col < MAP_COLS:
+                self._tiles[row][col] = TILE_WALL
+
+        for row, col, tile in (
+            (center_row - 3, center_col - 2, TILE_WIND),
+            (center_row - 1, center_col + 4, TILE_WATER),
+            (center_row + 2, center_col + 2, TILE_EMBER),
+            (center_row + 2, center_col - 3, TILE_STONEFIELD),
+            (center_row, center_col, TILE_PALE),
+            (center_row - 1, center_col + 1, TILE_PALE),
+            (center_row + 1, center_col - 1, TILE_PALE),
+        ):
+            if 0 <= row < MAP_ROWS and 0 <= col < MAP_COLS:
+                self._tiles[row][col] = tile
+
+        exit_col = center_col
+        exit_row = room_row + room_h - 1
+        self._tiles[exit_row][exit_col] = TILE_EXIT
+        self._tiles[room_row][center_col] = TILE_EXIT
+        self._tiles[center_row][center_col + 6] = TILE_EXIT
+        self.player_spawn = (exit_col * TILE + 4, (exit_row - 1) * TILE + 4)
+
+    def _generate_lost_place_depths(self):
+        """失われた場所の奥の固定マップを生成する。"""
+        self._tiles = [[TILE_WALL] * MAP_COLS for _ in range(MAP_ROWS)]
+
+        room_col = 5
+        room_row = 3
+        room_w = 15
+        room_h = 10
+        center_col = room_col + room_w // 2
+        center_row = room_row + room_h // 2
+
+        for row in range(room_row, room_row + room_h):
+            for col in range(room_col, room_col + room_w):
+                dx = col - center_col
+                dy = row - center_row
+                if dx * dx * 5 + dy * dy * 6 <= 155:
+                    self._tiles[row][col] = TILE_FLOOR
+
+        self.rooms.append(Room(room_col, room_row, room_w, room_h))
+
+        for col, row in (
+            (room_col + 2, room_row + 2),
+            (room_col + room_w - 3, room_row + 2),
+            (center_col - 4, center_row + 2),
+            (center_col + 4, center_row + 2),
+            (center_col - 2, room_row + room_h - 3),
+            (center_col + 2, room_row + room_h - 3),
+        ):
+            if 0 <= row < MAP_ROWS and 0 <= col < MAP_COLS:
+                self._tiles[row][col] = TILE_WALL
+
+        for row, col, tile in (
+            (center_row - 3, center_col, TILE_WIND),
+            (center_row - 1, center_col + 4, TILE_WATER),
+            (center_row + 2, center_col + 2, TILE_EMBER),
+            (center_row + 2, center_col - 3, TILE_STONEFIELD),
+            (center_row, center_col, TILE_PALE),
+            (center_row - 1, center_col + 1, TILE_PALE),
+            (center_row + 1, center_col - 1, TILE_PALE),
+        ):
+            if 0 <= row < MAP_ROWS and 0 <= col < MAP_COLS:
+                self._tiles[row][col] = tile
+
+        exit_col = center_col
+        exit_row = room_row + room_h - 1
+        self._tiles[exit_row][exit_col] = TILE_EXIT
+        self.player_spawn = (exit_col * TILE + 4, (exit_row - 1) * TILE + 4)
+
+    def _generate_forgotten_boundary(self):
+        """忘れられた境域の固定マップを生成する。"""
+        self._tiles = [[TILE_WALL] * MAP_COLS for _ in range(MAP_ROWS)]
+
+        room_col = 4
+        room_row = 3
+        room_w = 17
+        room_h = 10
+        center_col = room_col + room_w // 2
+        center_row = room_row + room_h // 2
+
+        for row in range(room_row, room_row + room_h):
+            for col in range(room_col, room_col + room_w):
+                dx = col - center_col
+                dy = row - center_row
+                if dx * dx * 4 + dy * dy * 7 <= 170:
+                    self._tiles[row][col] = TILE_FLOOR
+
+        self.rooms.append(Room(room_col, room_row, room_w, room_h))
+
+        for col, row in (
+            (room_col + 2, room_row + 2),
+            (room_col + room_w - 3, room_row + 2),
+            (center_col - 5, center_row),
+            (center_col + 5, center_row),
+            (center_col - 4, center_row + 3),
+            (center_col + 4, center_row + 3),
+        ):
+            if 0 <= row < MAP_ROWS and 0 <= col < MAP_COLS:
+                self._tiles[row][col] = TILE_WALL
+
+        for row, col, tile in (
+            (center_row - 3, center_col - 2, TILE_WIND),
+            (center_row - 1, center_col + 4, TILE_WATER),
+            (center_row + 2, center_col + 2, TILE_EMBER),
+            (center_row + 2, center_col - 3, TILE_STONEFIELD),
+            (center_row, center_col - 4, TILE_PALE),
+            (center_row, center_col, TILE_PALE),
+            (center_row - 1, center_col + 1, TILE_PALE),
+            (center_row + 1, center_col - 1, TILE_PALE),
+        ):
+            if 0 <= row < MAP_ROWS and 0 <= col < MAP_COLS:
+                self._tiles[row][col] = tile
+
+        exit_col = center_col
+        exit_row = room_row + room_h - 1
+        self._tiles[room_row][center_col] = TILE_EXIT
+        self._tiles[center_row + 1][center_col + 6] = TILE_EXIT
+        self._tiles[exit_row][exit_col] = TILE_EXIT
+        self.player_spawn = (exit_col * TILE + 4, (exit_row - 1) * TILE + 4)
+
+    def _generate_forgotten_boundary_depths(self):
+        """忘れられた境域の奥の固定マップを生成する。"""
+        self._tiles = [[TILE_WALL] * MAP_COLS for _ in range(MAP_ROWS)]
+
+        room_col = 5
+        room_row = 3
+        room_w = 15
+        room_h = 10
+        center_col = room_col + room_w // 2
+        center_row = room_row + room_h // 2
+
+        for row in range(room_row, room_row + room_h):
+            for col in range(room_col, room_col + room_w):
+                dx = col - center_col
+                dy = row - center_row
+                if dx * dx * 5 + dy * dy * 6 <= 155:
+                    self._tiles[row][col] = TILE_FLOOR
+
+        self.rooms.append(Room(room_col, room_row, room_w, room_h))
+
+        for col, row in (
+            (room_col + 2, room_row + 2),
+            (room_col + room_w - 3, room_row + 2),
+            (center_col - 4, center_row + 2),
+            (center_col + 4, center_row + 2),
+            (center_col - 2, room_row + room_h - 3),
+            (center_col + 2, room_row + room_h - 3),
+        ):
+            if 0 <= row < MAP_ROWS and 0 <= col < MAP_COLS:
+                self._tiles[row][col] = TILE_WALL
+
+        for row, col, tile in (
+            (center_row - 3, center_col, TILE_WIND),
+            (center_row - 1, center_col + 4, TILE_WATER),
+            (center_row + 2, center_col + 2, TILE_EMBER),
+            (center_row + 2, center_col - 3, TILE_STONEFIELD),
+            (center_row, center_col, TILE_PALE),
+            (center_row - 1, center_col + 1, TILE_PALE),
+            (center_row + 1, center_col - 1, TILE_PALE),
+        ):
+            if 0 <= row < MAP_ROWS and 0 <= col < MAP_COLS:
+                self._tiles[row][col] = tile
+
+        exit_col = center_col
+        exit_row = room_row + room_h - 1
+        self._tiles[exit_row][exit_col] = TILE_EXIT
+        self.player_spawn = (exit_col * TILE + 4, (exit_row - 1) * TILE + 4)
+
+    def _generate_far_boundary(self):
+        """彼方へ続く境目の固定マップを生成する。"""
+        self._tiles = [[TILE_WALL] * MAP_COLS for _ in range(MAP_ROWS)]
+
+        start_col = 3
+        end_col = 21
+        path_row = 8
+        for col in range(start_col, end_col + 1):
+            for row in range(path_row - 2, path_row + 3):
+                if 0 <= row < MAP_ROWS and 0 <= col < MAP_COLS:
+                    self._tiles[row][col] = TILE_FLOOR
+
+        self.rooms.append(Room(start_col, path_row - 2, end_col - start_col + 1, 5))
+
+        for col, row in (
+            (start_col + 4, path_row - 2),
+            (start_col + 8, path_row + 2),
+            (start_col + 12, path_row - 2),
+            (start_col + 15, path_row + 2),
+        ):
+            if 0 <= row < MAP_ROWS and 0 <= col < MAP_COLS:
+                self._tiles[row][col] = TILE_WALL
+
+        for row, col, tile in (
+            (path_row - 1, start_col + 5, TILE_WIND),
+            (path_row + 1, start_col + 8, TILE_WATER),
+            (path_row - 1, start_col + 12, TILE_EMBER),
+            (path_row + 1, start_col + 15, TILE_STONEFIELD),
+            (path_row, start_col + 10, TILE_PALE),
+            (path_row - 1, start_col + 13, TILE_PALE),
+            (path_row + 1, start_col + 16, TILE_PALE),
+        ):
+            if 0 <= row < MAP_ROWS and 0 <= col < MAP_COLS:
+                self._tiles[row][col] = tile
+
+        self._tiles[path_row][start_col] = TILE_EXIT
+        self._tiles[path_row][end_col] = TILE_EXIT
+        self._tiles[path_row - 2][start_col + 15] = TILE_EXIT
+        self.player_spawn = ((start_col + 1) * TILE + 4, path_row * TILE + 4)
+
+    def _generate_far_boundary_depths(self):
+        """彼方へ続く境目の奥の固定マップを生成する。"""
+        self._tiles = [[TILE_WALL] * MAP_COLS for _ in range(MAP_ROWS)]
+
+        room_col = 5
+        room_row = 3
+        room_w = 15
+        room_h = 10
+        center_col = room_col + room_w // 2
+        center_row = room_row + room_h // 2
+
+        for row in range(room_row, room_row + room_h):
+            for col in range(room_col, room_col + room_w):
+                dx = col - center_col
+                dy = row - center_row
+                if dx * dx * 5 + dy * dy * 6 <= 155:
+                    self._tiles[row][col] = TILE_FLOOR
+
+        self.rooms.append(Room(room_col, room_row, room_w, room_h))
+
+        for col, row in (
+            (room_col + 2, room_row + 2),
+            (room_col + room_w - 3, room_row + 2),
+            (center_col - 4, center_row + 2),
+            (center_col + 4, center_row + 2),
+            (center_col - 2, room_row + room_h - 3),
+            (center_col + 2, room_row + room_h - 3),
+        ):
+            if 0 <= row < MAP_ROWS and 0 <= col < MAP_COLS:
+                self._tiles[row][col] = TILE_WALL
+
+        for row, col, tile in (
+            (center_row - 3, center_col, TILE_WIND),
+            (center_row - 1, center_col + 4, TILE_WATER),
+            (center_row + 2, center_col + 2, TILE_EMBER),
+            (center_row + 2, center_col - 3, TILE_STONEFIELD),
+            (center_row, center_col, TILE_PALE),
+            (center_row - 1, center_col + 1, TILE_PALE),
+            (center_row + 1, center_col - 1, TILE_PALE),
+        ):
+            if 0 <= row < MAP_ROWS and 0 <= col < MAP_COLS:
+                self._tiles[row][col] = tile
+
+        exit_col = center_col
+        exit_row = room_row + room_h - 1
+        self._tiles[exit_row][exit_col] = TILE_EXIT
+        self.player_spawn = (exit_col * TILE + 4, (exit_row - 1) * TILE + 4)
+
+    def _generate_far_echo(self):
+        """彼方の残響の固定マップを生成する。"""
+        self._tiles = [[TILE_WALL] * MAP_COLS for _ in range(MAP_ROWS)]
+
+        start_col = 3
+        end_col = 21
+        path_row = 8
+        for col in range(start_col, end_col + 1):
+            for row in range(path_row - 2, path_row + 3):
+                if 0 <= row < MAP_ROWS and 0 <= col < MAP_COLS:
+                    self._tiles[row][col] = TILE_FLOOR
+
+        self.rooms.append(Room(start_col, path_row - 2, end_col - start_col + 1, 5))
+
+        for col, row in (
+            (start_col + 3, path_row - 2),
+            (start_col + 6, path_row + 2),
+            (start_col + 11, path_row - 2),
+            (start_col + 15, path_row + 2),
+            (end_col - 2, path_row - 1),
+        ):
+            if 0 <= row < MAP_ROWS and 0 <= col < MAP_COLS:
+                self._tiles[row][col] = TILE_WALL
+
+        for row, col, tile in (
+            (path_row - 1, start_col + 4, TILE_WIND),
+            (path_row + 1, start_col + 7, TILE_WATER),
+            (path_row - 1, start_col + 11, TILE_EMBER),
+            (path_row + 1, start_col + 14, TILE_STONEFIELD),
+            (path_row, start_col + 9, TILE_PALE),
+            (path_row - 1, start_col + 13, TILE_PALE),
+            (path_row + 1, start_col + 16, TILE_PALE),
+        ):
+            if 0 <= row < MAP_ROWS and 0 <= col < MAP_COLS:
+                self._tiles[row][col] = tile
+
+        self._tiles[path_row][start_col] = TILE_EXIT
         self.player_spawn = ((start_col + 1) * TILE + 4, path_row * TILE + 4)
 
     def _carve_room(self, room: Room):

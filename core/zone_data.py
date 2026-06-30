@@ -350,14 +350,110 @@ ZONE_DATA: dict[str, dict] = {
         "map_type"   : "sealed_path",
         "exits"      : [
             {"to": "old_road", "hint": "忘れられた街道へ戻る"},
+            {"to": "sealed_path_depths", "hint": "閉ざされた奥へ"},
+            {"to": "lost_place", "hint": "失われた場所へ"},
         ],
         "floor_color": ( 52,  56,  52),
         "wall_color" : ( 24,  27,  27),
     },
 
+    "sealed_path_depths": {
+        "name"       : "閉ざされた奥",
+        "has_enemies": False,
+        "map_type"   : "sealed_path_depths",
+        "exits"      : [
+            {"to": "sealed_path", "hint": "閉ざされた小径へ戻る"},
+        ],
+        "floor_color": ( 54,  56,  53),
+        "wall_color" : ( 24,  26,  27),
+    },
+
     # ──────────────────────────────────────────────────
     #  以下は将来追加予定（コメントで設計を残しておく）
     # ──────────────────────────────────────────────────
+
+    "lost_place": {
+        "name"       : "失われた場所",
+        "has_enemies": False,
+        "map_type"   : "lost_place",
+        "exits"      : [
+            {"to": "sealed_path", "hint": "閉ざされた小径へ戻る"},
+            {"to": "lost_place_depths", "hint": "失われた場所の奥へ"},
+            {"to": "forgotten_boundary", "hint": "忘れられた境域へ"},
+        ],
+        "floor_color": ( 55,  57,  54),
+        "wall_color" : ( 24,  26,  27),
+    },
+
+    "lost_place_depths": {
+        "name"       : "失われた場所の奥",
+        "has_enemies": False,
+        "map_type"   : "lost_place_depths",
+        "exits"      : [
+            {"to": "lost_place", "hint": "失われた場所へ戻る"},
+        ],
+        "floor_color": ( 52,  54,  53),
+        "wall_color" : ( 23,  25,  26),
+    },
+
+    "forgotten_boundary": {
+        "name"       : "忘れられた境域",
+        "has_enemies": False,
+        "map_type"   : "forgotten_boundary",
+        "exits"      : [
+            {"to": "lost_place", "hint": "失われた場所へ戻る"},
+            {"to": "forgotten_boundary_depths", "hint": "忘れられた境域の奥へ"},
+            {"to": "far_boundary", "hint": "彼方へ続く境目へ"},
+        ],
+        "floor_color": ( 50,  53,  53),
+        "wall_color" : ( 22,  24,  26),
+    },
+
+    "forgotten_boundary_depths": {
+        "name"       : "忘れられた境域の奥",
+        "has_enemies": False,
+        "map_type"   : "forgotten_boundary_depths",
+        "exits"      : [
+            {"to": "forgotten_boundary", "hint": "忘れられた境域へ戻る"},
+        ],
+        "floor_color": ( 49,  51,  52),
+        "wall_color" : ( 21,  23,  25),
+    },
+
+    "far_boundary": {
+        "name"       : "彼方へ続く境目",
+        "has_enemies": False,
+        "map_type"   : "far_boundary",
+        "exits"      : [
+            {"to": "forgotten_boundary", "hint": "忘れられた境域へ戻る"},
+            {"to": "far_boundary_depths", "hint": "彼方へ続く境目の奥へ"},
+            {"to": "far_echo", "hint": "彼方の残響へ"},
+        ],
+        "floor_color": ( 48,  50,  51),
+        "wall_color" : ( 20,  22,  24),
+    },
+
+    "far_boundary_depths": {
+        "name"       : "彼方へ続く境目の奥",
+        "has_enemies": False,
+        "map_type"   : "far_boundary_depths",
+        "exits"      : [
+            {"to": "far_boundary", "hint": "彼方へ続く境目へ戻る"},
+        ],
+        "floor_color": ( 47,  49,  50),
+        "wall_color" : ( 19,  21,  23),
+    },
+
+    "far_echo": {
+        "name"       : "彼方の残響",
+        "has_enemies": False,
+        "map_type"   : "far_echo",
+        "exits"      : [
+            {"to": "far_boundary", "hint": "彼方へ続く境目へ戻る"},
+        ],
+        "floor_color": ( 49,  50,  49),
+        "wall_color" : ( 20,  21,  22),
+    },
 
     # "forest": {
     #     "name"       : "迷いの森",
