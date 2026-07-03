@@ -460,6 +460,18 @@ class Game:
                     return
                 if self._try_investigate_distant_center():
                     return
+                if self._try_investigate_far_terminus_center():
+                    return
+                if self._try_investigate_far_relay_center():
+                    return
+                if self._try_investigate_far_relay_trace():
+                    return
+                if self._try_investigate_far_connection_center():
+                    return
+                if self._try_investigate_far_connection_trace():
+                    return
+                if self._try_investigate_far_echo_center():
+                    return
                 if self._try_investigate_far_echo_trace():
                     return
                 if self._try_investigate_far_boundary_center():
@@ -1023,6 +1035,30 @@ class Game:
             "far_echo_entered", False
         ):
             self._start_far_echo_arrival_event()
+        if next_zone_id == "far_echo_depths" and not self._get_story_flag(
+            "far_echo_depths_entered", False
+        ):
+            self._start_far_echo_depths_arrival_event()
+        if next_zone_id == "far_connection" and not self._get_story_flag(
+            "far_connection_entered", False
+        ):
+            self._start_far_connection_arrival_event()
+        if next_zone_id == "far_connection_depths" and not self._get_story_flag(
+            "far_connection_depths_entered", False
+        ):
+            self._start_far_connection_depths_arrival_event()
+        if next_zone_id == "far_relay" and not self._get_story_flag(
+            "far_relay_entered", False
+        ):
+            self._start_far_relay_arrival_event()
+        if next_zone_id == "far_relay_depths" and not self._get_story_flag(
+            "far_relay_depths_entered", False
+        ):
+            self._start_far_relay_depths_arrival_event()
+        if next_zone_id == "far_terminus" and not self._get_story_flag(
+            "far_terminus_entered", False
+        ):
+            self._start_far_terminus_arrival_event()
 
     def _handle_exit_transition(self, exit_rect: pygame.Rect) -> None:
         if self.current_zone_id == "town":
@@ -1304,7 +1340,97 @@ class Game:
             return
 
         if self.current_zone_id == "far_echo":
+            if self._is_far_echo_connection_exit(exit_rect):
+                if self._get_story_flag("far_echo_return_hint_received", False):
+                    self._transition_zone("far_connection")
+                else:
+                    self._add_message(
+                        "交わる道の先は、まだ静かに閉ざされている。彼方から届く反応が、経路として十分に定まっていないようだ。",
+                        C_GRAY,
+                    )
+                    self.player.rect.top = exit_rect.bottom + 2
+                return
+
+            if self._is_far_echo_deeper_exit(exit_rect):
+                if self._get_story_flag("far_echo_depths_hint_received", False):
+                    self._transition_zone("far_echo_depths")
+                else:
+                    self._add_message(
+                        "遺構の奥へ続く回廊は、まだ静かに閉ざされている。中心へ進むための反応が、十分に定まっていないようだ。",
+                        C_GRAY,
+                    )
+                    self.player.rect.right = exit_rect.left - 2
+                return
+
             self._transition_zone("far_boundary")
+            return
+
+        if self.current_zone_id == "far_echo_depths":
+            self._transition_zone("far_echo")
+            return
+
+        if self.current_zone_id == "far_connection":
+            if self._is_far_connection_relay_exit(exit_rect):
+                if self._get_story_flag("far_connection_return_hint_received", False):
+                    self._transition_zone("far_relay")
+                else:
+                    self._add_message(
+                        "交わる道の先は、まだ静かに閉ざされている。中継地へ続く反応が、道として十分に定まっていないようだ。",
+                        C_GRAY,
+                    )
+                    self.player.rect.right = exit_rect.left - 2
+                return
+
+            if self._is_far_connection_deeper_exit(exit_rect):
+                if self._get_story_flag("far_connection_depths_hint_received", False):
+                    self._transition_zone("far_connection_depths")
+                else:
+                    self._add_message(
+                        "交わる道のさらに奥は、まだ静かに閉ざされている。中心へ進むための反応が、十分に定まっていないようだ。",
+                        C_GRAY,
+                    )
+                    self.player.rect.top = exit_rect.bottom + 2
+                return
+
+            self._transition_zone("far_echo")
+            return
+
+        if self.current_zone_id == "far_connection_depths":
+            self._transition_zone("far_connection")
+            return
+
+        if self.current_zone_id == "far_relay":
+            if self._is_far_relay_deeper_exit(exit_rect):
+                if self._get_story_flag("far_relay_depths_hint_received", False):
+                    self._transition_zone("far_relay_depths")
+                else:
+                    self._add_message(
+                        "広場の奥へ続く道は、まだ静かに閉ざされている。中心へ進むための反応が、十分に定まっていないようだ。",
+                        C_GRAY,
+                    )
+                    self.player.rect.top = exit_rect.bottom + 2
+                return
+
+            if self._is_far_relay_terminus_exit(exit_rect):
+                if self._get_story_flag("far_relay_return_hint_received", False):
+                    self._transition_zone("far_terminus")
+                else:
+                    self._add_message(
+                        "途切れた道の先は、まだ静かに閉ざされている。終端へ続く反応が、道として十分に定まっていないようだ。",
+                        C_GRAY,
+                    )
+                    self.player.rect.right = exit_rect.left - 2
+                return
+
+            self._transition_zone("far_connection")
+            return
+
+        if self.current_zone_id == "far_relay_depths":
+            self._transition_zone("far_relay")
+            return
+
+        if self.current_zone_id == "far_terminus":
+            self._transition_zone("far_relay")
             return
 
         exits = get_zone_exits(self.current_zone_id)
@@ -1368,6 +1494,24 @@ class Game:
     def _is_far_boundary_far_echo_exit(self, exit_rect: pygame.Rect) -> bool:
         return exit_rect.centery <= TILE * 7
 
+    def _is_far_echo_deeper_exit(self, exit_rect: pygame.Rect) -> bool:
+        return exit_rect.centerx >= TILE * 20
+
+    def _is_far_echo_connection_exit(self, exit_rect: pygame.Rect) -> bool:
+        return exit_rect.centery <= TILE * 7
+
+    def _is_far_connection_deeper_exit(self, exit_rect: pygame.Rect) -> bool:
+        return exit_rect.centery <= TILE * 5
+
+    def _is_far_connection_relay_exit(self, exit_rect: pygame.Rect) -> bool:
+        return exit_rect.centerx >= TILE * 20
+
+    def _is_far_relay_deeper_exit(self, exit_rect: pygame.Rect) -> bool:
+        return exit_rect.centery <= TILE * 5
+
+    def _is_far_relay_terminus_exit(self, exit_rect: pygame.Rect) -> bool:
+        return exit_rect.centerx >= TILE * 20
+
     # ──────────────────────────────────────────────────────
     #  ★ 0.7 Step5-B: 会話処理
     # ──────────────────────────────────────────────────────
@@ -1410,6 +1554,36 @@ class Game:
         return 0
 
     def get_current_objective_text(self) -> str:
+        if self._get_story_flag("far_terminus_response_hint_received", False):
+            return "目的：彼方の終端で見た反応を老人へ報告する"
+        if self._get_story_flag("far_terminus_resonance_seen", False):
+            return "目的：彼方の終端に残る反応を調べる"
+        if self._get_story_flag("far_relay_return_hint_received", False):
+            return "目的：彼方の中継地に戻り、彼方の終端へ続く経路を探す"
+        if self._get_story_flag("far_relay_response_hint_received", False):
+            return "目的：彼方の中継地の奥で見た反応を老人へ報告する"
+        if self._get_story_flag("far_relay_depths_resonance_seen", False):
+            return "目的：彼方の中継地の奥にある中心の反応を調べる"
+        if self._get_story_flag("far_relay_depths_hint_received", False):
+            return "目的：彼方の中継地のさらに奥にある反応を目指す"
+        if self._get_story_flag("far_relay_resonance_seen", False):
+            return "目的：彼方の中継地に残る反応を調べる"
+        if self._get_story_flag("far_connection_return_hint_received", False):
+            return "目的：彼方の接続点に戻り、彼方の中継地へ続く経路を探す"
+        if self._get_story_flag("far_connection_response_hint_received", False):
+            return "目的：彼方の接続点の奥で見た反応を老人へ報告する"
+        if self._get_story_flag("far_connection_depths_resonance_seen", False):
+            return "目的：彼方の接続点の奥にある中心の反応を調べる"
+        if self._get_story_flag("far_connection_depths_hint_received", False):
+            return "目的：彼方の接続点のさらに奥にある反応を目指す"
+        if self._get_story_flag("far_connection_resonance_seen", False):
+            return "目的：彼方の接続点に残る反応を調べる"
+        if self._get_story_flag("far_echo_return_hint_received", False):
+            return "目的：彼方の残響に戻り、彼方の接続点へ続く経路を探す"
+        if self._get_story_flag("far_echo_response_hint_received", False):
+            return "目的：彼方の残響の奥で見た反応を老人へ報告する"
+        if self._get_story_flag("far_echo_depths_resonance_seen", False):
+            return "目的：彼方の残響の奥にある中心の反応を調べる"
         if self._get_story_flag("far_echo_depths_hint_received", False):
             return "目的：彼方の残響のさらに奥にある反応を目指す"
         if self._get_story_flag("far_echo_resonance_seen", False):
@@ -1729,6 +1903,24 @@ class Game:
         base_dialogue_id = npc.get_current_dialogue_id()
         if npc.dialogue_id != "elder_first" or not self.player:
             return base_dialogue_id
+
+        if self._get_story_flag("far_relay_center_reported_to_elder", False):
+            return "elder_after_far_relay_center_hint"
+
+        if self._get_story_flag("far_relay_response_hint_received", False):
+            return "elder_after_far_relay_center_report"
+
+        if self._get_story_flag("far_connection_center_reported_to_elder", False):
+            return "elder_after_far_connection_center_hint"
+
+        if self._get_story_flag("far_connection_response_hint_received", False):
+            return "elder_after_far_connection_center_report"
+
+        if self._get_story_flag("far_echo_center_reported_to_elder", False):
+            return "elder_after_far_echo_center_hint"
+
+        if self._get_story_flag("far_echo_response_hint_received", False):
+            return "elder_after_far_echo_center_report"
 
         if self._get_story_flag("far_boundary_center_reported_to_elder", False):
             return "elder_after_far_boundary_center_hint"
@@ -2742,6 +2934,306 @@ class Game:
         self.dialogue_index = 0
         self.talking_npc = None
         self._mark_story_event_seen("far_echo_trace")
+        self.state = STATE_DIALOGUE
+
+    def _start_far_echo_depths_arrival_event(self) -> None:
+        self._set_story_flag("far_echo_depths_entered", True)
+        self._set_story_flag("far_echo_depths_resonance_seen", True)
+        self.current_dialogue_id = "far_echo_depths_arrival"
+        self.dialogue_lines = [
+            line.replace("{support_system_name}", self.get_support_system_display_name())
+            for line in get_dialogue_lines("far_echo_depths_arrival")
+        ]
+        self.dialogue_speaker = self.get_support_system_display_name()
+        self.dialogue_index = 0
+        self.talking_npc = None
+        self._mark_story_event_seen("far_echo_depths_arrival")
+        self.state = STATE_DIALOGUE
+
+    def _try_investigate_far_echo_center(self) -> bool:
+        if not self.world or not self.player:
+            return False
+        if self.current_zone_id != "far_echo_depths":
+            return False
+        if not self._get_story_flag("far_echo_depths_resonance_seen", False):
+            return False
+
+        center_rect = pygame.Rect(12 * TILE, 8 * TILE, TILE, TILE)
+        if not self.player.rect.colliderect(center_rect.inflate(TILE, TILE)):
+            return False
+
+        if self._get_story_flag("far_echo_center_investigated", False):
+            self._add_message(
+                "中心の反応は、彼方の残響のさらに先へ続いている。見えない場所から、わずかな応答が返ってくる。",
+                C_GRAY,
+            )
+        else:
+            self._start_far_echo_center_event()
+        return True
+
+    def _start_far_echo_center_event(self) -> None:
+        self._set_story_flag("far_echo_center_investigated", True)
+        self._set_story_flag("far_echo_center_resonance_seen", True)
+        self._set_story_flag("far_echo_response_hint_received", True)
+        self.current_dialogue_id = "far_echo_center_investigation"
+        self.dialogue_lines = [
+            line.replace("{support_system_name}", self.get_support_system_display_name())
+            for line in get_dialogue_lines("far_echo_center_investigation")
+        ]
+        self.dialogue_speaker = self.get_support_system_display_name()
+        self.dialogue_index = 0
+        self.talking_npc = None
+        self._mark_story_event_seen("far_echo_center_investigation")
+        self.state = STATE_DIALOGUE
+
+    def _start_far_connection_arrival_event(self) -> None:
+        self._set_story_flag("far_connection_entered", True)
+        self._set_story_flag("far_connection_resonance_seen", True)
+        self.current_dialogue_id = "far_connection_arrival"
+        self.dialogue_lines = [
+            line.replace("{support_system_name}", self.get_support_system_display_name())
+            for line in get_dialogue_lines("far_connection_arrival")
+        ]
+        self.dialogue_speaker = self.get_support_system_display_name()
+        self.dialogue_index = 0
+        self.talking_npc = None
+        self._mark_story_event_seen("far_connection_arrival")
+        self.state = STATE_DIALOGUE
+
+    def _try_investigate_far_connection_trace(self) -> bool:
+        if not self.world or not self.player:
+            return False
+        if self.current_zone_id != "far_connection":
+            return False
+        if not self._get_story_flag("far_connection_resonance_seen", False):
+            return False
+
+        trace_rect = pygame.Rect(12 * TILE, 8 * TILE, TILE, TILE)
+        if not self.player.rect.colliderect(trace_rect.inflate(TILE, TILE)):
+            return False
+
+        if self._get_story_flag("far_connection_trace_investigated", False):
+            self._add_message(
+                "複数の経路から集まる反応は、彼方の接続点のさらに奥へ続いている。途切れていた道が、静かにひとつへ結ばれようとしている。",
+                C_GRAY,
+            )
+        else:
+            self._start_far_connection_trace_event()
+        return True
+
+    def _start_far_connection_trace_event(self) -> None:
+        self._set_story_flag("far_connection_trace_investigated", True)
+        self._set_story_flag("far_connection_paths_resonated", True)
+        self._set_story_flag("far_connection_depths_hint_received", True)
+        self.current_dialogue_id = "far_connection_trace"
+        self.dialogue_lines = [
+            line.replace("{support_system_name}", self.get_support_system_display_name())
+            for line in get_dialogue_lines("far_connection_trace")
+        ]
+        self.dialogue_speaker = self.get_support_system_display_name()
+        self.dialogue_index = 0
+        self.talking_npc = None
+        self._mark_story_event_seen("far_connection_trace")
+        self.state = STATE_DIALOGUE
+
+    def _start_far_connection_depths_arrival_event(self) -> None:
+        self._set_story_flag("far_connection_depths_entered", True)
+        self._set_story_flag("far_connection_depths_resonance_seen", True)
+        self.current_dialogue_id = "far_connection_depths_arrival"
+        self.dialogue_lines = [
+            line.replace("{support_system_name}", self.get_support_system_display_name())
+            for line in get_dialogue_lines("far_connection_depths_arrival")
+        ]
+        self.dialogue_speaker = self.get_support_system_display_name()
+        self.dialogue_index = 0
+        self.talking_npc = None
+        self._mark_story_event_seen("far_connection_depths_arrival")
+        self.state = STATE_DIALOGUE
+
+    def _try_investigate_far_connection_center(self) -> bool:
+        if not self.world or not self.player:
+            return False
+        if self.current_zone_id != "far_connection_depths":
+            return False
+        if not self._get_story_flag("far_connection_depths_resonance_seen", False):
+            return False
+
+        center_rect = pygame.Rect(12 * TILE, 8 * TILE, TILE, TILE)
+        if not self.player.rect.colliderect(center_rect.inflate(TILE, TILE)):
+            return False
+
+        if self._get_story_flag("far_connection_center_investigated", False):
+            self._add_message(
+                "中心の反応は、複数の経路の先へ続いている。見えない場所から、わずかな応答が返ってくる。",
+                C_GRAY,
+            )
+        else:
+            self._start_far_connection_center_event()
+        return True
+
+    def _start_far_connection_center_event(self) -> None:
+        self._set_story_flag("far_connection_center_investigated", True)
+        self._set_story_flag("far_connection_center_resonance_seen", True)
+        self._set_story_flag("far_connection_response_hint_received", True)
+        self.current_dialogue_id = "far_connection_center_investigation"
+        self.dialogue_lines = [
+            line.replace("{support_system_name}", self.get_support_system_display_name())
+            for line in get_dialogue_lines("far_connection_center_investigation")
+        ]
+        self.dialogue_speaker = self.get_support_system_display_name()
+        self.dialogue_index = 0
+        self.talking_npc = None
+        self._mark_story_event_seen("far_connection_center_investigation")
+        self.state = STATE_DIALOGUE
+
+    def _start_far_relay_arrival_event(self) -> None:
+        self._set_story_flag("far_relay_entered", True)
+        self._set_story_flag("far_relay_resonance_seen", True)
+        self.current_dialogue_id = "far_relay_arrival"
+        self.dialogue_lines = [
+            line.replace("{support_system_name}", self.get_support_system_display_name())
+            for line in get_dialogue_lines("far_relay_arrival")
+        ]
+        self.dialogue_speaker = self.get_support_system_display_name()
+        self.dialogue_index = 0
+        self.talking_npc = None
+        self._mark_story_event_seen("far_relay_arrival")
+        self.state = STATE_DIALOGUE
+
+    def _try_investigate_far_relay_trace(self) -> bool:
+        if not self.world or not self.player:
+            return False
+        if self.current_zone_id != "far_relay":
+            return False
+        if not self._get_story_flag("far_relay_resonance_seen", False):
+            return False
+
+        trace_rect = pygame.Rect(12 * TILE, 8 * TILE, TILE, TILE)
+        if not self.player.rect.colliderect(trace_rect.inflate(TILE, TILE)):
+            return False
+
+        if self._get_story_flag("far_relay_trace_investigated", False):
+            self._add_message(
+                "複数の道から集まる反応は、彼方の中継地のさらに奥へ続いている。途切れていた石畳が、静かに先を示しているようだ。",
+                C_GRAY,
+            )
+        else:
+            self._start_far_relay_trace_event()
+        return True
+
+    def _start_far_relay_trace_event(self) -> None:
+        self._set_story_flag("far_relay_trace_investigated", True)
+        self._set_story_flag("far_relay_paths_resonated", True)
+        self._set_story_flag("far_relay_depths_hint_received", True)
+        self.current_dialogue_id = "far_relay_trace"
+        self.dialogue_lines = [
+            line.replace("{support_system_name}", self.get_support_system_display_name())
+            for line in get_dialogue_lines("far_relay_trace")
+        ]
+        self.dialogue_speaker = self.get_support_system_display_name()
+        self.dialogue_index = 0
+        self.talking_npc = None
+        self._mark_story_event_seen("far_relay_trace")
+        self.state = STATE_DIALOGUE
+
+    def _start_far_relay_depths_arrival_event(self) -> None:
+        self._set_story_flag("far_relay_depths_entered", True)
+        self._set_story_flag("far_relay_depths_resonance_seen", True)
+        self.current_dialogue_id = "far_relay_depths_arrival"
+        self.dialogue_lines = [
+            line.replace("{support_system_name}", self.get_support_system_display_name())
+            for line in get_dialogue_lines("far_relay_depths_arrival")
+        ]
+        self.dialogue_speaker = self.get_support_system_display_name()
+        self.dialogue_index = 0
+        self.talking_npc = None
+        self._mark_story_event_seen("far_relay_depths_arrival")
+        self.state = STATE_DIALOGUE
+
+    def _start_far_terminus_arrival_event(self) -> None:
+        self._set_story_flag("far_terminus_entered", True)
+        self._set_story_flag("far_terminus_resonance_seen", True)
+        self.current_dialogue_id = "far_terminus_arrival"
+        self.dialogue_lines = [
+            line.replace("{support_system_name}", self.get_support_system_display_name())
+            for line in get_dialogue_lines("far_terminus_arrival")
+        ]
+        self.dialogue_speaker = self.get_support_system_display_name()
+        self.dialogue_index = 0
+        self.talking_npc = None
+        self._mark_story_event_seen("far_terminus_arrival")
+        self.state = STATE_DIALOGUE
+
+    def _try_investigate_far_terminus_center(self) -> bool:
+        if not self.world or not self.player:
+            return False
+        if self.current_zone_id != "far_terminus":
+            return False
+        if not self._get_story_flag("far_terminus_resonance_seen", False):
+            return False
+
+        center_rect = pygame.Rect(12 * TILE, 8 * TILE, TILE, TILE)
+        if not self.player.rect.colliderect(center_rect.inflate(TILE, TILE)):
+            return False
+
+        if self._get_story_flag("far_terminus_center_investigated", False):
+            self._add_message(
+                "中心の反応は、途切れた道のさらに先へ続いている。見えない場所から、わずかな応答が返ってくる。",
+                C_GRAY,
+            )
+        else:
+            self._start_far_terminus_center_event()
+        return True
+
+    def _start_far_terminus_center_event(self) -> None:
+        self._set_story_flag("far_terminus_center_investigated", True)
+        self._set_story_flag("far_terminus_center_resonance_seen", True)
+        self._set_story_flag("far_terminus_response_hint_received", True)
+        self.current_dialogue_id = "far_terminus_center_investigation"
+        self.dialogue_lines = [
+            line.replace("{support_system_name}", self.get_support_system_display_name())
+            for line in get_dialogue_lines("far_terminus_center_investigation")
+        ]
+        self.dialogue_speaker = self.get_support_system_display_name()
+        self.dialogue_index = 0
+        self.talking_npc = None
+        self._mark_story_event_seen("far_terminus_center_investigation")
+        self.state = STATE_DIALOGUE
+
+    def _try_investigate_far_relay_center(self) -> bool:
+        if not self.world or not self.player:
+            return False
+        if self.current_zone_id != "far_relay_depths":
+            return False
+        if not self._get_story_flag("far_relay_depths_resonance_seen", False):
+            return False
+
+        center_rect = pygame.Rect(12 * TILE, 8 * TILE, TILE, TILE)
+        if not self.player.rect.colliderect(center_rect.inflate(TILE, TILE)):
+            return False
+
+        if self._get_story_flag("far_relay_center_investigated", False):
+            self._add_message(
+                "中心の反応は、複数の道の先へ続いている。見えない場所から、わずかな応答が返ってくる。",
+                C_GRAY,
+            )
+        else:
+            self._start_far_relay_center_event()
+        return True
+
+    def _start_far_relay_center_event(self) -> None:
+        self._set_story_flag("far_relay_center_investigated", True)
+        self._set_story_flag("far_relay_center_resonance_seen", True)
+        self._set_story_flag("far_relay_response_hint_received", True)
+        self.current_dialogue_id = "far_relay_center_investigation"
+        self.dialogue_lines = [
+            line.replace("{support_system_name}", self.get_support_system_display_name())
+            for line in get_dialogue_lines("far_relay_center_investigation")
+        ]
+        self.dialogue_speaker = self.get_support_system_display_name()
+        self.dialogue_index = 0
+        self.talking_npc = None
+        self._mark_story_event_seen("far_relay_center_investigation")
         self.state = STATE_DIALOGUE
 
     def _try_investigate_lost_place_center(self) -> bool:
@@ -6430,6 +6922,18 @@ class Game:
             self._set_story_flag("far_boundary_center_reported_to_elder", True)
             self._set_story_flag("far_echo_hint_received", True)
             self._set_story_flag("far_boundary_return_hint_received", True)
+        if finished_dialogue_id == "elder_after_far_echo_center_report":
+            self._set_story_flag("far_echo_center_reported_to_elder", True)
+            self._set_story_flag("far_connection_hint_received", True)
+            self._set_story_flag("far_echo_return_hint_received", True)
+        if finished_dialogue_id == "elder_after_far_connection_center_report":
+            self._set_story_flag("far_connection_center_reported_to_elder", True)
+            self._set_story_flag("far_relay_hint_received", True)
+            self._set_story_flag("far_connection_return_hint_received", True)
+        if finished_dialogue_id == "elder_after_far_relay_center_report":
+            self._set_story_flag("far_relay_center_reported_to_elder", True)
+            self._set_story_flag("far_terminus_hint_received", True)
+            self._set_story_flag("far_relay_return_hint_received", True)
         if finished_dialogue_id == "sage_boot" and self.player and hasattr(
             self.player, "set_story_flag"
         ):

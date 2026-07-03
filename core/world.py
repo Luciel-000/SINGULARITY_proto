@@ -254,6 +254,18 @@ class World:
             self._generate_far_boundary_depths()
         elif self.map_type == "far_echo":
             self._generate_far_echo()
+        elif self.map_type == "far_echo_depths":
+            self._generate_far_echo_depths()
+        elif self.map_type == "far_connection":
+            self._generate_far_connection()
+        elif self.map_type == "far_connection_depths":
+            self._generate_far_connection_depths()
+        elif self.map_type == "far_relay":
+            self._generate_far_relay()
+        elif self.map_type == "far_relay_depths":
+            self._generate_far_relay_depths()
+        elif self.map_type == "far_terminus":
+            self._generate_far_terminus()
         else:
             self._generate_town()
 
@@ -1584,7 +1596,347 @@ class World:
                 self._tiles[row][col] = tile
 
         self._tiles[path_row][start_col] = TILE_EXIT
+        self._tiles[path_row][end_col] = TILE_EXIT
+        self._tiles[path_row - 2][start_col + 15] = TILE_EXIT
         self.player_spawn = ((start_col + 1) * TILE + 4, path_row * TILE + 4)
+
+    def _generate_far_echo_depths(self):
+        """彼方の残響の奥の固定マップを生成する。"""
+        self._tiles = [[TILE_WALL] * MAP_COLS for _ in range(MAP_ROWS)]
+
+        room_col = 5
+        room_row = 3
+        room_w = 15
+        room_h = 10
+        center_col = room_col + room_w // 2
+        center_row = room_row + room_h // 2
+
+        for row in range(room_row, room_row + room_h):
+            for col in range(room_col, room_col + room_w):
+                dx = col - center_col
+                dy = row - center_row
+                if dx * dx * 5 + dy * dy * 6 <= 155:
+                    self._tiles[row][col] = TILE_FLOOR
+
+        self.rooms.append(Room(room_col, room_row, room_w, room_h))
+
+        for col, row in (
+            (room_col + 2, room_row + 2),
+            (room_col + room_w - 3, room_row + 2),
+            (center_col - 4, center_row + 2),
+            (center_col + 4, center_row + 2),
+            (center_col - 2, room_row + room_h - 3),
+            (center_col + 2, room_row + room_h - 3),
+        ):
+            if 0 <= row < MAP_ROWS and 0 <= col < MAP_COLS:
+                self._tiles[row][col] = TILE_WALL
+
+        for row, col, tile in (
+            (center_row - 3, center_col, TILE_WIND),
+            (center_row - 1, center_col + 4, TILE_WATER),
+            (center_row + 2, center_col + 2, TILE_EMBER),
+            (center_row + 2, center_col - 3, TILE_STONEFIELD),
+            (center_row, center_col, TILE_PALE),
+            (center_row - 1, center_col + 1, TILE_PALE),
+            (center_row + 1, center_col - 1, TILE_PALE),
+        ):
+            if 0 <= row < MAP_ROWS and 0 <= col < MAP_COLS:
+                self._tiles[row][col] = tile
+
+        exit_col = center_col
+        exit_row = room_row + room_h - 1
+        self._tiles[exit_row][exit_col] = TILE_EXIT
+        self.player_spawn = (exit_col * TILE + 4, (exit_row - 1) * TILE + 4)
+
+    def _generate_far_connection(self):
+        """彼方の接続点の固定マップを生成する。"""
+        self._tiles = [[TILE_WALL] * MAP_COLS for _ in range(MAP_ROWS)]
+
+        room_col = 4
+        room_row = 3
+        room_w = 17
+        room_h = 10
+        center_col = room_col + room_w // 2
+        center_row = room_row + room_h // 2
+
+        for row in range(room_row, room_row + room_h):
+            for col in range(room_col, room_col + room_w):
+                dx = col - center_col
+                dy = row - center_row
+                if dx * dx * 4 + dy * dy * 7 <= 170:
+                    self._tiles[row][col] = TILE_FLOOR
+
+        for col in range(center_col - 1, center_col + 2):
+            for row in range(room_row - 1, room_row + room_h + 1):
+                if 0 <= row < MAP_ROWS and 0 <= col < MAP_COLS:
+                    self._tiles[row][col] = TILE_FLOOR
+        for row in range(center_row - 1, center_row + 2):
+            for col in range(room_col - 1, room_col + room_w + 1):
+                if 0 <= row < MAP_ROWS and 0 <= col < MAP_COLS:
+                    self._tiles[row][col] = TILE_FLOOR
+
+        self.rooms.append(Room(room_col, room_row, room_w, room_h))
+
+        for col, row in (
+            (room_col + 2, room_row + 2),
+            (room_col + room_w - 3, room_row + 2),
+            (center_col - 5, center_row),
+            (center_col + 5, center_row),
+            (center_col - 4, center_row + 3),
+            (center_col + 4, center_row + 3),
+        ):
+            if 0 <= row < MAP_ROWS and 0 <= col < MAP_COLS:
+                self._tiles[row][col] = TILE_WALL
+
+        for row, col, tile in (
+            (center_row - 3, center_col - 2, TILE_WIND),
+            (center_row - 1, center_col + 4, TILE_WATER),
+            (center_row + 2, center_col + 2, TILE_EMBER),
+            (center_row + 2, center_col - 3, TILE_STONEFIELD),
+            (center_row, center_col - 4, TILE_PALE),
+            (center_row, center_col, TILE_PALE),
+            (center_row - 1, center_col + 1, TILE_PALE),
+            (center_row + 1, center_col - 1, TILE_PALE),
+        ):
+            if 0 <= row < MAP_ROWS and 0 <= col < MAP_COLS:
+                self._tiles[row][col] = tile
+
+        exit_col = center_col
+        exit_row = room_row + room_h - 1
+        self._tiles[room_row][center_col] = TILE_EXIT
+        self._tiles[center_row][room_col + room_w] = TILE_EXIT
+        self._tiles[exit_row][exit_col] = TILE_EXIT
+        self.player_spawn = (exit_col * TILE + 4, (exit_row - 1) * TILE + 4)
+
+    def _generate_far_connection_depths(self):
+        """彼方の接続点の奥の固定マップを生成する。"""
+        self._tiles = [[TILE_WALL] * MAP_COLS for _ in range(MAP_ROWS)]
+
+        room_col = 5
+        room_row = 3
+        room_w = 15
+        room_h = 10
+        center_col = room_col + room_w // 2
+        center_row = room_row + room_h // 2
+
+        for row in range(room_row, room_row + room_h):
+            for col in range(room_col, room_col + room_w):
+                dx = col - center_col
+                dy = row - center_row
+                if dx * dx * 5 + dy * dy * 6 <= 155:
+                    self._tiles[row][col] = TILE_FLOOR
+
+        for col in range(center_col - 1, center_col + 2):
+            for row in range(room_row, room_row + room_h):
+                if 0 <= row < MAP_ROWS and 0 <= col < MAP_COLS:
+                    self._tiles[row][col] = TILE_FLOOR
+        for row in range(center_row - 1, center_row + 2):
+            for col in range(room_col, room_col + room_w):
+                if 0 <= row < MAP_ROWS and 0 <= col < MAP_COLS:
+                    self._tiles[row][col] = TILE_FLOOR
+
+        self.rooms.append(Room(room_col, room_row, room_w, room_h))
+
+        for col, row in (
+            (room_col + 2, room_row + 2),
+            (room_col + room_w - 3, room_row + 2),
+            (center_col - 4, center_row + 2),
+            (center_col + 4, center_row + 2),
+            (center_col - 2, room_row + room_h - 3),
+            (center_col + 2, room_row + room_h - 3),
+        ):
+            if 0 <= row < MAP_ROWS and 0 <= col < MAP_COLS:
+                self._tiles[row][col] = TILE_WALL
+
+        for row, col, tile in (
+            (center_row - 3, center_col, TILE_WIND),
+            (center_row - 1, center_col + 4, TILE_WATER),
+            (center_row + 2, center_col + 2, TILE_EMBER),
+            (center_row + 2, center_col - 3, TILE_STONEFIELD),
+            (center_row, center_col, TILE_PALE),
+            (center_row - 1, center_col + 1, TILE_PALE),
+            (center_row + 1, center_col - 1, TILE_PALE),
+        ):
+            if 0 <= row < MAP_ROWS and 0 <= col < MAP_COLS:
+                self._tiles[row][col] = tile
+
+        exit_col = center_col
+        exit_row = room_row + room_h - 1
+        self._tiles[exit_row][exit_col] = TILE_EXIT
+        self.player_spawn = (exit_col * TILE + 4, (exit_row - 1) * TILE + 4)
+
+    def _generate_far_relay(self):
+        """彼方の中継地の固定マップを生成する。"""
+        self._tiles = [[TILE_WALL] * MAP_COLS for _ in range(MAP_ROWS)]
+
+        room_col = 4
+        room_row = 3
+        room_w = 17
+        room_h = 10
+        center_col = room_col + room_w // 2
+        center_row = room_row + room_h // 2
+
+        for row in range(room_row, room_row + room_h):
+            for col in range(room_col, room_col + room_w):
+                dx = col - center_col
+                dy = row - center_row
+                if dx * dx * 4 + dy * dy * 7 <= 165:
+                    self._tiles[row][col] = TILE_FLOOR
+
+        for col in range(center_col - 1, center_col + 2):
+            for row in range(room_row, room_row + room_h):
+                if 0 <= row < MAP_ROWS and 0 <= col < MAP_COLS:
+                    self._tiles[row][col] = TILE_FLOOR
+        for row in range(center_row - 1, center_row + 2):
+            for col in range(room_col, room_col + room_w):
+                if 0 <= row < MAP_ROWS and 0 <= col < MAP_COLS:
+                    self._tiles[row][col] = TILE_FLOOR
+
+        for row, col in (
+            (center_row - 3, center_col - 5),
+            (center_row - 2, center_col + 5),
+            (center_row + 2, center_col - 4),
+            (center_row + 3, center_col + 4),
+            (room_row + 2, room_col + 3),
+            (room_row + room_h - 3, room_col + room_w - 4),
+        ):
+            if 0 <= row < MAP_ROWS and 0 <= col < MAP_COLS:
+                self._tiles[row][col] = TILE_WALL
+
+        for row, col, tile in (
+            (center_row - 2, center_col - 3, TILE_WIND),
+            (center_row - 1, center_col + 4, TILE_WATER),
+            (center_row + 2, center_col + 3, TILE_EMBER),
+            (center_row + 2, center_col - 3, TILE_STONEFIELD),
+            (center_row, center_col - 1, TILE_PALE),
+            (center_row, center_col + 1, TILE_PALE),
+            (center_row + 1, center_col, TILE_PALE),
+        ):
+            if 0 <= row < MAP_ROWS and 0 <= col < MAP_COLS:
+                self._tiles[row][col] = tile
+
+        self.rooms.append(Room(room_col, room_row, room_w, room_h))
+
+        exit_col = center_col
+        exit_row = room_row + room_h - 1
+        self._tiles[room_row][center_col] = TILE_EXIT
+        self._tiles[center_row][room_col + room_w - 1] = TILE_EXIT
+        self._tiles[exit_row][exit_col] = TILE_EXIT
+        self.player_spawn = (exit_col * TILE + 4, (exit_row - 1) * TILE + 4)
+
+    def _generate_far_relay_depths(self):
+        """彼方の中継地の奥の固定マップを生成する。"""
+        self._tiles = [[TILE_WALL] * MAP_COLS for _ in range(MAP_ROWS)]
+
+        room_col = 5
+        room_row = 3
+        room_w = 15
+        room_h = 10
+        center_col = room_col + room_w // 2
+        center_row = room_row + room_h // 2
+
+        for row in range(room_row, room_row + room_h):
+            for col in range(room_col, room_col + room_w):
+                dx = col - center_col
+                dy = row - center_row
+                if dx * dx * 5 + dy * dy * 6 <= 155:
+                    self._tiles[row][col] = TILE_FLOOR
+
+        for col in range(center_col - 1, center_col + 2):
+            for row in range(room_row, room_row + room_h):
+                if 0 <= row < MAP_ROWS and 0 <= col < MAP_COLS:
+                    self._tiles[row][col] = TILE_FLOOR
+        for row in range(center_row - 1, center_row + 2):
+            for col in range(room_col, room_col + room_w):
+                if 0 <= row < MAP_ROWS and 0 <= col < MAP_COLS:
+                    self._tiles[row][col] = TILE_FLOOR
+
+        self.rooms.append(Room(room_col, room_row, room_w, room_h))
+
+        for col, row in (
+            (room_col + 2, room_row + 2),
+            (room_col + room_w - 3, room_row + 2),
+            (center_col - 4, center_row + 2),
+            (center_col + 4, center_row + 2),
+            (center_col - 2, room_row + room_h - 3),
+            (center_col + 2, room_row + room_h - 3),
+        ):
+            if 0 <= row < MAP_ROWS and 0 <= col < MAP_COLS:
+                self._tiles[row][col] = TILE_WALL
+
+        for row, col, tile in (
+            (center_row - 3, center_col, TILE_WIND),
+            (center_row - 1, center_col + 4, TILE_WATER),
+            (center_row + 2, center_col + 2, TILE_EMBER),
+            (center_row + 2, center_col - 3, TILE_STONEFIELD),
+            (center_row, center_col, TILE_PALE),
+            (center_row - 1, center_col + 1, TILE_PALE),
+            (center_row + 1, center_col - 1, TILE_PALE),
+        ):
+            if 0 <= row < MAP_ROWS and 0 <= col < MAP_COLS:
+                self._tiles[row][col] = tile
+
+        exit_col = center_col
+        exit_row = room_row + room_h - 1
+        self._tiles[exit_row][exit_col] = TILE_EXIT
+        self.player_spawn = (exit_col * TILE + 4, (exit_row - 1) * TILE + 4)
+
+    def _generate_far_terminus(self):
+        """彼方の終端の固定マップを生成する。"""
+        self._tiles = [[TILE_WALL] * MAP_COLS for _ in range(MAP_ROWS)]
+
+        room_col = 4
+        room_row = 3
+        room_w = 17
+        room_h = 10
+        center_col = room_col + room_w // 2
+        center_row = room_row + room_h // 2
+
+        for row in range(room_row, room_row + room_h):
+            for col in range(room_col, room_col + room_w):
+                dx = col - center_col
+                dy = row - center_row
+                if dx * dx * 4 + dy * dy * 6 <= 160:
+                    self._tiles[row][col] = TILE_FLOOR
+
+        for row in range(center_row - 1, center_row + 2):
+            for col in range(room_col, room_col + room_w):
+                if 0 <= row < MAP_ROWS and 0 <= col < MAP_COLS:
+                    self._tiles[row][col] = TILE_FLOOR
+        for col in range(center_col - 1, center_col + 2):
+            for row in range(room_row, room_row + room_h):
+                if 0 <= row < MAP_ROWS and 0 <= col < MAP_COLS:
+                    self._tiles[row][col] = TILE_FLOOR
+
+        for row, col in (
+            (center_row - 3, center_col - 5),
+            (center_row - 3, center_col + 5),
+            (center_row + 3, center_col - 5),
+            (center_row + 3, center_col + 5),
+            (room_row + 2, center_col - 2),
+            (room_row + room_h - 3, center_col + 2),
+        ):
+            if 0 <= row < MAP_ROWS and 0 <= col < MAP_COLS:
+                self._tiles[row][col] = TILE_WALL
+
+        for row, col, tile in (
+            (center_row - 2, center_col - 4, TILE_WIND),
+            (center_row - 1, center_col + 4, TILE_WATER),
+            (center_row + 2, center_col + 3, TILE_EMBER),
+            (center_row + 2, center_col - 3, TILE_STONEFIELD),
+            (center_row, center_col, TILE_PALE),
+            (center_row - 1, center_col, TILE_PALE),
+            (center_row + 1, center_col, TILE_PALE),
+        ):
+            if 0 <= row < MAP_ROWS and 0 <= col < MAP_COLS:
+                self._tiles[row][col] = tile
+
+        self.rooms.append(Room(room_col, room_row, room_w, room_h))
+
+        exit_col = center_col
+        exit_row = room_row + room_h - 1
+        self._tiles[exit_row][exit_col] = TILE_EXIT
+        self.player_spawn = (exit_col * TILE + 4, (exit_row - 1) * TILE + 4)
 
     def _carve_room(self, room: Room):
         for r in range(room.row, room.row + room.h):

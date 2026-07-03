@@ -450,9 +450,81 @@ ZONE_DATA: dict[str, dict] = {
         "map_type"   : "far_echo",
         "exits"      : [
             {"to": "far_boundary", "hint": "彼方へ続く境目へ戻る"},
+            {"to": "far_echo_depths", "hint": "彼方の残響の奥へ"},
+            {"to": "far_connection", "hint": "彼方の接続点へ"},
         ],
         "floor_color": ( 49,  50,  49),
         "wall_color" : ( 20,  21,  22),
+    },
+
+    "far_echo_depths": {
+        "name"       : "彼方の残響の奥",
+        "has_enemies": False,
+        "map_type"   : "far_echo_depths",
+        "exits"      : [
+            {"to": "far_echo", "hint": "彼方の残響へ戻る"},
+        ],
+        "floor_color": ( 48,  49,  48),
+        "wall_color" : ( 19,  20,  21),
+    },
+
+    "far_connection": {
+        "name"       : "彼方の接続点",
+        "has_enemies": False,
+        "map_type"   : "far_connection",
+        "exits"      : [
+            {"to": "far_echo", "hint": "彼方の残響へ戻る"},
+            {"to": "far_connection_depths", "hint": "彼方の接続点の奥へ"},
+            {"to": "far_relay", "hint": "彼方の中継地へ"},
+        ],
+        "floor_color": ( 50,  50,  48),
+        "wall_color" : ( 20,  20,  22),
+    },
+
+    "far_connection_depths": {
+        "name"       : "彼方の接続点の奥",
+        "has_enemies": False,
+        "map_type"   : "far_connection_depths",
+        "exits"      : [
+            {"to": "far_connection", "hint": "彼方の接続点へ戻る"},
+        ],
+        "floor_color": ( 49,  49,  47),
+        "wall_color" : ( 19,  20,  22),
+    },
+
+    "far_relay": {
+        "name"       : "彼方の中継地",
+        "has_enemies": False,
+        "map_type"   : "far_relay",
+        "exits"      : [
+            {"to": "far_connection", "hint": "彼方の接続点へ戻る"},
+            {"to": "far_relay_depths", "hint": "彼方の中継地の奥へ"},
+            {"to": "far_terminus", "hint": "彼方の終端へ"},
+        ],
+        "floor_color": ( 52,  51,  47),
+        "wall_color" : ( 21,  20,  21),
+    },
+
+    "far_relay_depths": {
+        "name"       : "彼方の中継地の奥",
+        "has_enemies": False,
+        "map_type"   : "far_relay_depths",
+        "exits"      : [
+            {"to": "far_relay", "hint": "彼方の中継地へ戻る"},
+        ],
+        "floor_color": ( 50,  49,  46),
+        "wall_color" : ( 20,  19,  21),
+    },
+
+    "far_terminus": {
+        "name"       : "彼方の終端",
+        "has_enemies": False,
+        "map_type"   : "far_terminus",
+        "exits"      : [
+            {"to": "far_relay", "hint": "彼方の中継地へ戻る"},
+        ],
+        "floor_color": ( 51,  50,  47),
+        "wall_color" : ( 20,  20,  21),
     },
 
     # "forest": {
