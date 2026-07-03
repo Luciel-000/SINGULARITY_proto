@@ -1,73 +1,133 @@
 # SINGULARITY - Chronicle of Origin -
 
-Pythonで開発中のオリジナルRPGプロトタイプです。
+略称：シンギュラ
 
 ## 概要
 
-「プレイヤーの行動で世界が変化するRPG」をテーマに制作中。
+Python / pygame-ce で開発中のオリジナルRPGプロトタイプです。
 
-属性・ジョブ進化・観測補助機構システムなどを実装予定です。
+「プレイヤーの行動で世界が変化するRPG」をテーマに、属性、職業、観測補助機構、探索進行、story_flags による状態復元を段階的に実装しています。
 
-現在はプロトタイプ段階として、
-
-* 戦闘システム
-* プレイヤー管理
-* 敵管理
-* ワールド管理
-* スプライト管理
-
-などの基礎システムを構築しています。
+現在の Prototype 1.3 では、四大精霊ルートから白影、境界、彼方へ続く探索ルートまで進行できます。彼方ルートは「彼方の終端」まで到達可能で、中心反応を調べ終え、老人へ報告する段階まで実装済みです。
 
 ---
 
 ## 使用技術
 
 * Python
-* pygame
+* pygame-ce
 * Git / GitHub
 
 ---
 
 ## 起動方法
 
-```bash
-pip install pygame
-python main.py
+Windows PowerShell で仮想環境を使う場合:
+
+```powershell
+.\.venv\Scripts\Activate.ps1
+.\.venv\Scripts\python.exe main.py
 ```
 
----
+仮想環境を有効化せずに直接起動する場合:
 
-## 現在の実装内容
+```powershell
+.\.venv\Scripts\python.exe main.py
+```
 
-* プレイヤー表示
-* 敵表示
-* 戦闘基礎システム
-* スプライト管理
-* 日本語フォント対応
-* モジュール分割構成
+エントリーファイルは `main.py` です。
 
 ---
 
-## 今後の実装予定
+## 基本操作
 
+* 移動: WASD / 矢印キー
+* 決定・調べる・会話送り: Z / Enter / Space
+* 会話を閉じる・キャンセル: X / Esc
+* 攻撃: 戦闘コマンドで決定
+* セーブ / ロードメニュー: 探索中に Esc
+* タイトル操作: ↑ / ↓ または W / S で選択、Z / Enter / Space で決定
+
+---
+
+## 実装済み機能
+
+* タイトル画面、NEW GAME / LOAD GAME
+* 主人公名と観測補助機構名の入力
+* マップ移動とゾーン遷移
+* NPC会話
+* 現在の目的表示
+* 戦闘、経験値、レベル
+* 職業: ノービス / ファイター / メイジ
 * 属性システム
-* ジョブ進化
-* プレイヤー補助システム
-* マップ移動
-* セーブ機能
-* UI改善
-* ドットアニメーション
+* セーブ / ロードと story_flags 復元
+* 封印の欠片、祠イベント
+* シルフ、ウンディーネ、サラマンダー、ノーム関連ルート
+* 白影、境界、彼方へ続く探索ルート
+* 彼方ルートは「彼方の終端」まで到達可能
 
 ---
 
-## コンセプト
+## 現在実装済みゾーン
 
-「プレイヤーの記憶に残るゲーム体験」を目標に制作しています。
-
-ダークファンタジー × 成長 × 選択 をテーマに、
-独自の世界観を構築中です。
+* `town`
+* `field`
+* `north_road`
+* `shrine_inner`
+* `wind_gorge`
+* `water_cave`
+* `water_cave_depths`
+* `water_cave_source`
+* `water_cave_reflection`
+* `water_cave_mirror_chamber`
+* `ember_path`
+* `ember_depths`
+* `stonefield_path`
+* `stonefield_depths`
+* `pale_path`
+* `pale_depths`
+* `boundary_path`
+* `boundary_depths`
+* `distant_path`
+* `distant_depths`
+* `old_road`
+* `old_road_depths`
+* `sealed_path`
+* `sealed_path_depths`
+* `lost_place`
+* `lost_place_depths`
+* `forgotten_boundary`
+* `forgotten_boundary_depths`
+* `far_boundary`
+* `far_boundary_depths`
+* `far_echo`
+* `far_echo_depths`
+* `far_connection`
+* `far_connection_depths`
+* `far_relay`
+* `far_relay_depths`
+* `far_terminus`
 
 ---
+
+## 現在のストーリー進行
+
+* 四大精霊ルートは風、水、火、土まで実装済みです。
+* 四属性の共鳴から、白影、境界、彼方の探索ルートへ進行します。
+* 現在は「彼方の終端」で中心反応を調べ終え、老人へ報告する段階です。
+* 彼方の終端の報告後、さらに先の地域、遠方の反応との対面、光闇属性、職業進化、真相開示などは未実装です。
+
+---
+
+## 注意
+
+* README 内では観測補助機構という表記を使います。
+* 未実装内容を実装済みとして扱わないでください。
+* 将来予定は確定仕様ではなく、今後の実装で変更される可能性があります。
+
+---
+
+## 開発履歴
 
 ## Author
 
@@ -253,12 +313,12 @@ LUCIEL_000
 
 ### Step1
 
-- 旧称「大賢者」表記を整理
+- 旧称表記を整理
 - README / コメント / 説明文の表記を「観測補助機構」系へ統一
-- 大賢者システム → 観測補助機構システム
-- 大賢者メッセージ → 観測補助メッセージ
+- 旧称のシステム表記 → 観測補助機構システム
+- 旧称のメッセージ表記 → 観測補助メッセージ
 - スキル説明文の旧称も整理
-- Select-String で「大賢者」0件を確認
+- 旧称表記が残っていないことを確認
 - 機能変更なし
 - save_data やテスト用スクリプトは commit 対象外
 
@@ -270,7 +330,7 @@ LUCIEL_000
 - 空文字 / None / 不正値の場合は「観測補助機構」にフォールバック
 - 戦闘開始メッセージにも同じ差し替え処理を適用
 - 戦闘バランスや処理ロジックは変更なし
-- core/*.py に「大賢者」表記が残っていないことを確認
+- core/*.py に旧称表記が残っていないことを確認
 
 ### 最新コミット
 
@@ -280,7 +340,7 @@ LUCIEL_000
 ### Final Check
 
 - 構文チェック OK
-- core/*.py に「大賢者」表記が残っていないことを確認
+- core/*.py に旧称表記が残っていないことを確認
 - デフォルト名では戦闘ログが《観測補助機構》になることを確認
 - 名前変更時は戦闘ログが《ルシエル》などの設定名になることを確認
 - 空文字 / None は《観測補助機構》にフォールバック
@@ -310,7 +370,7 @@ LUCIEL_000
 - 条件なしの場合は elder_first を使用
 - elder_after_sage / elder_after_battle の会話を追加
 - story_flags / action_log の保存・復元後も会話分岐が維持されることを確認
-- core/*.py に「大賢者」表記が残っていないことを確認
+- core/*.py に旧称表記が残っていないことを確認
 - save_data やテスト用スクリプトは commit 対象外
 
 ### Step2
@@ -322,7 +382,7 @@ LUCIEL_000
 - quest_check_field_done=True の場合は elder_after_quest_done を優先
 - elder_after_quest_done の会話を追加
 - SAVE / LOAD 後も quest_check_field / quest_check_field_done が復元されることを確認
-- core/*.py に「大賢者」表記が残っていないことを確認
+- core/*.py に旧称表記が残っていないことを確認
 - クエスト一覧UIや報酬処理はまだ未実装
 - save_data やテスト用スクリプトは commit 対象外
 
@@ -336,7 +396,7 @@ LUCIEL_000
 - 探索中 STATE_PLAY のみ右上に目的を1行表示
 - 戦闘中・会話中には表示しない
 - SAVE / LOAD 後も目的表示が復元されることを確認
-- core/*.py に「大賢者」表記が残っていないことを確認
+- core/*.py に旧称表記が残っていないことを確認
 - クエスト一覧UIや報酬処理はまだ未実装
 - save_data やテスト用スクリプトは commit 対象外
 
@@ -356,7 +416,7 @@ LUCIEL_000
 - 戦闘中・会話中には目的表示なし
 - support_system_name の保存・復元 OK
 - 戦闘ログ名反映 OK
-- core/*.py に「大賢者」表記が残っていないことを確認
+- core/*.py に旧称表記が残っていないことを確認
 - save_data やテスト用スクリプトは commit 対象外
 - Prototype 1.2 完了
 
@@ -378,7 +438,7 @@ LUCIEL_000
 - quest_check_field_reported=True の場合は目的表示を消す
 - 報告後の老人会話 elder_after_report を追加
 - SAVE / LOAD 後も quest_check_field_reported が復元されることを確認
-- core/*.py に「大賢者」表記が残っていないことを確認
+- core/*.py に旧称表記が残っていないことを確認
 - 報酬UI / アイテム報酬 / クエスト一覧UI はまだ未実装
 - save_data やテスト用スクリプトは commit 対象外
 
@@ -390,7 +450,7 @@ LUCIEL_000
 - quest_go_north は quest_check_field_reported より優先表示
 - elder_after_report の会話に北へ向かう示唆を追加
 - SAVE / LOAD 後も quest_go_north が復元されることを確認
-- core/*.py に「大賢者」表記が残っていないことを確認
+- core/*.py に旧称表記が残っていないことを確認
 - 新マップ / 北の祠イベント / クエスト一覧UI / 報酬UI はまだ未実装
 - save_data やテスト用スクリプトは commit 対象外
 
@@ -401,7 +461,7 @@ LUCIEL_000
 - quest_go_north_reached=True の場合は「目的：北の異変を調べる」を表示
 - elder_after_go_north_reached の会話を追加
 - SAVE / LOAD 後も quest_go_north_reached が復元されることを確認
-- core/*.py に「大賢者」表記が残っていないことを確認
+- core/*.py に旧称表記が残っていないことを確認
 - 新マップ・北の祠イベント・報酬UIはまだ未実装
 - save_data やテスト用スクリプトは commit 対象外
 
@@ -416,7 +476,7 @@ LUCIEL_000
 - north_road は敵なしの小規模固定マップ
 - north_road で SAVE / LOAD 後も復帰できることを確認
 - 既存 town ↔ field 遷移を維持
-- core/*.py に「大賢者」表記が残っていないことを確認
+- core/*.py に旧称表記が残っていないことを確認
 - 北の祠イベント・敵配置・報酬UIはまだ未実装
 - save_data やテスト用スクリプトは commit 対象外
 
@@ -443,7 +503,7 @@ LUCIEL_000
 - elder_after_shrine_hint の会話を追加
 - 老人は封印や欠片について答えを言い切らず、ヒント中心にする
 - SAVE / LOAD 後も shrine_hint_received が復元されることを確認
-- core/*.py に「大賢者」表記が残っていないことを確認
+- core/*.py に旧称表記が残っていないことを確認
 - 封印の欠片取得・祠内部マップ・封印解除はまだ未実装
 - save_data やテスト用スクリプトは commit 対象外
 
@@ -457,7 +517,7 @@ LUCIEL_000
 - 取得済みの欠片は非表示となり、再取得できない
 - 観測補助機構の設定名を欠片イベントの話者名に使用
 - SAVE / LOAD 後も shrine_fragment_1_obtained が復元されることを確認
-- core/*.py に「大賢者」表記が残っていないことを確認
+- core/*.py に旧称表記が残っていないことを確認
 - 祠で欠片を使う処理・封印解除・祠内部マップ・ボス戦はまだ未実装
 - save_data やテスト用スクリプトは commit 対象外
 
@@ -472,7 +532,7 @@ LUCIEL_000
 - 祠入口の見た目を、封印反応後に変化させる
 - 再度Zを押してもイベントは再発せず、「封印はわずかに開いている」などの短い反応のみ
 - SAVE / LOAD 後も shrine_fragment_1_offered / shrine_seal_reacted が復元されることを確認
-- core/*.py に「大賢者」表記が残っていないことを確認
+- core/*.py に旧称表記が残っていないことを確認
 - 祠内部マップ・実際の遷移・ボス戦・封印の完全解除はまだ未実装
 - save_data やテスト用スクリプトは commit 対象外
 
@@ -489,7 +549,7 @@ LUCIEL_000
 - 観測補助機構の設定名を初回入場イベントの話者名に使用
 - shrine_inner_entered=True かつ shrine_altar_investigated=False の場合は「目的：祠の祭壇を調べる」を表示
 - SAVE / LOAD 後も current_zone_id と shrine_inner_entered が復元されることを確認
-- core/*.py に「大賢者」表記が残っていないことを確認
+- core/*.py に旧称表記が残っていないことを確認
 - 祭壇を調べる本イベント・ボス戦・封印の完全解除はまだ未実装
 - save_data やテスト用スクリプトは commit 対象外
 
@@ -503,7 +563,7 @@ LUCIEL_000
 - shrine_altar_investigated=True の場合は「目的：老人に祭壇のことを報告する」を表示
 - 調査済み後は本イベントを再発させず、短い反応のみ表示
 - SAVE / LOAD 後も shrine_altar_investigated / shrine_altar_resonance_seen が復元されることを確認
-- core/*.py に「大賢者」表記が残っていないことを確認
+- core/*.py に旧称表記が残っていないことを確認
 - ボス戦・封印解除・真相開示・新マップ追加はまだ未実装
 - save_data やテスト用スクリプトは commit 対象外
 
@@ -518,7 +578,7 @@ LUCIEL_000
 - 老人は次の欠片について、風が絶えず通り抜ける場所という手がかりのみ示す
 - 真相、天使・悪魔、ソロモンの正体はまだ明かさない
 - SAVE / LOAD 後も shrine_altar_reported / next_fragment_hint_received が復元されることを確認
-- core/*.py に「大賢者」表記が残っていないことを確認
+- core/*.py に旧称表記が残っていないことを確認
 - 新マップ・次の欠片取得・ボス戦はまだ未実装
 - save_data やテスト用スクリプトは commit 対象外
 
@@ -536,7 +596,7 @@ LUCIEL_000
 - 観測補助機構の設定名を初回入場イベントの話者名に使用
 - wind_gorge_entered=True かつ wind_gorge_anomaly_seen=False の場合は「目的：峡谷の奥を調べる」を表示
 - SAVE / LOAD 後も current_zone_id と wind_gorge_entered が復元されることを確認
-- core/*.py に「大賢者」表記が残っていないことを確認
+- core/*.py に旧称表記が残っていないことを確認
 - 峡谷奥の異変調査・次の欠片取得・ボス戦はまだ未実装
 - save_data やテスト用スクリプトは commit 対象外
 
@@ -552,7 +612,7 @@ LUCIEL_000
 - 調査済み後は本イベントを再発させず、短い反応のみ表示
 - wind_gorge_anomaly_seen=True の場合、異変地点の光と風の描画を少し強化
 - SAVE / LOAD 後も wind_gorge_anomaly_seen / wind_gorge_wind_resonance_seen が復元されることを確認
-- core/*.py に「大賢者」表記が残っていないことを確認
+- core/*.py に旧称表記が残っていないことを確認
 - 次の欠片取得・新敵・ボス戦・新マップはまだ未実装
 - save_data やテスト用スクリプトは commit 対象外
 
@@ -568,7 +628,7 @@ LUCIEL_000
 - 初回イベント後は再発させず、再度Zでは短いシルフ反応のみ表示
 - 風の中心に淡い人影・粒子・風の渦を追加して、シルフの気配を表現
 - SAVE / LOAD 後も sylph_encountered / sylph_trial_available が復元されることを確認
-- core/*.py に「大賢者」表記が残っていないことを確認
+- core/*.py に旧称表記が残っていないことを確認
 - シルフ戦・仲間化・2つ目の封印の欠片取得・新マップはまだ未実装
 - save_data やテスト用スクリプトは commit 対象外
 
@@ -586,7 +646,7 @@ LUCIEL_000
 - sylph_trial_cleared=True の場合は「目的：風の欠片へ向かう」を表示
 - 試練開始後・完了後は本イベントを再発させず、短い反応のみ表示
 - sylph_trial_step をSAVE / LOADで復元できるように対応
-- core/*.py に「大賢者」表記が残っていないことを確認
+- core/*.py に旧称表記が残っていないことを確認
 - シルフ戦・仲間化・2つ目の封印の欠片取得・新マップはまだ未実装
 - save_data やテスト用スクリプトは commit 対象外
 
@@ -603,7 +663,7 @@ LUCIEL_000
 - 取得後は同じイベントを再発させず、短いシルフ反応のみ表示
 - 取得後、風の中心の渦と光が落ち着く描画変化を追加
 - SAVE / LOAD 後も wind_fragment_2_obtained / sylph_fragment_granted が復元されることを確認
-- core/*.py に「大賢者」表記が残っていないことを確認
+- core/*.py に旧称表記が残っていないことを確認
 - 祠で2つ目の欠片を使う処理・シルフ仲間化・新マップ・ボス戦はまだ未実装
 - save_data やテスト用スクリプトは commit 対象外
 
@@ -620,7 +680,7 @@ LUCIEL_000
 - 奉納後は本イベントを再発させず、祭壇の短い反応のみ表示
 - 二つの欠片の光、風の線、淡い粒子など祭壇の描画変化を追加
 - SAVE / LOAD 後も wind_fragment_2_offered / shrine_second_seal_reacted / shrine_altar_changed が復元されることを確認
-- core/*.py に「大賢者」表記が残っていないことを確認
+- core/*.py に旧称表記が残っていないことを確認
 - 次の精霊イベント・新マップ・3つ目の欠片・ボス戦・封印の完全解除はまだ未実装
 - save_data やテスト用スクリプトは commit 対象外
 
@@ -635,7 +695,7 @@ LUCIEL_000
 - 老人は、流れる水・記憶を運ぶ水・水音についてヒントだけを示す
 - ウンディーネ、天使・悪魔・神、ソロモンの正体はまだ明かさない
 - SAVE / LOAD 後も shrine_second_reaction_reported / water_hint_received が復元されることを確認
-- core/*.py に「大賢者」表記が残っていないことを確認
+- core/*.py に旧称表記が残っていないことを確認
 - 水エリア・ウンディーネ登場・3つ目の封印の欠片・ボス戦はまだ未実装
 - save_data やテスト用スクリプトは commit 対象外
 
