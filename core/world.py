@@ -266,6 +266,10 @@ class World:
             self._generate_far_relay_depths()
         elif self.map_type == "far_terminus":
             self._generate_far_terminus()
+        elif self.map_type == "outer_edge":
+            self._generate_outer_edge()
+        elif self.map_type == "outer_edge_depths":
+            self._generate_outer_edge_depths()
         else:
             self._generate_town()
 
@@ -1935,8 +1939,101 @@ class World:
 
         exit_col = center_col
         exit_row = room_row + room_h - 1
+        self._tiles[center_row][room_col + room_w - 1] = TILE_EXIT
         self._tiles[exit_row][exit_col] = TILE_EXIT
         self.player_spawn = (exit_col * TILE + 4, (exit_row - 1) * TILE + 4)
+
+    def _generate_outer_edge(self):
+        """外縁の道の固定マップを生成する。"""
+        self._tiles = [[TILE_WALL] * MAP_COLS for _ in range(MAP_ROWS)]
+
+        path_row = 8
+        start_col = 4
+        end_col = 20
+
+        for col in range(start_col, end_col + 1):
+            for row in range(path_row - 1, path_row + 2):
+                if 0 <= row < MAP_ROWS and 0 <= col < MAP_COLS:
+                    self._tiles[row][col] = TILE_FLOOR
+
+        for col in range(8, 16):
+            if 0 <= path_row - 3 < MAP_ROWS:
+                self._tiles[path_row - 3][col] = TILE_FLOOR
+            if 0 <= path_row + 3 < MAP_ROWS:
+                self._tiles[path_row + 3][col] = TILE_FLOOR
+
+        for row, col in (
+            (path_row - 2, start_col + 2),
+            (path_row + 2, start_col + 5),
+            (path_row - 2, start_col + 9),
+            (path_row + 2, start_col + 12),
+            (path_row - 2, end_col - 2),
+        ):
+            if 0 <= row < MAP_ROWS and 0 <= col < MAP_COLS:
+                self._tiles[row][col] = TILE_WALL
+
+        for row, col, tile in (
+            (path_row - 1, start_col + 5, TILE_WIND),
+            (path_row + 1, start_col + 8, TILE_WATER),
+            (path_row - 1, start_col + 11, TILE_EMBER),
+            (path_row + 1, start_col + 14, TILE_STONEFIELD),
+            (path_row, start_col + 10, TILE_PALE),
+            (path_row, start_col + 12, TILE_PALE),
+        ):
+            if 0 <= row < MAP_ROWS and 0 <= col < MAP_COLS:
+                self._tiles[row][col] = tile
+
+        self.rooms.append(Room(start_col, path_row - 2, end_col - start_col + 1, 5))
+
+        self._tiles[path_row][start_col] = TILE_EXIT
+        self._tiles[path_row][end_col] = TILE_EXIT
+        self.player_spawn = ((start_col + 1) * TILE + 4, path_row * TILE + 4)
+
+    def _generate_outer_edge_depths(self):
+        """外縁の道の奥の固定マップを生成する。"""
+        self._tiles = [[TILE_WALL] * MAP_COLS for _ in range(MAP_ROWS)]
+
+        path_row = 8
+        start_col = 4
+        end_col = 20
+
+        for col in range(start_col, end_col + 1):
+            for row in range(path_row - 1, path_row + 2):
+                if 0 <= row < MAP_ROWS and 0 <= col < MAP_COLS:
+                    self._tiles[row][col] = TILE_FLOOR
+
+        for col in range(9, 18):
+            if 0 <= path_row - 2 < MAP_ROWS:
+                self._tiles[path_row - 2][col] = TILE_FLOOR
+            if col % 2 == 0 and 0 <= path_row + 2 < MAP_ROWS:
+                self._tiles[path_row + 2][col] = TILE_FLOOR
+
+        for row, col in (
+            (path_row - 2, start_col + 4),
+            (path_row + 2, start_col + 7),
+            (path_row - 2, start_col + 11),
+            (path_row + 2, end_col - 3),
+            (path_row - 3, end_col - 1),
+        ):
+            if 0 <= row < MAP_ROWS and 0 <= col < MAP_COLS:
+                self._tiles[row][col] = TILE_WALL
+
+        for row, col, tile in (
+            (path_row - 1, start_col + 7, TILE_WIND),
+            (path_row + 1, start_col + 9, TILE_WATER),
+            (path_row - 1, start_col + 11, TILE_EMBER),
+            (path_row + 1, start_col + 13, TILE_STONEFIELD),
+            (path_row, start_col + 12, TILE_PALE),
+            (path_row, start_col + 13, TILE_PALE),
+            (path_row, start_col + 14, TILE_PALE),
+        ):
+            if 0 <= row < MAP_ROWS and 0 <= col < MAP_COLS:
+                self._tiles[row][col] = tile
+
+        self.rooms.append(Room(start_col, path_row - 2, end_col - start_col + 1, 5))
+
+        self._tiles[path_row][start_col] = TILE_EXIT
+        self.player_spawn = ((start_col + 1) * TILE + 4, path_row * TILE + 4)
 
     def _carve_room(self, room: Room):
         for r in range(room.row, room.row + room.h):

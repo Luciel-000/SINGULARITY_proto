@@ -522,9 +522,33 @@ ZONE_DATA: dict[str, dict] = {
         "map_type"   : "far_terminus",
         "exits"      : [
             {"to": "far_relay", "hint": "彼方の中継地へ戻る"},
+            {"to": "outer_edge", "hint": "外縁の道へ"},
         ],
         "floor_color": ( 51,  50,  47),
         "wall_color" : ( 20,  20,  21),
+    },
+
+    "outer_edge": {
+        "name"       : "外縁の道",
+        "has_enemies": False,
+        "map_type"   : "outer_edge",
+        "exits"      : [
+            {"to": "far_terminus", "hint": "彼方の終端へ戻る"},
+            {"to": "outer_edge_depths", "hint": "外縁の道の奥へ"},
+        ],
+        "floor_color": ( 49,  50,  48),
+        "wall_color" : ( 18,  20,  22),
+    },
+
+    "outer_edge_depths": {
+        "name"       : "外縁の道の奥",
+        "has_enemies": False,
+        "map_type"   : "outer_edge_depths",
+        "exits"      : [
+            {"to": "outer_edge", "hint": "外縁の道へ戻る"},
+        ],
+        "floor_color": ( 46,  48,  47),
+        "wall_color" : ( 16,  18,  21),
     },
 
     # "forest": {
