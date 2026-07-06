@@ -535,6 +535,7 @@ ZONE_DATA: dict[str, dict] = {
         "exits"      : [
             {"to": "far_terminus", "hint": "彼方の終端へ戻る"},
             {"to": "outer_edge_depths", "hint": "外縁の道の奥へ"},
+            {"to": "outer_depths", "hint": "外縁の深部へ"},
         ],
         "floor_color": ( 49,  50,  48),
         "wall_color" : ( 18,  20,  22),
@@ -549,6 +550,149 @@ ZONE_DATA: dict[str, dict] = {
         ],
         "floor_color": ( 46,  48,  47),
         "wall_color" : ( 16,  18,  21),
+    },
+
+    "outer_depths": {
+        "name"       : "外縁の深部",
+        "has_enemies": False,
+        "map_type"   : "outer_depths",
+        "exits"      : [
+            {"to": "outer_edge", "hint": "外縁の道へ戻る"},
+            {"to": "outer_depths_beyond", "hint": "外縁の彼方へ"},
+        ],
+        "floor_color": ( 43,  45,  45),
+        "wall_color" : ( 14,  16,  19),
+    },
+
+    "outer_depths_beyond": {
+        "name"       : "外縁の彼方",
+        "has_enemies": False,
+        "map_type"   : "outer_depths_beyond",
+        "exits"      : [
+            {"to": "outer_depths", "hint": "外縁の深部へ戻る"},
+            {"to": "outer_depths_far", "hint": "外縁の遠層へ"},
+        ],
+        "floor_color": ( 41,  43,  44),
+        "wall_color" : ( 13,  15,  18),
+    },
+
+    "outer_depths_far": {
+        "name"       : "外縁の遠層",
+        "has_enemies": False,
+        "map_type"   : "outer_depths_far",
+        "exits"      : [
+            {"to": "outer_depths_beyond", "hint": "外縁の彼方へ戻る"},
+            {"to": "outer_depths_inner", "hint": "外縁の内層へ"},
+        ],
+        "floor_color": ( 39,  41,  43),
+        "wall_color" : ( 12,  14,  17),
+    },
+
+    "outer_depths_inner": {
+        "name"       : "外縁の内層",
+        "has_enemies": False,
+        "map_type"   : "outer_depths_inner",
+        "exits"      : [
+            {"to": "outer_depths_far", "hint": "外縁の遠層へ戻る"},
+            {"to": "outer_depths_coreward", "hint": "外縁の核寄りへ"},
+        ],
+        "floor_color": ( 38,  40,  42),
+        "wall_color" : ( 11,  13,  16),
+    },
+
+    "outer_depths_coreward": {
+        "name"       : "外縁の核寄り",
+        "has_enemies": False,
+        "map_type"   : "outer_depths_coreward",
+        "exits"      : [
+            {"to": "outer_depths_inner", "hint": "外縁の内層へ戻る"},
+            {"to": "outer_depths_stillreach", "hint": "外縁の静域へ"},
+        ],
+        "floor_color": ( 36,  38,  41),
+        "wall_color" : ( 10,  12,  15),
+    },
+
+    "outer_depths_stillreach": {
+        "name"       : "外縁の静域",
+        "has_enemies": False,
+        "map_type"   : "outer_depths_stillreach",
+        "exits"      : [
+            {"to": "outer_depths_coreward", "hint": "外縁の核寄りへ戻る"},
+            {"to": "outer_depths_quietcore", "hint": "外縁の静核へ"},
+        ],
+        "floor_color": ( 34,  36,  40),
+        "wall_color" : (  9,  11,  14),
+    },
+
+    "outer_depths_quietcore": {
+        "name"       : "外縁の静核",
+        "has_enemies": False,
+        "map_type"   : "outer_depths_quietcore",
+        "exits"      : [
+            {"to": "outer_depths_stillreach", "hint": "外縁の静域へ戻る"},
+            {"to": "outer_depths_quietcore_depths", "hint": "外縁の静核の奥へ"},
+        ],
+        "floor_color": ( 32,  34,  39),
+        "wall_color" : (  8,  10,  13),
+    },
+
+    "outer_depths_quietcore_depths": {
+        "name"       : "外縁の静核の奥",
+        "has_enemies": False,
+        "map_type"   : "outer_depths_quietcore_depths",
+        "exits"      : [
+            {"to": "outer_depths_quietcore", "hint": "外縁の静核へ戻る"},
+            {"to": "outer_depths_quietcore_reach", "hint": "外縁の静核深部へ"},
+        ],
+        "floor_color": ( 30,  32,  37),
+        "wall_color" : (  7,   9,  12),
+    },
+
+    "outer_depths_quietcore_reach": {
+        "name"       : "外縁の静核深部",
+        "has_enemies": False,
+        "map_type"   : "outer_depths_quietcore_reach",
+        "exits"      : [
+            {"to": "outer_depths_quietcore_depths", "hint": "外縁の静核の奥へ戻る"},
+            {"to": "outer_depths_quietcore_hollow", "hint": "外縁の静核空洞へ"},
+        ],
+        "floor_color": ( 29,  31,  36),
+        "wall_color" : (  6,   8,  11),
+    },
+
+    "outer_depths_quietcore_hollow": {
+        "name"       : "外縁の静核空洞",
+        "has_enemies": False,
+        "map_type"   : "outer_depths_quietcore_hollow",
+        "exits"      : [
+            {"to": "outer_depths_quietcore_reach", "hint": "外縁の静核深部へ戻る"},
+            {"to": "outer_depths_quietcore_silentfold", "hint": "外縁の静核の静層へ"},
+        ],
+        "floor_color": ( 27,  29,  34),
+        "wall_color" : (  5,   7,  10),
+    },
+
+    "outer_depths_quietcore_silentfold": {
+        "name"       : "外縁の静核の静層",
+        "has_enemies": False,
+        "map_type"   : "outer_depths_quietcore_silentfold",
+        "exits"      : [
+            {"to": "outer_depths_quietcore_hollow", "hint": "外縁の静核空洞へ戻る"},
+            {"to": "outer_depths_quietcore_silentfold_depths", "hint": "外縁の静核の静層奥へ"},
+        ],
+        "floor_color": ( 25,  27,  32),
+        "wall_color" : (  4,   6,   9),
+    },
+
+    "outer_depths_quietcore_silentfold_depths": {
+        "name"       : "外縁の静核の静層奥",
+        "has_enemies": False,
+        "map_type"   : "outer_depths_quietcore_silentfold_depths",
+        "exits"      : [
+            {"to": "outer_depths_quietcore_silentfold", "hint": "外縁の静核の静層へ戻る"},
+        ],
+        "floor_color": ( 24,  26,  31),
+        "wall_color" : (  4,   5,   8),
     },
 
     # "forest": {
