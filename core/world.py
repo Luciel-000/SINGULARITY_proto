@@ -294,6 +294,26 @@ class World:
             self._generate_outer_depths_quietcore_silentfold()
         elif self.map_type == "outer_depths_quietcore_silentfold_depths":
             self._generate_outer_depths_quietcore_silentfold_depths()
+        elif self.map_type == "outer_depths_quietcore_stillcore":
+            self._generate_outer_depths_quietcore_stillcore()
+        elif self.map_type == "outer_depths_quietcore_stillcore_depths":
+            self._generate_outer_depths_quietcore_stillcore_depths()
+        elif self.map_type == "outer_depths_quietcore_stillcore_far":
+            self._generate_outer_depths_quietcore_stillcore_far()
+        elif self.map_type == "outer_depths_quietcore_stillcore_far_reach":
+            self._generate_outer_depths_quietcore_stillcore_far_reach()
+        elif self.map_type == "outer_depths_quietcore_stillcore_far_reach_beyond":
+            self._generate_outer_depths_quietcore_stillcore_far_reach_beyond()
+        elif self.map_type == "outer_depths_quietcore_stillcore_far_reach_beyond_inner":
+            self._generate_outer_depths_quietcore_stillcore_far_reach_beyond_inner()
+        elif self.map_type == "outer_depths_quietcore_stillcore_far_reach_beyond_inner_depths":
+            self._generate_outer_depths_quietcore_stillcore_far_reach_beyond_inner_depths()
+        elif self.map_type == "outer_depths_quietcore_stillcore_far_reach_beyond_inner_depths_coreward":
+            self._generate_outer_depths_quietcore_stillcore_far_reach_beyond_inner_depths_coreward()
+        elif self.map_type == "outer_depths_quietcore_stillcore_far_reach_beyond_inner_depths_coreward_inner":
+            self._generate_outer_depths_quietcore_stillcore_far_reach_beyond_inner_depths_coreward_inner()
+        elif self.map_type == "outer_depths_quietcore_stillcore_far_reach_beyond_inner_depths_coreward_inner_reach":
+            self._generate_outer_depths_quietcore_stillcore_far_reach_beyond_inner_depths_coreward_inner_reach()
         else:
             self._generate_town()
 
@@ -2353,6 +2373,512 @@ class World:
             (path_row, start_col + 14, TILE_PALE),
             (path_row, start_col + 16, TILE_PALE),
             (path_row, start_col + 18, TILE_PALE),
+        ):
+            if 0 <= row < MAP_ROWS and 0 <= col < MAP_COLS:
+                self._tiles[row][col] = tile
+
+        self.rooms.append(Room(start_col, path_row - 2, end_col - start_col + 1, 5))
+
+        self._tiles[path_row][start_col] = TILE_EXIT
+        self._tiles[path_row][start_col + 13] = TILE_EXIT
+        self.player_spawn = ((start_col + 1) * TILE + 4, path_row * TILE + 4)
+
+    def _generate_outer_depths_quietcore_stillcore(self):
+        """外縁の静核深層の固定マップを生成する。"""
+        self._tiles = [[TILE_WALL] * MAP_COLS for _ in range(MAP_ROWS)]
+
+        path_row = 8
+        start_col = 4
+        end_col = 21
+
+        for col in range(start_col, end_col + 1):
+            for row in range(path_row - 1, path_row + 2):
+                if 0 <= row < MAP_ROWS and 0 <= col < MAP_COLS:
+                    self._tiles[row][col] = TILE_FLOOR
+
+        for col in range(7, 21):
+            if 0 <= path_row - 2 < MAP_ROWS and col % 3 != 0:
+                self._tiles[path_row - 2][col] = TILE_FLOOR
+            if 0 <= path_row + 2 < MAP_ROWS and col % 2 == 0:
+                self._tiles[path_row + 2][col] = TILE_FLOOR
+
+        for row, col in (
+            (path_row - 2, start_col + 3),
+            (path_row + 2, start_col + 6),
+            (path_row - 2, start_col + 11),
+            (path_row + 2, start_col + 14),
+            (path_row - 2, start_col + 16),
+            (path_row + 1, end_col - 2),
+        ):
+            if 0 <= row < MAP_ROWS and 0 <= col < MAP_COLS:
+                self._tiles[row][col] = TILE_WALL
+
+        for row, col, tile in (
+            (path_row - 1, start_col + 7, TILE_WIND),
+            (path_row + 1, start_col + 9, TILE_WATER),
+            (path_row - 1, start_col + 12, TILE_EMBER),
+            (path_row + 1, start_col + 14, TILE_STONEFIELD),
+            (path_row, start_col + 8, TILE_PALE),
+            (path_row, start_col + 10, TILE_PALE),
+            (path_row, start_col + 12, TILE_PALE),
+            (path_row, start_col + 14, TILE_PALE),
+            (path_row, start_col + 16, TILE_PALE),
+            (path_row, start_col + 18, TILE_PALE),
+        ):
+            if 0 <= row < MAP_ROWS and 0 <= col < MAP_COLS:
+                self._tiles[row][col] = tile
+
+        self.rooms.append(Room(start_col, path_row - 2, end_col - start_col + 1, 5))
+
+        self._tiles[path_row][start_col] = TILE_EXIT
+        self._tiles[path_row][start_col + 14] = TILE_EXIT
+        self.player_spawn = ((start_col + 1) * TILE + 4, path_row * TILE + 4)
+
+    def _generate_outer_depths_quietcore_stillcore_depths(self):
+        """外縁の静核深層奥の固定マップを生成する。"""
+        self._tiles = [[TILE_WALL] * MAP_COLS for _ in range(MAP_ROWS)]
+
+        path_row = 8
+        start_col = 4
+        end_col = 21
+
+        for col in range(start_col, end_col + 1):
+            for row in range(path_row - 1, path_row + 2):
+                if 0 <= row < MAP_ROWS and 0 <= col < MAP_COLS:
+                    self._tiles[row][col] = TILE_FLOOR
+
+        for col in range(7, 21):
+            if 0 <= path_row - 2 < MAP_ROWS and col % 2 == 1:
+                self._tiles[path_row - 2][col] = TILE_FLOOR
+            if 0 <= path_row + 2 < MAP_ROWS and col % 3 != 2:
+                self._tiles[path_row + 2][col] = TILE_FLOOR
+
+        for row, col in (
+            (path_row - 2, start_col + 4),
+            (path_row + 2, start_col + 7),
+            (path_row - 2, start_col + 10),
+            (path_row + 2, start_col + 13),
+            (path_row - 2, start_col + 16),
+            (path_row + 1, end_col - 2),
+        ):
+            if 0 <= row < MAP_ROWS and 0 <= col < MAP_COLS:
+                self._tiles[row][col] = TILE_WALL
+
+        for row, col, tile in (
+            (path_row - 1, start_col + 7, TILE_WIND),
+            (path_row + 1, start_col + 9, TILE_WATER),
+            (path_row - 1, start_col + 12, TILE_EMBER),
+            (path_row + 1, start_col + 14, TILE_STONEFIELD),
+            (path_row, start_col + 8, TILE_PALE),
+            (path_row, start_col + 10, TILE_PALE),
+            (path_row, start_col + 12, TILE_PALE),
+            (path_row, start_col + 14, TILE_PALE),
+            (path_row, start_col + 16, TILE_PALE),
+            (path_row, start_col + 18, TILE_PALE),
+        ):
+            if 0 <= row < MAP_ROWS and 0 <= col < MAP_COLS:
+                self._tiles[row][col] = tile
+
+        self.rooms.append(Room(start_col, path_row - 2, end_col - start_col + 1, 5))
+
+        self._tiles[path_row][start_col] = TILE_EXIT
+        self._tiles[path_row][start_col + 14] = TILE_EXIT
+        self.player_spawn = ((start_col + 1) * TILE + 4, path_row * TILE + 4)
+
+    def _generate_outer_depths_quietcore_stillcore_far(self):
+        """外縁の静核深層彼方の固定マップを生成する。"""
+        self._tiles = [[TILE_WALL] * MAP_COLS for _ in range(MAP_ROWS)]
+
+        path_row = 8
+        start_col = 4
+        end_col = 21
+
+        for col in range(start_col, end_col + 1):
+            for row in range(path_row - 1, path_row + 2):
+                if 0 <= row < MAP_ROWS and 0 <= col < MAP_COLS:
+                    self._tiles[row][col] = TILE_FLOOR
+
+        for col in range(7, 21):
+            if 0 <= path_row - 2 < MAP_ROWS and col % 3 != 1:
+                self._tiles[path_row - 2][col] = TILE_FLOOR
+            if 0 <= path_row + 2 < MAP_ROWS and col % 2 == 1:
+                self._tiles[path_row + 2][col] = TILE_FLOOR
+
+        for row, col in (
+            (path_row - 2, start_col + 3),
+            (path_row + 2, start_col + 6),
+            (path_row - 2, start_col + 9),
+            (path_row + 2, start_col + 12),
+            (path_row - 2, start_col + 15),
+            (path_row + 1, end_col - 2),
+        ):
+            if 0 <= row < MAP_ROWS and 0 <= col < MAP_COLS:
+                self._tiles[row][col] = TILE_WALL
+
+        for row, col, tile in (
+            (path_row - 1, start_col + 7, TILE_WIND),
+            (path_row + 1, start_col + 9, TILE_WATER),
+            (path_row - 1, start_col + 12, TILE_EMBER),
+            (path_row + 1, start_col + 14, TILE_STONEFIELD),
+            (path_row, start_col + 8, TILE_PALE),
+            (path_row, start_col + 10, TILE_PALE),
+            (path_row, start_col + 12, TILE_PALE),
+            (path_row, start_col + 14, TILE_PALE),
+            (path_row, start_col + 16, TILE_PALE),
+            (path_row, start_col + 18, TILE_PALE),
+        ):
+            if 0 <= row < MAP_ROWS and 0 <= col < MAP_COLS:
+                self._tiles[row][col] = tile
+
+        self.rooms.append(Room(start_col, path_row - 2, end_col - start_col + 1, 5))
+
+        self._tiles[path_row][start_col] = TILE_EXIT
+        self._tiles[path_row][start_col + 14] = TILE_EXIT
+        self.player_spawn = ((start_col + 1) * TILE + 4, path_row * TILE + 4)
+
+    def _generate_outer_depths_quietcore_stillcore_far_reach(self):
+        """外縁の静核深層彼方の奥の固定マップを生成する。"""
+        self._tiles = [[TILE_WALL] * MAP_COLS for _ in range(MAP_ROWS)]
+
+        path_row = 8
+        start_col = 4
+        end_col = 21
+
+        for col in range(start_col, end_col + 1):
+            for row in range(path_row - 1, path_row + 2):
+                if 0 <= row < MAP_ROWS and 0 <= col < MAP_COLS:
+                    self._tiles[row][col] = TILE_FLOOR
+
+        for col in range(7, 21):
+            if 0 <= path_row - 2 < MAP_ROWS and col % 2 == 0:
+                self._tiles[path_row - 2][col] = TILE_FLOOR
+            if 0 <= path_row + 2 < MAP_ROWS and col % 3 != 0:
+                self._tiles[path_row + 2][col] = TILE_FLOOR
+
+        for row, col in (
+            (path_row - 2, start_col + 4),
+            (path_row + 2, start_col + 7),
+            (path_row - 2, start_col + 10),
+            (path_row + 2, start_col + 13),
+            (path_row - 2, start_col + 16),
+            (path_row + 1, end_col - 2),
+        ):
+            if 0 <= row < MAP_ROWS and 0 <= col < MAP_COLS:
+                self._tiles[row][col] = TILE_WALL
+
+        for row, col, tile in (
+            (path_row - 1, start_col + 7, TILE_WIND),
+            (path_row + 1, start_col + 9, TILE_WATER),
+            (path_row - 1, start_col + 12, TILE_EMBER),
+            (path_row + 1, start_col + 14, TILE_STONEFIELD),
+            (path_row, start_col + 8, TILE_PALE),
+            (path_row, start_col + 10, TILE_PALE),
+            (path_row, start_col + 12, TILE_PALE),
+            (path_row, start_col + 14, TILE_PALE),
+            (path_row, start_col + 16, TILE_PALE),
+            (path_row, start_col + 18, TILE_PALE),
+        ):
+            if 0 <= row < MAP_ROWS and 0 <= col < MAP_COLS:
+                self._tiles[row][col] = tile
+
+        self.rooms.append(Room(start_col, path_row - 2, end_col - start_col + 1, 5))
+
+        self._tiles[path_row][start_col] = TILE_EXIT
+        self._tiles[path_row][start_col + 14] = TILE_EXIT
+        self.player_spawn = ((start_col + 1) * TILE + 4, path_row * TILE + 4)
+
+    def _generate_outer_depths_quietcore_stillcore_far_reach_beyond(self):
+        """外縁の静核深層彼方の奥地の固定マップを生成する。"""
+        self._tiles = [[TILE_WALL] * MAP_COLS for _ in range(MAP_ROWS)]
+
+        path_row = 8
+        start_col = 4
+        end_col = 21
+
+        for col in range(start_col, end_col + 1):
+            for row in range(path_row - 1, path_row + 2):
+                if 0 <= row < MAP_ROWS and 0 <= col < MAP_COLS:
+                    self._tiles[row][col] = TILE_FLOOR
+
+        for col in range(7, 21):
+            if 0 <= path_row - 2 < MAP_ROWS and col % 3 != 2:
+                self._tiles[path_row - 2][col] = TILE_FLOOR
+            if 0 <= path_row + 2 < MAP_ROWS and col % 2 == 0:
+                self._tiles[path_row + 2][col] = TILE_FLOOR
+
+        for row, col in (
+            (path_row - 2, start_col + 3),
+            (path_row + 2, start_col + 6),
+            (path_row - 2, start_col + 10),
+            (path_row + 2, start_col + 13),
+            (path_row - 2, start_col + 16),
+            (path_row + 1, end_col - 2),
+        ):
+            if 0 <= row < MAP_ROWS and 0 <= col < MAP_COLS:
+                self._tiles[row][col] = TILE_WALL
+
+        for row, col, tile in (
+            (path_row - 1, start_col + 7, TILE_WIND),
+            (path_row + 1, start_col + 9, TILE_WATER),
+            (path_row - 1, start_col + 12, TILE_EMBER),
+            (path_row + 1, start_col + 14, TILE_STONEFIELD),
+            (path_row, start_col + 8, TILE_PALE),
+            (path_row, start_col + 10, TILE_PALE),
+            (path_row, start_col + 12, TILE_PALE),
+            (path_row, start_col + 14, TILE_PALE),
+            (path_row, start_col + 16, TILE_PALE),
+            (path_row, start_col + 18, TILE_PALE),
+        ):
+            if 0 <= row < MAP_ROWS and 0 <= col < MAP_COLS:
+                self._tiles[row][col] = tile
+
+        self.rooms.append(Room(start_col, path_row - 2, end_col - start_col + 1, 5))
+
+        self._tiles[path_row][start_col] = TILE_EXIT
+        self._tiles[path_row][start_col + 14] = TILE_EXIT
+        self.player_spawn = ((start_col + 1) * TILE + 4, path_row * TILE + 4)
+
+    def _generate_outer_depths_quietcore_stillcore_far_reach_beyond_inner(self):
+        """外縁の静核深層彼方の奥地深部の固定マップを生成する。"""
+        self._tiles = [[TILE_WALL] * MAP_COLS for _ in range(MAP_ROWS)]
+
+        path_row = 8
+        start_col = 4
+        end_col = 21
+
+        for col in range(start_col, end_col + 1):
+            for row in range(path_row - 1, path_row + 2):
+                if 0 <= row < MAP_ROWS and 0 <= col < MAP_COLS:
+                    self._tiles[row][col] = TILE_FLOOR
+
+        for col in range(7, 21):
+            if 0 <= path_row - 2 < MAP_ROWS and col % 2 == 0:
+                self._tiles[path_row - 2][col] = TILE_FLOOR
+            if 0 <= path_row + 2 < MAP_ROWS and col % 3 != 1:
+                self._tiles[path_row + 2][col] = TILE_FLOOR
+
+        for row, col in (
+            (path_row - 2, start_col + 4),
+            (path_row + 2, start_col + 7),
+            (path_row - 2, start_col + 11),
+            (path_row + 2, start_col + 14),
+            (path_row - 2, start_col + 17),
+            (path_row + 1, end_col - 1),
+        ):
+            if 0 <= row < MAP_ROWS and 0 <= col < MAP_COLS:
+                self._tiles[row][col] = TILE_WALL
+
+        for row, col, tile in (
+            (path_row - 1, start_col + 7, TILE_WIND),
+            (path_row + 1, start_col + 9, TILE_WATER),
+            (path_row - 1, start_col + 12, TILE_EMBER),
+            (path_row + 1, start_col + 14, TILE_STONEFIELD),
+            (path_row, start_col + 9, TILE_PALE),
+            (path_row, start_col + 11, TILE_PALE),
+            (path_row, start_col + 13, TILE_PALE),
+            (path_row, start_col + 15, TILE_PALE),
+            (path_row, start_col + 17, TILE_PALE),
+        ):
+            if 0 <= row < MAP_ROWS and 0 <= col < MAP_COLS:
+                self._tiles[row][col] = tile
+
+        self.rooms.append(Room(start_col, path_row - 2, end_col - start_col + 1, 5))
+
+        self._tiles[path_row][start_col] = TILE_EXIT
+        self._tiles[path_row][start_col + 14] = TILE_EXIT
+        self.player_spawn = ((start_col + 1) * TILE + 4, path_row * TILE + 4)
+
+    def _generate_outer_depths_quietcore_stillcore_far_reach_beyond_inner_depths(self):
+        """外縁の静核深層彼方の奥地深部の奥の固定マップを生成する。"""
+        self._tiles = [[TILE_WALL] * MAP_COLS for _ in range(MAP_ROWS)]
+
+        path_row = 8
+        start_col = 4
+        end_col = 21
+
+        for col in range(start_col, end_col + 1):
+            for row in range(path_row - 1, path_row + 2):
+                if 0 <= row < MAP_ROWS and 0 <= col < MAP_COLS:
+                    self._tiles[row][col] = TILE_FLOOR
+
+        for col in range(7, 21):
+            if 0 <= path_row - 2 < MAP_ROWS and col % 3 != 1:
+                self._tiles[path_row - 2][col] = TILE_FLOOR
+            if 0 <= path_row + 2 < MAP_ROWS and col % 2 == 1:
+                self._tiles[path_row + 2][col] = TILE_FLOOR
+
+        for row, col in (
+            (path_row - 2, start_col + 3),
+            (path_row + 2, start_col + 6),
+            (path_row - 2, start_col + 10),
+            (path_row + 2, start_col + 13),
+            (path_row - 2, start_col + 16),
+            (path_row + 1, end_col - 2),
+        ):
+            if 0 <= row < MAP_ROWS and 0 <= col < MAP_COLS:
+                self._tiles[row][col] = TILE_WALL
+
+        for row, col, tile in (
+            (path_row - 1, start_col + 7, TILE_WIND),
+            (path_row + 1, start_col + 9, TILE_WATER),
+            (path_row - 1, start_col + 12, TILE_EMBER),
+            (path_row + 1, start_col + 14, TILE_STONEFIELD),
+            (path_row, start_col + 8, TILE_PALE),
+            (path_row, start_col + 10, TILE_PALE),
+            (path_row, start_col + 12, TILE_PALE),
+            (path_row, start_col + 14, TILE_PALE),
+            (path_row, start_col + 16, TILE_PALE),
+            (path_row, start_col + 18, TILE_PALE),
+        ):
+            if 0 <= row < MAP_ROWS and 0 <= col < MAP_COLS:
+                self._tiles[row][col] = tile
+
+        self.rooms.append(Room(start_col, path_row - 2, end_col - start_col + 1, 5))
+
+        self._tiles[path_row][start_col] = TILE_EXIT
+        self._tiles[path_row][start_col + 14] = TILE_EXIT
+        self.player_spawn = ((start_col + 1) * TILE + 4, path_row * TILE + 4)
+
+    def _generate_outer_depths_quietcore_stillcore_far_reach_beyond_inner_depths_coreward(self):
+        """外縁の静核深層彼方の奥地深部の核寄りの固定マップを生成する。"""
+        self._tiles = [[TILE_WALL] * MAP_COLS for _ in range(MAP_ROWS)]
+
+        path_row = 8
+        start_col = 4
+        end_col = 21
+
+        for col in range(start_col, end_col + 1):
+            for row in range(path_row - 1, path_row + 2):
+                if 0 <= row < MAP_ROWS and 0 <= col < MAP_COLS:
+                    self._tiles[row][col] = TILE_FLOOR
+
+        for col in range(7, 21):
+            if 0 <= path_row - 2 < MAP_ROWS and col % 2 == 1:
+                self._tiles[path_row - 2][col] = TILE_FLOOR
+            if 0 <= path_row + 2 < MAP_ROWS and col % 3 != 2:
+                self._tiles[path_row + 2][col] = TILE_FLOOR
+
+        for row, col in (
+            (path_row - 2, start_col + 4),
+            (path_row + 2, start_col + 8),
+            (path_row - 2, start_col + 11),
+            (path_row + 2, start_col + 15),
+            (path_row - 2, start_col + 17),
+            (path_row + 1, end_col - 1),
+        ):
+            if 0 <= row < MAP_ROWS and 0 <= col < MAP_COLS:
+                self._tiles[row][col] = TILE_WALL
+
+        for row, col, tile in (
+            (path_row - 1, start_col + 10, TILE_WIND),
+            (path_row + 1, start_col + 11, TILE_WATER),
+            (path_row - 1, start_col + 13, TILE_EMBER),
+            (path_row + 1, start_col + 14, TILE_STONEFIELD),
+            (path_row, start_col + 9, TILE_PALE),
+            (path_row, start_col + 11, TILE_PALE),
+            (path_row, start_col + 13, TILE_PALE),
+            (path_row, start_col + 15, TILE_PALE),
+            (path_row, start_col + 17, TILE_PALE),
+        ):
+            if 0 <= row < MAP_ROWS and 0 <= col < MAP_COLS:
+                self._tiles[row][col] = tile
+
+        self.rooms.append(Room(start_col, path_row - 2, end_col - start_col + 1, 5))
+
+        self._tiles[path_row][start_col] = TILE_EXIT
+        self._tiles[path_row][start_col + 14] = TILE_EXIT
+        self.player_spawn = ((start_col + 1) * TILE + 4, path_row * TILE + 4)
+
+    def _generate_outer_depths_quietcore_stillcore_far_reach_beyond_inner_depths_coreward_inner(self):
+        """外縁の静核深層彼方の奥地深部の核寄り深部の固定マップを生成する。"""
+        self._tiles = [[TILE_WALL] * MAP_COLS for _ in range(MAP_ROWS)]
+
+        path_row = 8
+        start_col = 4
+        end_col = 21
+
+        for col in range(start_col, end_col + 1):
+            for row in range(path_row - 1, path_row + 2):
+                if 0 <= row < MAP_ROWS and 0 <= col < MAP_COLS:
+                    self._tiles[row][col] = TILE_FLOOR
+
+        for col in range(7, 21):
+            if 0 <= path_row - 2 < MAP_ROWS and col % 3 != 0:
+                self._tiles[path_row - 2][col] = TILE_FLOOR
+            if 0 <= path_row + 2 < MAP_ROWS and col % 2 == 0:
+                self._tiles[path_row + 2][col] = TILE_FLOOR
+
+        for row, col in (
+            (path_row - 2, start_col + 3),
+            (path_row + 2, start_col + 7),
+            (path_row - 2, start_col + 12),
+            (path_row + 2, start_col + 15),
+            (path_row - 2, start_col + 17),
+            (path_row + 1, end_col - 1),
+        ):
+            if 0 <= row < MAP_ROWS and 0 <= col < MAP_COLS:
+                self._tiles[row][col] = TILE_WALL
+
+        for row, col, tile in (
+            (path_row - 1, start_col + 10, TILE_WIND),
+            (path_row + 1, start_col + 11, TILE_WATER),
+            (path_row - 1, start_col + 12, TILE_EMBER),
+            (path_row + 1, start_col + 13, TILE_STONEFIELD),
+            (path_row, start_col + 9, TILE_PALE),
+            (path_row, start_col + 11, TILE_PALE),
+            (path_row, start_col + 13, TILE_PALE),
+            (path_row, start_col + 15, TILE_PALE),
+            (path_row, start_col + 17, TILE_PALE),
+        ):
+            if 0 <= row < MAP_ROWS and 0 <= col < MAP_COLS:
+                self._tiles[row][col] = tile
+
+        self.rooms.append(Room(start_col, path_row - 2, end_col - start_col + 1, 5))
+
+        self._tiles[path_row][start_col] = TILE_EXIT
+        self._tiles[path_row][18] = TILE_EXIT
+        self.player_spawn = ((start_col + 1) * TILE + 4, path_row * TILE + 4)
+
+    def _generate_outer_depths_quietcore_stillcore_far_reach_beyond_inner_depths_coreward_inner_reach(self):
+        """外縁の静核深層彼方の奥地深部の核寄り深部の奥の固定マップを生成する。"""
+        self._tiles = [[TILE_WALL] * MAP_COLS for _ in range(MAP_ROWS)]
+
+        path_row = 8
+        start_col = 4
+        end_col = 21
+
+        for col in range(start_col, end_col + 1):
+            for row in range(path_row - 1, path_row + 2):
+                if 0 <= row < MAP_ROWS and 0 <= col < MAP_COLS:
+                    self._tiles[row][col] = TILE_FLOOR
+
+        for col in range(7, 21):
+            if 0 <= path_row - 2 < MAP_ROWS and col % 2 == 0:
+                self._tiles[path_row - 2][col] = TILE_FLOOR
+            if 0 <= path_row + 2 < MAP_ROWS and col % 3 != 0:
+                self._tiles[path_row + 2][col] = TILE_FLOOR
+
+        for row, col in (
+            (path_row - 2, start_col + 4),
+            (path_row + 2, start_col + 7),
+            (path_row - 2, start_col + 11),
+            (path_row + 2, start_col + 15),
+            (path_row - 2, start_col + 17),
+            (path_row + 1, end_col - 1),
+        ):
+            if 0 <= row < MAP_ROWS and 0 <= col < MAP_COLS:
+                self._tiles[row][col] = TILE_WALL
+
+        for row, col, tile in (
+            (path_row - 1, start_col + 10, TILE_WIND),
+            (path_row + 1, start_col + 11, TILE_WATER),
+            (path_row - 1, start_col + 13, TILE_EMBER),
+            (path_row + 1, start_col + 14, TILE_STONEFIELD),
+            (path_row, start_col + 9, TILE_PALE),
+            (path_row, start_col + 11, TILE_PALE),
+            (path_row, start_col + 13, TILE_PALE),
+            (path_row, start_col + 15, TILE_PALE),
+            (path_row, start_col + 17, TILE_PALE),
         ):
             if 0 <= row < MAP_ROWS and 0 <= col < MAP_COLS:
                 self._tiles[row][col] = tile
