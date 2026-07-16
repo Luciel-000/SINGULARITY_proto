@@ -460,6 +460,8 @@ class Game:
                     return
                 if self._try_investigate_distant_center():
                     return
+                if self._try_investigate_outer_depths_quietcore_stillcore_far_reach_beyond_inner_depths_coreward_inner_reach_trace():
+                    return
                 if self._try_investigate_outer_depths_quietcore_stillcore_far_reach_beyond_inner_depths_coreward_inner_flow_shift():
                     return
                 if self._try_investigate_outer_depths_quietcore_stillcore_far_reach_beyond_inner_depths_coreward_inner_trace():
@@ -2714,6 +2716,11 @@ class Game:
         return 0
 
     def get_current_objective_text(self) -> str:
+        if self._get_story_flag(
+            "outer_depths_quietcore_stillcore_far_reach_beyond_inner_depths_coreward_inner_reach_trace_investigated",
+            False,
+        ):
+            return "目的：外縁の静核深層彼方の奥地深部の核寄り深部の奥で保たれる反応の重なりを追う"
         if self._get_story_flag(
             "outer_depths_quietcore_stillcore_far_reach_beyond_inner_depths_coreward_inner_reach_resonance_seen",
             False,
@@ -5050,6 +5057,73 @@ class Game:
         self.talking_npc = None
         self._mark_story_event_seen(
             "outer_depths_quietcore_stillcore_far_reach_beyond_inner_depths_coreward_inner_reach_arrival"
+        )
+        self.state = STATE_DIALOGUE
+
+    def _try_investigate_outer_depths_quietcore_stillcore_far_reach_beyond_inner_depths_coreward_inner_reach_trace(
+        self,
+    ) -> bool:
+        if not self.world or not self.player:
+            return False
+        if self.current_zone_id != "outer_depths_quietcore_stillcore_far_reach_beyond_inner_depths_coreward_inner_reach":
+            return False
+        if not (
+            self._get_story_flag(
+                "outer_depths_quietcore_stillcore_far_reach_beyond_inner_depths_coreward_inner_reach_entered",
+                False,
+            )
+            and self._get_story_flag(
+                "outer_depths_quietcore_stillcore_far_reach_beyond_inner_depths_coreward_inner_reach_resonance_seen",
+                False,
+            )
+        ):
+            return False
+
+        trace_rect = pygame.Rect(18 * TILE, 8 * TILE, TILE, TILE)
+        if not self.player.rect.colliderect(trace_rect.inflate(TILE, TILE)):
+            return False
+
+        if self._get_story_flag(
+            "outer_depths_quietcore_stillcore_far_reach_beyond_inner_depths_coreward_inner_reach_trace_investigated",
+            False,
+        ):
+            self._add_message(
+                "四つの反応と色のない淡い揺らぎは、近い距離で静かに残っている。核や中心へ到達したとは断定できず、何がこの重なりを保つのか、これまでの観測と照らし合わせる必要がありそうだ。",
+                C_GRAY,
+            )
+        else:
+            self._start_outer_depths_quietcore_stillcore_far_reach_beyond_inner_depths_coreward_inner_reach_trace_event()
+        return True
+
+    def _start_outer_depths_quietcore_stillcore_far_reach_beyond_inner_depths_coreward_inner_reach_trace_event(
+        self,
+    ) -> None:
+        self._set_story_flag(
+            "outer_depths_quietcore_stillcore_far_reach_beyond_inner_depths_coreward_inner_reach_trace_investigated",
+            True,
+        )
+        self._set_story_flag(
+            "outer_depths_quietcore_stillcore_far_reach_beyond_inner_depths_coreward_inner_reach_convergence_seen",
+            True,
+        )
+        self._set_story_flag(
+            "outer_depths_quietcore_stillcore_far_reach_beyond_inner_depths_coreward_inner_reach_center_hint_received",
+            True,
+        )
+        self.current_dialogue_id = (
+            "outer_depths_quietcore_stillcore_far_reach_beyond_inner_depths_coreward_inner_reach_trace"
+        )
+        self.dialogue_lines = [
+            line.replace("{support_system_name}", self.get_support_system_display_name())
+            for line in get_dialogue_lines(
+                "outer_depths_quietcore_stillcore_far_reach_beyond_inner_depths_coreward_inner_reach_trace"
+            )
+        ]
+        self.dialogue_speaker = self.get_support_system_display_name()
+        self.dialogue_index = 0
+        self.talking_npc = None
+        self._mark_story_event_seen(
+            "outer_depths_quietcore_stillcore_far_reach_beyond_inner_depths_coreward_inner_reach_trace"
         )
         self.state = STATE_DIALOGUE
 
